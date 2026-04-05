@@ -16,6 +16,7 @@ router.put("/users/:id/toggle-status", admin.toggleUserStatus);
 
 // Dashboard stats
 router.get("/stats/dashboard", admin.getAdminStats);
+router.get("/revenue", admin.getRevenue);
 
 // Rooms & bookings (admin)
 router.get("/rooms/all", admin.getAllRooms);

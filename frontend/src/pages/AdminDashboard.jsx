@@ -2,7 +2,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { usersAPI, getStoredUser } from "../services/api";
+import {
+  PieChart,
+  Pie,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+import { usersAPI } from "../services/api";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -13,9 +26,36 @@ export default function AdminDashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState(null); // Track which user is being updated
 
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
+  const [userFilter, setUserFilter] = useState("all"); // all, admin, owner, tenant
+
+  const [rooms, setRooms] = useState([]);
+  const [roomsPagination, setRoomsPagination] = useState(null);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  // Revenue state
+  const [revenue, setRevenue] = useState(null);
+  const [revenueLoading, setRevenueLoading] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  // Settings state
+  const [adminData, setAdminData] = useState(null);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [passwordFormData, setPasswordFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Normalize role to lowercase
   const normalizeRole = (role) =>
@@ -54,6 +94,128 @@ export default function AdminDashboard() {
     loadUsers();
   }, []);
 
+  const loadRooms = async () => {
+    setRoomsLoading(true);
+    try {
+      const res = await usersAPI.getAllRooms();
+      const list = res?.rooms || [];
+      setRooms(list);
+      setRoomsPagination(res?.pagination || null);
+    } catch (e) {
+      console.error("Failed to load rooms:", e);
+    } finally {
+      setRoomsLoading(false);
+    }
+  };
+
+  // Load rooms when Rooms tab is activated
+  useEffect(() => {
+    if (active === "Rooms" && rooms.length === 0 && !roomsLoading) {
+      loadRooms();
+    }
+  }, [active, rooms.length, roomsLoading]);
+
+  const loadStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await usersAPI.getAdminStats();
+      setStats(res?.stats || null);
+    } catch (e) {
+      console.error("Failed to load stats:", e);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // Load stats when Analytics tab is activated
+  useEffect(() => {
+    if (active === "Analytics" && !stats && !statsLoading) {
+      loadStats();
+    }
+  }, [active, stats, statsLoading]);
+
+  // Load revenue when Overview tab is activated or dates change
+  useEffect(() => {
+    const loadRevenue = async () => {
+      setRevenueLoading(true);
+      try {
+        const res = await usersAPI.getRevenue(fromDate, toDate);
+        setRevenue(res || null);
+      } catch (e) {
+        console.error("Failed to load revenue:", e);
+      } finally {
+        setRevenueLoading(false);
+      }
+    };
+
+    if (active === "Overview") {
+      loadRevenue();
+    }
+  }, [active, fromDate, toDate]);
+
+  const loadAdmin = async () => {
+    setAdminLoading(true);
+    try {
+      const res = await usersAPI.getMe();
+      setAdminData(res?.user || null);
+    } catch (e) {
+      console.error("Failed to load admin data:", e);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  // Load admin data when Settings tab is activated
+  useEffect(() => {
+    if (active === "Settings" && !adminData && !adminLoading) {
+      loadAdmin();
+    }
+  }, [active, adminData, adminLoading]);
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    // Validation
+    if (
+      !passwordFormData.currentPassword ||
+      !passwordFormData.newPassword ||
+      !passwordFormData.confirmPassword
+    ) {
+      setPasswordError("All fields are required");
+      return;
+    }
+
+    if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    if (passwordFormData.newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await usersAPI.updatePassword({
+        currentPassword: passwordFormData.currentPassword,
+        newPassword: passwordFormData.newPassword,
+      });
+      setPasswordSuccess("Password changed successfully!");
+      setPasswordFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      setPasswordError(err?.message || "Failed to change password");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const counts = useMemo(() => {
     const total = users.length;
     const admins = users.filter(
@@ -68,6 +230,34 @@ export default function AdminDashboard() {
 
     return { total, admins, owners, tenants };
   }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    if (userFilter === "all") return users;
+    return users.filter((u) => normalizeRole(u.role) === userFilter);
+  }, [users, userFilter]);
+
+  // Handle activate/deactivate user
+  const handleToggleUserStatus = async (userId, isCurrentlyActive) => {
+    setActionLoading(userId);
+    try {
+      await usersAPI.updateUser(userId, {
+        isActive: !isCurrentlyActive,
+      });
+      // Update local state
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === userId ? { ...u, is_active: isCurrentlyActive ? 0 : 1 } : u,
+        ),
+      );
+    } catch (err) {
+      console.error("Error toggling user status:", err);
+      alert(
+        `Failed to ${isCurrentlyActive ? "deactivate" : "activate"} user: ${err.message}`,
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const statsCards = useMemo(
     () => [
@@ -153,6 +343,76 @@ export default function AdminDashboard() {
                   ))}
                 </Grid>
 
+                <Panel>
+                  <PanelTitle>Revenue Collection</PanelTitle>
+                  <FilterRow>
+                    <FilterGroup>
+                      <FilterLabel>From Date</FilterLabel>
+                      <FilterInput
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                      />
+                    </FilterGroup>
+                    <FilterGroup>
+                      <FilterLabel>To Date</FilterLabel>
+                      <FilterInput
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                      />
+                    </FilterGroup>
+                    <ClearBtn
+                      onClick={() => {
+                        setFromDate("");
+                        setToDate("");
+                      }}
+                    >
+                      Clear Filters
+                    </ClearBtn>
+                  </FilterRow>
+
+                  {revenueLoading ? (
+                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                      Loading revenue data...
+                    </p>
+                  ) : revenue ? (
+                    <RevenueInfo>
+                      <RevenueItem>
+                        <RevenueLabel>Total Revenue</RevenueLabel>
+                        <RevenueValue>
+                          Rs{" "}
+                          {Number(revenue.totalRevenue || 0).toLocaleString(
+                            "en-US",
+                          )}
+                        </RevenueValue>
+                      </RevenueItem>
+                      <RevenueItem>
+                        <RevenueLabel>Total Payments</RevenueLabel>
+                        <RevenueValue>
+                          {revenue.totalPayments || 0}
+                        </RevenueValue>
+                      </RevenueItem>
+                      {revenue.totalPayments > 0 && (
+                        <RevenueItem>
+                          <RevenueLabel>Average Payment</RevenueLabel>
+                          <RevenueValue>
+                            Rs{" "}
+                            {Math.round(
+                              (revenue.totalRevenue || 0) /
+                                (revenue.totalPayments || 1),
+                            ).toLocaleString("en-US")}
+                          </RevenueValue>
+                        </RevenueItem>
+                      )}
+                    </RevenueInfo>
+                  ) : (
+                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                      No revenue data available.
+                    </p>
+                  )}
+                </Panel>
+
                 <TwoCol>
                   <Panel>
                     <PanelTitle>Summary</PanelTitle>
@@ -180,7 +440,7 @@ export default function AdminDashboard() {
             {!loading && !error && active === "Users" && (
               <Panel>
                 <PanelTitle>
-                  All Users{" "}
+                  User Management{" "}
                   <span
                     style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}
                   >
@@ -188,8 +448,38 @@ export default function AdminDashboard() {
                   </span>
                 </PanelTitle>
 
-                {users.length === 0 ? (
-                  <p style={{ margin: 0, color: "#546173" }}>No users found.</p>
+                {/* Role Filter Tabs */}
+                <TabRow>
+                  <Tab
+                    $active={userFilter === "all"}
+                    onClick={() => setUserFilter("all")}
+                  >
+                    All Users ({counts.total})
+                  </Tab>
+                  <Tab
+                    $active={userFilter === "admin"}
+                    onClick={() => setUserFilter("admin")}
+                  >
+                    Admins ({counts.admins})
+                  </Tab>
+                  <Tab
+                    $active={userFilter === "owner"}
+                    onClick={() => setUserFilter("owner")}
+                  >
+                    Owners ({counts.owners})
+                  </Tab>
+                  <Tab
+                    $active={userFilter === "tenant"}
+                    onClick={() => setUserFilter("tenant")}
+                  >
+                    Tenants ({counts.tenants})
+                  </Tab>
+                </TabRow>
+
+                {filteredUsers.length === 0 ? (
+                  <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                    No users found in this category.
+                  </p>
                 ) : (
                   <TableWrap>
                     <Table>
@@ -199,19 +489,104 @@ export default function AdminDashboard() {
                           <th>Email</th>
                           <th>Role</th>
                           <th>Status</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {users.map((u) => (
-                          <tr key={u.id}>
-                            <td>{u.full_name || "-"}</td>
-                            <td>{u.email || "-"}</td>
+                        {filteredUsers.map((u) => {
+                          const isActive = u.is_active === 1;
+                          const isAdmin = normalizeRole(u.role) === "admin";
+                          return (
+                            <tr key={u.id}>
+                              <td>{u.full_name || "-"}</td>
+                              <td>{u.email || "-"}</td>
+                              <td>
+                                <RolePill
+                                  $role={normalizeRole(u.role)}
+                                  title={`${normalizeRole(u.role).toUpperCase()}`}
+                                >
+                                  {normalizeRole(u.role) || "-"}
+                                </RolePill>
+                              </td>
+                              <td>
+                                <StatusBadge $active={isActive}>
+                                  {isActive ? "Active" : "Inactive"}
+                                </StatusBadge>
+                              </td>
+                              <td>
+                                {isAdmin ? (
+                                  <ActionText>Admin Account</ActionText>
+                                ) : (
+                                  <ActionButton
+                                    $danger={isActive}
+                                    onClick={() =>
+                                      handleToggleUserStatus(u.id, isActive)
+                                    }
+                                    disabled={actionLoading === u.id}
+                                  >
+                                    {actionLoading === u.id
+                                      ? "..."
+                                      : isActive
+                                        ? "Deactivate"
+                                        : "Activate"}
+                                  </ActionButton>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </Table>
+                  </TableWrap>
+                )}
+              </Panel>
+            )}
+
+            {!loading && !error && active === "Rooms" && (
+              <Panel>
+                <PanelTitle>
+                  All Rooms{" "}
+                  <span
+                    style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}
+                  >
+                    ({roomsPagination?.totalRooms ?? rooms.length})
+                  </span>
+                </PanelTitle>
+
+                {roomsLoading ? (
+                  <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                    Loading rooms...
+                  </p>
+                ) : rooms.length === 0 ? (
+                  <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                    No rooms found.
+                  </p>
+                ) : (
+                  <TableWrap>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <th>Room Title</th>
+                          <th>Owner Name</th>
+                          <th>Owner Email</th>
+                          <th>Location</th>
+                          <th>Price</th>
+                          <th>Available</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rooms.map((room) => (
+                          <tr key={room.id}>
+                            <td>{room.title || "-"}</td>
+                            <td>{room.owner_name || "-"}</td>
+                            <td>{room.owner_email || "-"}</td>
+                            <td>{room.location || "-"}</td>
+                            <td>Rs. {room.price || "-"}</td>
                             <td>
-                              <RolePill>
-                                {normalizeRole(u.role) || "-"}
-                              </RolePill>
+                              <StatusBadge $active={room.is_available === 1}>
+                                {room.is_available === 1 ? "Yes" : "No"}
+                              </StatusBadge>
                             </td>
-                            <td>{u.is_active === 0 ? "Inactive" : "Active"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -221,10 +596,413 @@ export default function AdminDashboard() {
               </Panel>
             )}
 
+            {!loading && !error && active === "Analytics" && (
+              <>
+                {statsLoading ? (
+                  <Panel>
+                    <PanelTitle>Loading Analytics...</PanelTitle>
+                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                      Fetching platform analytics.
+                    </p>
+                  </Panel>
+                ) : !stats ? (
+                  <Panel>
+                    <PanelTitle>Error Loading Analytics</PanelTitle>
+                    <p style={{ margin: "12px 0 0", color: "#b42318" }}>
+                      Failed to load analytics data.
+                    </p>
+                    <PrimaryBtn onClick={loadStats} style={{ marginTop: 12 }}>
+                      Try Again
+                    </PrimaryBtn>
+                  </Panel>
+                ) : (
+                  <>
+                    {/* Stats Cards */}
+                    <Grid>
+                      <Card>
+                        <CardLabel>Total Users</CardLabel>
+                        <CardValue>{stats.users?.total ?? 0}</CardValue>
+                        <CardHint>All registered users</CardHint>
+                      </Card>
+                      <Card>
+                        <CardLabel>Total Rooms</CardLabel>
+                        <CardValue>{stats.rooms?.total ?? 0}</CardValue>
+                        <CardHint>All listed rooms</CardHint>
+                      </Card>
+                      <Card>
+                        <CardLabel>Total Bookings</CardLabel>
+                        <CardValue>{stats.bookings?.total ?? 0}</CardValue>
+                        <CardHint>All bookings</CardHint>
+                      </Card>
+                      <Card>
+                        <CardLabel>Total Reviews</CardLabel>
+                        <CardValue>{stats.reviews?.total ?? 0}</CardValue>
+                        <CardHint>Platform reviews</CardHint>
+                      </Card>
+                    </Grid>
+
+                    {/* Charts */}
+                    <TwoCol>
+                      <Panel>
+                        <PanelTitle>User Distribution by Role</PanelTitle>
+                        <ChartContainer>
+                          <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  {
+                                    name: "Admins",
+                                    value: stats.users?.admins ?? 0,
+                                    fill: "#fcd34d",
+                                  },
+                                  {
+                                    name: "Owners",
+                                    value: stats.users?.owners ?? 0,
+                                    fill: "#93c5fd",
+                                  },
+                                  {
+                                    name: "Tenants",
+                                    value: stats.users?.tenants ?? 0,
+                                    fill: "#86efac",
+                                  },
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ name, value }) => `${name}: ${value}`}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                <Cell fill="#fcd34d" />
+                                <Cell fill="#93c5fd" />
+                                <Cell fill="#86efac" />
+                              </Pie>
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </Panel>
+
+                      <Panel>
+                        <PanelTitle>Room Availability</PanelTitle>
+                        <ChartContainer>
+                          <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  {
+                                    name: "Available",
+                                    value: stats.rooms?.available ?? 0,
+                                    fill: "#86efac",
+                                  },
+                                  {
+                                    name: "Unavailable",
+                                    value:
+                                      (stats.rooms?.total ?? 0) -
+                                      (stats.rooms?.available ?? 0),
+                                    fill: "#fca5a5",
+                                  },
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ name, value }) => `${name}: ${value}`}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                <Cell fill="#86efac" />
+                                <Cell fill="#fca5a5" />
+                              </Pie>
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </Panel>
+                    </TwoCol>
+
+                    {/* Room Price Distribution Bar Chart */}
+                    <Panel>
+                      <PanelTitle>Room Price Distribution</PanelTitle>
+                      <ChartContainer>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart
+                            data={[
+                              {
+                                range: "Budget (0-5K)",
+                                count: stats.priceRanges?.budget ?? 0,
+                              },
+                              {
+                                range: "Mid-Range (5K-15K)",
+                                count: stats.priceRanges?.mid ?? 0,
+                              },
+                              {
+                                range: "High (15K-30K)",
+                                count: stats.priceRanges?.high ?? 0,
+                              },
+                              {
+                                range: "Premium (30K+)",
+                                count: stats.priceRanges?.premium ?? 0,
+                              },
+                            ]}
+                            margin={{ top: 20, right: 30, left: 0, bottom: 80 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="range"
+                              angle={-45}
+                              textAnchor="end"
+                              height={100}
+                            />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar
+                              dataKey="count"
+                              radius={[8, 8, 0, 0]}
+                              name="Number of Rooms"
+                            >
+                              <Cell fill="#10b981" />
+                              <Cell fill="#3b82f6" />
+                              <Cell fill="#f59e0b" />
+                              <Cell fill="#ef4444" />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </Panel>
+
+                    {/* Summary Stats */}
+                    <TwoCol>
+                      <Panel>
+                        <PanelTitle>User Summary</PanelTitle>
+                        <List>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Admins:</StatLabel>
+                              <StatValue>{stats.users?.admins ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Owners:</StatLabel>
+                              <StatValue>{stats.users?.owners ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Tenants:</StatLabel>
+                              <StatValue>{stats.users?.tenants ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                        </List>
+                      </Panel>
+
+                      <Panel>
+                        <PanelTitle>Room & Pricing Summary</PanelTitle>
+                        <List>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Total Rooms:</StatLabel>
+                              <StatValue>{stats.rooms?.total ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Available:</StatLabel>
+                              <StatValue>
+                                {stats.rooms?.available ?? 0}
+                              </StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Avg Price:</StatLabel>
+                              <StatValue>
+                                Rs. {stats.rooms?.avgPrice ?? 0}
+                              </StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Price Range:</StatLabel>
+                              <StatValue>
+                                Rs. {stats.rooms?.minPrice ?? 0} -{" "}
+                                {stats.rooms?.maxPrice ?? 0}
+                              </StatValue>
+                            </StatItem>
+                          </li>
+                        </List>
+                      </Panel>
+                    </TwoCol>
+                  </>
+                )}
+              </>
+            )}
+
+            {!loading && !error && active === "Settings" && (
+              <>
+                {adminLoading ? (
+                  <Panel>
+                    <PanelTitle>Loading settings...</PanelTitle>
+                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                      Fetching admin profile.
+                    </p>
+                  </Panel>
+                ) : !adminData ? (
+                  <Panel>
+                    <PanelTitle>Error</PanelTitle>
+                    <p style={{ margin: "12px 0 0", color: "#b42318" }}>
+                      Failed to load admin data.
+                    </p>
+                    <PrimaryBtn onClick={loadAdmin} style={{ marginTop: 12 }}>
+                      Try Again
+                    </PrimaryBtn>
+                  </Panel>
+                ) : (
+                  <>
+                    {/* Admin Profile Section */}
+                    <Panel>
+                      <PanelTitle>Admin Profile</PanelTitle>
+                      <ProfileGrid>
+                        <ProfileItem>
+                          <ProfileLabel>Full Name</ProfileLabel>
+                          <ProfileValue>
+                            {adminData.full_name || "-"}
+                          </ProfileValue>
+                        </ProfileItem>
+                        <ProfileItem>
+                          <ProfileLabel>Email</ProfileLabel>
+                          <ProfileValue>{adminData.email || "-"}</ProfileValue>
+                        </ProfileItem>
+                        <ProfileItem>
+                          <ProfileLabel>Role</ProfileLabel>
+                          <ProfileValue>
+                            <RolePill $role={normalizeRole(adminData.role)}>
+                              {normalizeRole(adminData.role) || "-"}
+                            </RolePill>
+                          </ProfileValue>
+                        </ProfileItem>
+                        <ProfileItem>
+                          <ProfileLabel>Account Status</ProfileLabel>
+                          <ProfileValue>
+                            <StatusBadge $active={adminData.is_active === 1}>
+                              {adminData.is_active === 1
+                                ? "Active"
+                                : "Inactive"}
+                            </StatusBadge>
+                          </ProfileValue>
+                        </ProfileItem>
+                        <ProfileItem>
+                          <ProfileLabel>Verified</ProfileLabel>
+                          <ProfileValue>
+                            <StatusBadge $active={adminData.is_verified === 1}>
+                              {adminData.is_verified === 1
+                                ? "Verified"
+                                : "Not Verified"}
+                            </StatusBadge>
+                          </ProfileValue>
+                        </ProfileItem>
+                        <ProfileItem>
+                          <ProfileLabel>Member Since</ProfileLabel>
+                          <ProfileValue>
+                            {new Date(
+                              adminData.created_at,
+                            ).toLocaleDateString()}
+                          </ProfileValue>
+                        </ProfileItem>
+                      </ProfileGrid>
+                    </Panel>
+
+                    {/* Change Password Section */}
+                    <Panel>
+                      <PanelTitle>Change Password</PanelTitle>
+                      <PasswordForm onSubmit={handlePasswordChange}>
+                        {passwordError && (
+                          <AlertMessage $error={true}>
+                            {passwordError}
+                          </AlertMessage>
+                        )}
+                        {passwordSuccess && (
+                          <AlertMessage $error={false}>
+                            {passwordSuccess}
+                          </AlertMessage>
+                        )}
+
+                        <FormGroup>
+                          <FormLabel htmlFor="currentPassword">
+                            Current Password
+                          </FormLabel>
+                          <FormInput
+                            id="currentPassword"
+                            type="password"
+                            placeholder="Enter your current password"
+                            value={passwordFormData.currentPassword}
+                            onChange={(e) =>
+                              setPasswordFormData({
+                                ...passwordFormData,
+                                currentPassword: e.target.value,
+                              })
+                            }
+                            disabled={passwordLoading}
+                          />
+                        </FormGroup>
+
+                        <FormGroup>
+                          <FormLabel htmlFor="newPassword">
+                            New Password
+                          </FormLabel>
+                          <FormInput
+                            id="newPassword"
+                            type="password"
+                            placeholder="Enter your new password"
+                            value={passwordFormData.newPassword}
+                            onChange={(e) =>
+                              setPasswordFormData({
+                                ...passwordFormData,
+                                newPassword: e.target.value,
+                              })
+                            }
+                            disabled={passwordLoading}
+                          />
+                        </FormGroup>
+
+                        <FormGroup>
+                          <FormLabel htmlFor="confirmPassword">
+                            Confirm Password
+                          </FormLabel>
+                          <FormInput
+                            id="confirmPassword"
+                            type="password"
+                            placeholder="Confirm your new password"
+                            value={passwordFormData.confirmPassword}
+                            onChange={(e) =>
+                              setPasswordFormData({
+                                ...passwordFormData,
+                                confirmPassword: e.target.value,
+                              })
+                            }
+                            disabled={passwordLoading}
+                          />
+                        </FormGroup>
+
+                        <SubmitBtn type="submit" disabled={passwordLoading}>
+                          {passwordLoading ? "Updating..." : "Change Password"}
+                        </SubmitBtn>
+                      </PasswordForm>
+                    </Panel>
+                  </>
+                )}
+              </>
+            )}
+
             {!loading &&
               !error &&
               active !== "Overview" &&
-              active !== "Users" && (
+              active !== "Users" &&
+              active !== "Rooms" &&
+              active !== "Analytics" &&
+              active !== "Settings" && (
                 <Panel>
                   <PanelTitle>{active}</PanelTitle>
                   <p style={{ margin: 0, color: "#546173" }}>
@@ -581,6 +1359,314 @@ const RolePill = styled.span`
   background: #f3f6fb;
   font-weight: 800;
   text-transform: lowercase;
+  font-size: 12px;
+
+  ${(p) => {
+    switch (p.$role) {
+      case "admin":
+        return `
+          background: #fef3c7;
+          border-color: #fcd34d;
+          color: #92400e;
+        `;
+      case "owner":
+        return `
+          background: #dbeafe;
+          border-color: #93c5fd;
+          color: #1e40af;
+        `;
+      case "tenant":
+        return `
+          background: #dcfce7;
+          border-color: #86efac;
+          color: #166534;
+        `;
+      default:
+        return "";
+    }
+  }}
+`;
+
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  ${(p) =>
+    p.$active
+      ? `
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  `
+      : `
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  `}
+`;
+
+const ActionButton = styled.button`
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e7edf5;
+  background: ${(p) => (p.$danger ? "#fee2e2" : "#dcfce7")};
+  color: ${(p) => (p.$danger ? "#991b1b" : "#166534")};
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${(p) => (p.$danger ? "#fca5a5" : "#86efac")};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ActionText = styled.span`
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const ChartContainer = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+`;
+
+const StatItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+`;
+
+const StatLabel = styled.span`
+  color: #64748b;
+  font-weight: 600;
+  font-size: 13px;
+`;
+
+const StatValue = styled.span`
+  color: #0f172a;
+  font-weight: 900;
+  font-size: 16px;
+`;
+
+const ProfileGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ProfileItem = styled.div`
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e7edf5;
+`;
+
+const ProfileLabel = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+`;
+
+const ProfileValue = styled.div`
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 600;
+`;
+
+const PasswordForm = styled.form`
+  margin-top: 12px;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e7edf5;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    background: #f3f6fb;
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
+`;
+
+const SubmitBtn = styled.button`
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #cfe2ff;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #1d4ed8;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const AlertMessage = styled.div`
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  ${(p) =>
+    p.$error
+      ? `
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+  `
+      : `
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
+  `}
+`;
+
+const FilterRow = styled.div`
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: 12px;
+  }
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 150px;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+`;
+
+const FilterInput = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+`;
+
+const ClearBtn = styled.button`
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+  }
+`;
+
+const RevenueInfo = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+`;
+
+const RevenueItem = styled.div`
+  padding: 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const RevenueLabel = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+`;
+
+const RevenueValue = styled.span`
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
 `;
 
 const Overlay = styled.div`

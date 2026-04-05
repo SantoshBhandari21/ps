@@ -317,8 +317,31 @@ export const usersAPI = {
     });
   },
 
+  activateUser: async (id) => {
+    return apiCall(`/admin/users/${id}`, {
+      method: "PUT",
+      body: { isActive: true },
+    });
+  },
+
+  deactivateUser: async (id) => {
+    return apiCall(`/admin/users/${id}`, {
+      method: "PUT",
+      body: { isActive: false },
+    });
+  },
+
   getAdminStats: async () => {
     return apiCall(`/admin/stats/dashboard`);
+  },
+
+  getRevenue: async (fromDate = null, toDate = null) => {
+    let url = `/admin/revenue`;
+    const params = new URLSearchParams();
+    if (fromDate) params.append("fromDate", fromDate);
+    if (toDate) params.append("toDate", toDate);
+    if (params.toString()) url += `?${params.toString()}`;
+    return apiCall(url);
   },
 
   getAllRooms: async (page = 1, limit = 20) => {
@@ -336,6 +359,17 @@ export const usersAPI = {
     return apiCall(
       `/admin/bookings/all${queryString ? `?${queryString}` : ""}`,
     );
+  },
+
+  getMe: async () => {
+    return apiCall(`/auth/me`);
+  },
+
+  updatePassword: async (passwordData) => {
+    return apiCall(`/auth/password`, {
+      method: "PUT",
+      body: passwordData,
+    });
   },
 };
 

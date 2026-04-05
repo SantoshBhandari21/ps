@@ -71,7 +71,7 @@ const getUserById = async (req, res) => {
   try {
     const user = await getOne(
       "SELECT id, full_name, email, role, is_verified, is_active, created_at FROM users WHERE id = ?",
-      [req.params.id]
+      [req.params.id],
     );
 
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -81,24 +81,24 @@ const getUserById = async (req, res) => {
     if (user.role === "owner") {
       const roomStats = await getOne(
         "SELECT COUNT(*) as total_rooms FROM rooms WHERE owner_id = ?",
-        [user.id]
+        [user.id],
       );
 
       const bookingStats = await getOne(
         "SELECT COUNT(*) as total_bookings FROM bookings WHERE owner_id = ?",
-        [user.id]
+        [user.id],
       );
 
       stats = { ...(roomStats || {}), ...(bookingStats || {}) };
     } else if (user.role === "tenant") {
       const bookingStats = await getOne(
         "SELECT COUNT(*) as total_bookings FROM bookings WHERE tenant_id = ?",
-        [user.id]
+        [user.id],
       );
 
       const favoriteStats = await getOne(
         "SELECT COUNT(*) as total_favorites FROM favorites WHERE tenant_id = ?",
-        [user.id]
+        [user.id],
       );
 
       stats = { ...(bookingStats || {}), ...(favoriteStats || {}) };
@@ -129,21 +129,24 @@ const createUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    const exists = await getOne("SELECT id FROM users WHERE email = ?", [email]);
-    if (exists) return res.status(409).json({ message: "Email already exists" });
+    const exists = await getOne("SELECT id FROM users WHERE email = ?", [
+      email,
+    ]);
+    if (exists)
+      return res.status(409).json({ message: "Email already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await runQuery(
       "INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)",
-      [fullName, email, hashed, role]
+      [fullName, email, hashed, role],
     );
 
     const newId = result?.id ?? result?.insertId;
 
     const user = await getOne(
       "SELECT id, full_name, email, role, is_verified, is_active, created_at FROM users WHERE id = ?",
-      [newId]
+      [newId],
     );
 
     return res.status(201).json({ message: "User created successfully", user });
@@ -195,14 +198,20 @@ const updateUser = async (req, res) => {
     updates.push("updated_at = CURRENT_TIMESTAMP");
     values.push(req.params.id);
 
-    await runQuery(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, values);
+    await runQuery(
+      `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
+      values,
+    );
 
     const updatedUser = await getOne(
       "SELECT id, full_name, email, role, is_verified, is_active, created_at FROM users WHERE id = ?",
-      [req.params.id]
+      [req.params.id],
     );
 
-    return res.json({ message: "User updated successfully", user: updatedUser });
+    return res.json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
   } catch (error) {
     console.error("Update user error:", error);
     return res.status(500).json({ message: "Server error" });
@@ -214,20 +223,26 @@ const updateUser = async (req, res) => {
  */
 const deleteUser = async (req, res) => {
   try {
-    const user = await getOne("SELECT id, role FROM users WHERE id = ?", [req.params.id]);
+    const user = await getOne("SELECT id, role FROM users WHERE id = ?", [
+      req.params.id,
+    ]);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.id === req.user.id) {
-      return res.status(400).json({ message: "You cannot delete your own account" });
+      return res
+        .status(400)
+        .json({ message: "You cannot delete your own account" });
     }
 
     if (user.role === "owner") {
       const activeBookings = await getOne(
         "SELECT COUNT(*) as count FROM bookings WHERE owner_id = ? AND status IN (?, ?)",
-        [user.id, "pending", "approved"]
+        [user.id, "pending", "approved"],
       );
       if ((activeBookings?.count ?? 0) > 0) {
-        return res.status(400).json({ message: "Cannot delete owner with active bookings" });
+        return res
+          .status(400)
+          .json({ message: "Cannot delete owner with active bookings" });
       }
     }
 
@@ -244,14 +259,16 @@ const deleteUser = async (req, res) => {
  */
 const toggleUserStatus = async (req, res) => {
   try {
-    const user = await getOne("SELECT id, is_active FROM users WHERE id = ?", [req.params.id]);
+    const user = await getOne("SELECT id, is_active FROM users WHERE id = ?", [
+      req.params.id,
+    ]);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const newStatus = user.is_active ? 0 : 1;
 
     await runQuery(
       "UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [newStatus, user.id]
+      [newStatus, user.id],
     );
 
     return res.json({
@@ -269,35 +286,67 @@ const toggleUserStatus = async (req, res) => {
 const getAdminStats = async (req, res) => {
   try {
     const rowUsers = await getOne("SELECT COUNT(*) as total_users FROM users");
-    const rowAdmins = await getOne("SELECT COUNT(*) as total_admins FROM users WHERE role = ?", [
-      "admin",
-    ]);
-    const rowOwners = await getOne("SELECT COUNT(*) as total_owners FROM users WHERE role = ?", [
-      "owner",
-    ]);
-    const rowTenants = await getOne("SELECT COUNT(*) as total_tenants FROM users WHERE role = ?", [
-      "tenant",
-    ]);
+    const rowAdmins = await getOne(
+      "SELECT COUNT(*) as total_admins FROM users WHERE role = ?",
+      ["admin"],
+    );
+    const rowOwners = await getOne(
+      "SELECT COUNT(*) as total_owners FROM users WHERE role = ?",
+      ["owner"],
+    );
+    const rowTenants = await getOne(
+      "SELECT COUNT(*) as total_tenants FROM users WHERE role = ?",
+      ["tenant"],
+    );
 
     const rowRooms = await getOne("SELECT COUNT(*) as total_rooms FROM rooms");
     const rowAvailRooms = await getOne(
-      "SELECT COUNT(*) as available_rooms FROM rooms WHERE is_available = 1"
+      "SELECT COUNT(*) as available_rooms FROM rooms WHERE is_available = 1",
     );
 
-    const rowBookings = await getOne("SELECT COUNT(*) as total_bookings FROM bookings");
+    const rowBookings = await getOne(
+      "SELECT COUNT(*) as total_bookings FROM bookings",
+    );
     const rowPending = await getOne(
       "SELECT COUNT(*) as pending_bookings FROM bookings WHERE status = ?",
-      ["pending"]
+      ["pending"],
     );
     const rowApproved = await getOne(
       "SELECT COUNT(*) as approved_bookings FROM bookings WHERE status = ?",
-      ["approved"]
+      ["approved"],
     );
 
-    const rowReviews = await getOne("SELECT COUNT(*) as total_reviews FROM reviews");
+    const rowReviews = await getOne(
+      "SELECT COUNT(*) as total_reviews FROM reviews",
+    );
+
+    // Room price statistics
+    const rowAvgPrice = await getOne(
+      "SELECT AVG(price) as avg_price FROM rooms WHERE price IS NOT NULL AND price > 0",
+    );
+    const rowMinPrice = await getOne(
+      "SELECT MIN(price) as min_price FROM rooms WHERE price IS NOT NULL AND price > 0",
+    );
+    const rowMaxPrice = await getOne(
+      "SELECT MAX(price) as max_price FROM rooms WHERE price IS NOT NULL AND price > 0",
+    );
+
+    // Price range distribution
+    const priceBudget = await getOne(
+      "SELECT COUNT(*) as count FROM rooms WHERE price >= 0 AND price <= 5000",
+    );
+    const priceMid = await getOne(
+      "SELECT COUNT(*) as count FROM rooms WHERE price > 5000 AND price <= 15000",
+    );
+    const priceHigh = await getOne(
+      "SELECT COUNT(*) as count FROM rooms WHERE price > 15000 AND price <= 30000",
+    );
+    const pricePremium = await getOne(
+      "SELECT COUNT(*) as count FROM rooms WHERE price > 30000",
+    );
 
     const recentUsers = await getAll(
-      "SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC LIMIT 5"
+      "SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC LIMIT 5",
     );
 
     return res.json({
@@ -311,6 +360,15 @@ const getAdminStats = async (req, res) => {
         rooms: {
           total: rowRooms?.total_rooms ?? 0,
           available: rowAvailRooms?.available_rooms ?? 0,
+          avgPrice: Math.round(rowAvgPrice?.avg_price ?? 0),
+          minPrice: Math.round(rowMinPrice?.min_price ?? 0),
+          maxPrice: Math.round(rowMaxPrice?.max_price ?? 0),
+        },
+        priceRanges: {
+          budget: priceBudget?.count ?? 0,
+          mid: priceMid?.count ?? 0,
+          high: priceHigh?.count ?? 0,
+          premium: pricePremium?.count ?? 0,
         },
         bookings: {
           total: rowBookings?.total_bookings ?? 0,
@@ -330,22 +388,72 @@ const getAdminStats = async (req, res) => {
 };
 
 /**
+ * GET /api/admin/revenue?fromDate=&toDate=
+ * Fetch total revenue from completed payments with optional date filtering
+ */
+const getRevenue = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.query;
+
+    let query = `
+      SELECT 
+        SUM(amount) as total_revenue,
+        COUNT(*) as total_payments
+      FROM khalti_payments 
+      WHERE status = 'completed'
+    `;
+    const params = [];
+
+    // Add date filtering if provided
+    if (fromDate) {
+      query += ` AND DATE(created_at) >= ?`;
+      params.push(fromDate);
+    }
+    if (toDate) {
+      query += ` AND DATE(created_at) <= ?`;
+      params.push(toDate);
+    }
+
+    const result = await getOne(query, params);
+
+    return res.json({
+      totalRevenue: result?.total_revenue ?? 0,
+      totalPayments: result?.total_payments ?? 0,
+      fromDate: fromDate || null,
+      toDate: toDate || null,
+    });
+  } catch (error) {
+    console.error("Get revenue error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
  * GET /api/admin/rooms/all?search=&page=&limit=
  */
 const getAllRooms = async (req, res) => {
   try {
     const { search, page = 1, limit = 20 } = req.query;
 
-    // ✅ FIX: your rooms table uses "location" not "city"
-    let query = "SELECT * FROM rooms WHERE 1=1";
+    // ✅ Join rooms with users to include owner information
+    let query = `
+      SELECT 
+        r.*, 
+        u.full_name as owner_name,
+        u.email as owner_email
+      FROM rooms r
+      LEFT JOIN users u ON r.owner_id = u.id
+      WHERE 1=1
+    `;
     const params = [];
 
     if (search) {
-      query += " AND (title LIKE ? OR address LIKE ? OR location LIKE ?)";
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      query +=
+        " AND (r.title LIKE ? OR r.address LIKE ? OR r.location LIKE ? OR u.full_name LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    query += " ORDER BY created_at DESC";
+    query += " ORDER BY r.created_at DESC";
 
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -356,11 +464,18 @@ const getAllRooms = async (req, res) => {
 
     const rooms = await getAll(query, params);
 
-    let countQuery = "SELECT COUNT(*) as total FROM rooms WHERE 1=1";
+    let countQuery =
+      "SELECT COUNT(*) as total FROM rooms r LEFT JOIN users u ON r.owner_id = u.id WHERE 1=1";
     const countParams = [];
     if (search) {
-      countQuery += " AND (title LIKE ? OR address LIKE ? OR location LIKE ?)";
-      countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      countQuery +=
+        " AND (r.title LIKE ? OR r.address LIKE ? OR r.location LIKE ? OR u.full_name LIKE ?)";
+      countParams.push(
+        `%${search}%`,
+        `%${search}%`,
+        `%${search}%`,
+        `%${search}%`,
+      );
     }
     const countRow = await getOne(countQuery, countParams);
     const total = countRow?.total ?? 0;
@@ -438,6 +553,7 @@ module.exports = {
   deleteUser,
   toggleUserStatus,
   getAdminStats,
+  getRevenue,
   getAllRooms,
   getAllBookings,
 };
