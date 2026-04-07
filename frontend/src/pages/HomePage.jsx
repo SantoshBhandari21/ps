@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
-import { MdSearch, MdCheckCircle, MdCreditCard, MdStar } from "react-icons/md";
 
 const Container = styled.div`
   width: 100%;
@@ -414,7 +413,10 @@ const HomePage = () => {
           <Grid>
             <Card>
               <Icon>
-                <MdSearch size={44} />
+                <i
+                  className="fa-solid fa-magnifying-glass"
+                  style={{ fontSize: "44px", color: "#2563eb" }}
+                />
               </Icon>
               <CardTitle>Easy Search</CardTitle>
               <CardText>
@@ -424,7 +426,10 @@ const HomePage = () => {
 
             <Card>
               <Icon>
-                <MdCheckCircle size={44} />
+                <i
+                  className="fa-solid fa-circle-check"
+                  style={{ fontSize: "44px", color: "#2563eb" }}
+                />
               </Icon>
               <CardTitle>Trusted Listings</CardTitle>
               <CardText>Verified room details from registered owners.</CardText>
@@ -432,7 +437,10 @@ const HomePage = () => {
 
             <Card>
               <Icon>
-                <MdCreditCard size={44} />
+                <i
+                  className="fa-solid fa-credit-card"
+                  style={{ fontSize: "44px", color: "#2563eb" }}
+                />
               </Icon>
               <CardTitle>Payments & Invoices</CardTitle>
               <CardText>eSewa payments with auto-generated invoices.</CardText>
@@ -440,7 +448,10 @@ const HomePage = () => {
 
             <Card>
               <Icon>
-                <MdStar size={44} />
+                <i
+                  className="fa-solid fa-star"
+                  style={{ fontSize: "44px", color: "#2563eb" }}
+                />
               </Icon>
               <CardTitle>Reviews</CardTitle>
               <CardText>Only booked tenants can leave room reviews.</CardText>

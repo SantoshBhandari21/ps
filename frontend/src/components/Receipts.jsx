@@ -333,14 +333,22 @@ Payment Date: ${formatDate(payment.created_at)}
                   onClick={() => downloadReceipt(payment)}
                   title="Download receipt as text file"
                 >
-                  ⬇ Download
+                  <i
+                    className="fa-solid fa-download"
+                    style={{ marginRight: "6px" }}
+                  />{" "}
+                  Download
                 </button>
                 <button
                   className="action-btn print-btn"
                   onClick={() => printReceipt(payment)}
                   title="Print receipt"
                 >
-                  🖨 Print
+                  <i
+                    className="fa-solid fa-print"
+                    style={{ marginRight: "6px" }}
+                  />{" "}
+                  Print
                 </button>
               </div>
             </div>

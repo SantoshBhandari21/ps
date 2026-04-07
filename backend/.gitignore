@@ -1,27 +1,38 @@
 # Dependencies
 node_modules/
+package-lock.json
+yarn.lock
 
 # Environment variables
 .env
 .env.local
 .env.development
 .env.production
+.env.*.local
 
-
-# Uploads
+# Uploads & User-generated content
 uploads/*
 !uploads/.gitkeep
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.sqbpro
+
 # Logs
-logs
+logs/
+logs/*
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+.windows-build-tools
 
 # IDE
 .vscode/
@@ -29,7 +40,16 @@ Thumbs.db
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# Build
+# Build & Runtime
 dist/
 build/
+pids/
+*.pid
+
+# Temporary files
+tmp/
+temp/
+.cache/

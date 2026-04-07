@@ -1,22 +1,5 @@
 //IMPORTS
 import React, { useMemo, useState, useEffect } from "react";
-import {
-  Search,
-  MapPin,
-  Home,
-  Star,
-  Filter,
-  X,
-  Bed,
-  Bath,
-  Square,
-  Wifi,
-  Car,
-  Utensils,
-  Heart,
-  Grid,
-  List,
-} from "lucide-react";
 import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { roomsAPI, getStoredUser } from "../services/api";
@@ -24,11 +7,11 @@ import RoomDetailsModal from "../components/RoomDetailsModal";
 
 //Filtering options using amenities
 const AMENITIES = [
-  { id: "wifi", label: "WiFi", icon: Wifi },
-  { id: "parking", label: "Parking", icon: Car },
-  { id: "kitchen", label: "Kitchen", icon: Utensils },
-  { id: "balcony", label: "Balcony", icon: Home },
-  { id: "gym", label: "Gym", icon: Home },
+  { id: "wifi", label: "WiFi", iconClass: "fa-solid fa-wifi" },
+  { id: "parking", label: "Parking", iconClass: "fa-solid fa-car" },
+  { id: "kitchen", label: "Kitchen", iconClass: "fa-solid fa-utensils" },
+  { id: "balcony", label: "Balcony", iconClass: "fa-solid fa-building" },
+  { id: "gym", label: "Gym", iconClass: "fa-solid fa-dumbbell" },
 ];
 
 /* -------------------- Styles -------------------- */
@@ -612,11 +595,13 @@ const BrowseRooms = () => {
               onClick={() => toggleFavorite(room.id)}
               aria-label="favorite"
             >
-              <Heart
-                size={18}
+              <i
+                className={
+                  isFavorite ? "fa-solid fa-heart" : "fa-regular fa-heart"
+                }
                 style={{
                   color: isFavorite ? "#ef4444" : "#94a3b8",
-                  fill: isFavorite ? "#ef4444" : "transparent",
+                  fontSize: "18px",
                 }}
               />
             </FavBtn>
@@ -627,16 +612,27 @@ const BrowseRooms = () => {
           <CardTitle>{room.title}</CardTitle>
           {/*location display based on view*/}
           <Meta>
-            <MapPin size={16} />
+            <i
+              className="fa-solid fa-map-pin"
+              style={{ fontSize: "16px", marginRight: "4px" }}
+            />
             <span>{isListView ? room.address : room.location}</span>
           </Meta>
 
           <Specs>
             <Spec>
-              <Bed size={16} /> {room.bedrooms} Bed
+              <i
+                className="fa-solid fa-bed"
+                style={{ fontSize: "16px", marginRight: "4px" }}
+              />
+              {room.bedrooms} Bed
             </Spec>
             <Spec>
-              <Bath size={16} /> {room.bathrooms} Bath
+              <i
+                className="fa-solid fa-bath"
+                style={{ fontSize: "16px", marginRight: "4px" }}
+              />
+              {room.bathrooms} Bath
             </Spec>
           </Specs>
 
@@ -675,7 +671,14 @@ const BrowseRooms = () => {
 
           <BottomRow>
             <Rating>
-              <Star size={16} style={{ color: "#f59e0b", fill: "#f59e0b" }} />
+              <i
+                className="fa-solid fa-star"
+                style={{
+                  color: "#f59e0b",
+                  fontSize: "16px",
+                  marginRight: "4px",
+                }}
+              />
               {room.avg_rating ? room.avg_rating.toFixed(1) : "N/A"}{" "}
               <span>({room.review_count || 0})</span>
             </Rating>
@@ -699,7 +702,10 @@ const BrowseRooms = () => {
             <SearchGrid>
               <InputWrap>
                 <IconLeft>
-                  <Search size={18} />
+                  <i
+                    className="fa-solid fa-magnifying-glass"
+                    style={{ fontSize: "18px" }}
+                  />
                 </IconLeft>
                 <Input
                   type="text"
@@ -711,7 +717,10 @@ const BrowseRooms = () => {
 
               <InputWrap>
                 <IconLeft>
-                  <MapPin size={18} />
+                  <i
+                    className="fa-solid fa-map-pin"
+                    style={{ fontSize: "18px" }}
+                  />
                 </IconLeft>
                 <Input
                   type="text"
@@ -725,7 +734,10 @@ const BrowseRooms = () => {
                 type="button"
                 onClick={() => setShowFilters((s) => !s)}
               >
-                <Filter size={18} />
+                <i
+                  className="fa-solid fa-filter"
+                  style={{ fontSize: "18px", marginRight: "8px" }}
+                />
                 Filters
               </FilterBtn>
             </SearchGrid>
@@ -739,7 +751,10 @@ const BrowseRooms = () => {
                     onClick={() => setShowFilters(false)}
                     aria-label="close"
                   >
-                    <X size={18} />
+                    <i
+                      className="fa-solid fa-xmark"
+                      style={{ fontSize: "18px" }}
+                    />
                   </CloseBtn>
                 </FiltersHeader>
 
@@ -823,7 +838,6 @@ const BrowseRooms = () => {
                   <Label>Amenities</Label>
                   <Chips>
                     {AMENITIES.map((a) => {
-                      const Icon = a.icon;
                       const active = filters.amenities.includes(a.id);
                       return (
                         <Chip
@@ -832,7 +846,10 @@ const BrowseRooms = () => {
                           $active={active}
                           onClick={() => toggleAmenity(a.id)}
                         >
-                          <Icon size={16} />
+                          <i
+                            className={a.iconClass}
+                            style={{ fontSize: "16px", marginRight: "6px" }}
+                          />
                           {a.label}
                         </Chip>
                       );
@@ -859,7 +876,7 @@ const BrowseRooms = () => {
               onClick={() => setViewMode("grid")}
               aria-label="grid"
             >
-              <Grid size={18} />
+              <i className="fa-solid fa-grip" style={{ fontSize: "20px" }} />
             </IconBtn>
             <IconBtn
               type="button"
@@ -867,7 +884,7 @@ const BrowseRooms = () => {
               onClick={() => setViewMode("list")}
               aria-label="list"
             >
-              <List size={18} />
+              <i className="fa-solid fa-list" style={{ fontSize: "20px" }} />
             </IconBtn>
           </ViewToggle>
         </ResultsBar>

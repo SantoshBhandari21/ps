@@ -2,14 +2,6 @@
 import React from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import {
-  MdSearch,
-  MdVerified,
-  MdPayment,
-  MdStar,
-  MdDashboard,
-  MdSecurity, // corrected
-} from "react-icons/md";
 
 const Page = styled.div`
   min-height: 100vh;
@@ -216,7 +208,11 @@ const AboutPage = () => (
         <Grid>
           <Box>
             <h3>
-              <MdSearch /> Smart Search
+              <i
+                className="fa-solid fa-magnifying-glass"
+                style={{ marginRight: "8px", color: "#2563eb" }}
+              />{" "}
+              Smart Search
             </h3>
             <p>
               Filter by location, price, and amenities to find your perfect room
@@ -225,7 +221,11 @@ const AboutPage = () => (
           </Box>
           <Box>
             <h3>
-              <MdVerified /> Verified
+              <i
+                className="fa-solid fa-check"
+                style={{ marginRight: "8px", color: "#2563eb" }}
+              />{" "}
+              Verified
             </h3>
             <p>
               All listings verified with authentic photos, pricing, and owner
@@ -234,7 +234,11 @@ const AboutPage = () => (
           </Box>
           <Box>
             <h3>
-              <MdPayment /> Secure Pay
+              <i
+                className="fa-solid fa-credit-card"
+                style={{ marginRight: "8px", color: "#2563eb" }}
+              />{" "}
+              Secure Pay
             </h3>
             <p>
               eSewa integration with auto-generated invoices for every
@@ -243,7 +247,11 @@ const AboutPage = () => (
           </Box>
           <Box>
             <h3>
-              <MdStar /> Reviews
+              <i
+                className="fa-solid fa-star"
+                style={{ marginRight: "8px", color: "#2563eb" }}
+              />{" "}
+              Reviews
             </h3>
             <p>
               Only verified tenants can review, ensuring genuine feedback
@@ -252,13 +260,21 @@ const AboutPage = () => (
           </Box>
           <Box>
             <h3>
-              <MdDashboard /> Dashboard
+              <i
+                className="fa-solid fa-chart-line"
+                style={{ marginRight: "8px", color: "#2563eb" }}
+              />{" "}
+              Dashboard
             </h3>
             <p>Easy management tools for tenants, owners, and admins.</p>
           </Box>
           <Box>
             <h3>
-              <MdSecurity /> Secure
+              <i
+                className="fa-solid fa-shield"
+                style={{ marginRight: "8px", color: "#2563eb" }}
+              />{" "}
+              Secure
             </h3>
             <p>
               Modern security standards with encrypted data and transactions.

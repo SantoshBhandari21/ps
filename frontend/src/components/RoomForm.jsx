@@ -180,7 +180,7 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
       });
 
       const result = await onSubmit(submitData);
-      
+
       // If this is a new room (not editing), show success with room ID
       if (!room && result && result.room) {
         setSuccess(true);
@@ -230,11 +230,15 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
               fontSize: "40px",
             }}
           >
-            ✓
+            <i className="fa-solid fa-check" style={{ color: "white" }} />
           </div>
 
           <h2 style={{ marginBottom: "10px", color: "#059669" }}>
-            Room Created Successfully! 🎉
+            <i
+              className="fa-solid fa-party-bell"
+              style={{ marginRight: "8px" }}
+            />
+            Room Created Successfully!
           </h2>
 
           <p
@@ -274,7 +278,16 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
                 fontSize: "14px",
               }}
             >
-              <strong>Unique Room ID:</strong> <span style={{ fontSize: "18px", fontWeight: "bold", color: "#059669" }}>#{createdRoomId}</span>
+              <strong>Unique Room ID:</strong>{" "}
+              <span
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: "#059669",
+                }}
+              >
+                #{createdRoomId}
+              </span>
             </p>
             <p
               style={{
@@ -524,10 +537,38 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
               onClick={onClose}
               disabled={loading}
             >
-              Cancel
+              <i
+                className="fa-solid fa-arrow-left"
+                style={{ marginRight: "6px" }}
+              />
+              Go Back
             </button>
             <button type="submit" className="btn-submit" disabled={loading}>
-              {loading ? "Saving..." : room ? "Update Room" : "Add Room"}
+              {loading ? (
+                <>
+                  <i
+                    className="fa-solid fa-spinner fa-spin"
+                    style={{ marginRight: "6px" }}
+                  />
+                  Saving...
+                </>
+              ) : room ? (
+                <>
+                  <i
+                    className="fa-solid fa-arrow-rotate-right"
+                    style={{ marginRight: "6px" }}
+                  />
+                  Update Listing
+                </>
+              ) : (
+                <>
+                  <i
+                    className="fa-solid fa-rocket"
+                    style={{ marginRight: "6px" }}
+                  />
+                  List Now
+                </>
+              )}
             </button>
           </div>
         </form>

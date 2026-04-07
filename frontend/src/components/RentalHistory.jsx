@@ -71,7 +71,13 @@ const RentalHistory = () => {
               <div className="rental-card-header">
                 <div className="rental-info">
                   <h3>{rental.title}</h3>
-                  <p className="rental-location">📍 {rental.location}</p>
+                  <p className="rental-location">
+                    <i
+                      className="fa-solid fa-map-pin"
+                      style={{ marginRight: "8px" }}
+                    />{" "}
+                    {rental.location}
+                  </p>
                 </div>
               </div>
 

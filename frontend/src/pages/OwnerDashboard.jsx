@@ -115,7 +115,8 @@ const OwnerDashboard = () => {
         </div>
         <div style={{ display: "flex", gap: "12px" }}>
           <button className="btn-add-room" onClick={handleAddRoom}>
-            + Add New Room
+            <i className="fa-solid fa-plus" style={{ marginRight: "8px" }} />
+            List a New Room
           </button>
         </div>
       </div>
@@ -156,9 +157,13 @@ const OwnerDashboard = () => {
         <div className="loading">Loading your rooms...</div>
       ) : rooms.length === 0 ? (
         <div className="no-rooms">
-          <p>You haven't added any rooms yet.</p>
+          <p>
+            You haven't listed any rooms yet. Start by adding your first
+            property!
+          </p>
           <button className="btn-primary" onClick={handleAddRoom}>
-            Add Your First Room
+            <i className="fa-solid fa-home" style={{ marginRight: "8px" }} />
+            List Your First Room
           </button>
         </div>
       ) : (
@@ -188,7 +193,13 @@ const OwnerDashboard = () => {
 
               <div className="room-content">
                 <h3>{room.title}</h3>
-                <p className="room-location">📍 {room.location}</p>
+                <p className="room-location">
+                  <i
+                    className="fa-solid fa-map-pin"
+                    style={{ marginRight: "8px" }}
+                  />{" "}
+                  {room.location}
+                </p>
                 <p className="room-address">{room.address}</p>
 
                 <div className="room-details">
@@ -206,14 +217,24 @@ const OwnerDashboard = () => {
                     <button
                       className="btn-edit"
                       onClick={() => handleEditRoom(room)}
+                      title="Update room details"
                     >
-                      ✏️ Edit
+                      <i
+                        className="fa-solid fa-pen-to-square"
+                        style={{ marginRight: "6px" }}
+                      />{" "}
+                      Update
                     </button>
                     <button
                       className="btn-delete"
                       onClick={() => setDeleteConfirm(room.id)}
+                      title="Remove this listing"
                     >
-                      🗑️ Delete
+                      <i
+                        className="fa-solid fa-trash-can"
+                        style={{ marginRight: "6px" }}
+                      />{" "}
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -222,19 +243,33 @@ const OwnerDashboard = () => {
               {deleteConfirm === room.id && (
                 <div className="delete-confirm">
                   <div className="confirm-dialog">
-                    <p>Are you sure you want to delete this room?</p>
+                    <p>
+                      <i
+                        className="fa-solid fa-exclamation-triangle"
+                        style={{ marginRight: "8px", color: "#dc2626" }}
+                      />
+                      Are you sure you want to remove this listing?
+                    </p>
                     <div className="confirm-actions">
-                      <button
-                        className="btn-confirm"
-                        onClick={() => handleDeleteRoom(room.id)}
-                      >
-                        Delete
-                      </button>
                       <button
                         className="btn-cancel"
                         onClick={() => setDeleteConfirm(null)}
                       >
-                        Cancel
+                        <i
+                          className="fa-solid fa-arrow-left"
+                          style={{ marginRight: "6px" }}
+                        />
+                        Keep It
+                      </button>
+                      <button
+                        className="btn-confirm"
+                        onClick={() => handleDeleteRoom(room.id)}
+                      >
+                        <i
+                          className="fa-solid fa-check"
+                          style={{ marginRight: "6px" }}
+                        />
+                        Remove
                       </button>
                     </div>
                   </div>

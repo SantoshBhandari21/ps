@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { X, MapPin, Bed, Bath, Wifi, Car, Utensils, Home } from "lucide-react";
 import { paymentsAPI } from "../services/api";
 
 const Overlay = styled.div`
@@ -350,11 +349,15 @@ const Message = styled.div`
 
 const getAmenityIcon = (amenity) => {
   const name = typeof amenity === "string" ? amenity.toLowerCase() : "";
-  if (name.includes("wifi")) return <Wifi size={18} />;
-  if (name.includes("parking")) return <Car size={18} />;
-  if (name.includes("kitchen")) return <Utensils size={18} />;
-  if (name.includes("gym")) return <Home size={18} />;
-  return <Home size={18} />;
+  if (name.includes("wifi"))
+    return <i className="fa-solid fa-wifi" style={{ fontSize: "18px" }} />;
+  if (name.includes("parking"))
+    return <i className="fa-solid fa-car" style={{ fontSize: "18px" }} />;
+  if (name.includes("kitchen"))
+    return <i className="fa-solid fa-utensils" style={{ fontSize: "18px" }} />;
+  if (name.includes("gym"))
+    return <i className="fa-solid fa-dumbbell" style={{ fontSize: "18px" }} />;
+  return <i className="fa-solid fa-building" style={{ fontSize: "18px" }} />;
 };
 
 const RoomDetailsModal = ({ room, onClose }) => {
@@ -461,7 +464,7 @@ const RoomDetailsModal = ({ room, onClose }) => {
     <Overlay onClick={onClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
         <CloseBtn onClick={onClose} title="Close modal">
-          <X size={24} />
+          <i className="fa-solid fa-xmark" style={{ fontSize: "24px" }} />
         </CloseBtn>
 
         <Header>
@@ -479,7 +482,7 @@ const RoomDetailsModal = ({ room, onClose }) => {
           <Title>{room.title}</Title>
 
           <LocationRow>
-            <MapPin size={18} />
+            <i className="fa-solid fa-map-pin" style={{ fontSize: "18px" }} />
             {room.location}
           </LocationRow>
 
@@ -487,7 +490,10 @@ const RoomDetailsModal = ({ room, onClose }) => {
 
           <DetailsGrid>
             <DetailCard>
-              <Bed size={20} />
+              <i
+                className="fa-solid fa-bed"
+                style={{ fontSize: "20px", color: "#2563eb" }}
+              />
               <DetailText>
                 <span>Bedrooms</span>
                 <span>{room.bedrooms}</span>
@@ -495,7 +501,10 @@ const RoomDetailsModal = ({ room, onClose }) => {
             </DetailCard>
 
             <DetailCard>
-              <Bath size={20} />
+              <i
+                className="fa-solid fa-bath"
+                style={{ fontSize: "20px", color: "#2563eb" }}
+              />
               <DetailText>
                 <span>Bathrooms</span>
                 <span>{room.bathrooms}</span>
@@ -533,7 +542,8 @@ const RoomDetailsModal = ({ room, onClose }) => {
             <RentalSection>
               <RentalTitle>Ready to rent this room?</RentalTitle>
               <p style={{ color: "#64748b", marginBottom: "1.5rem" }}>
-                Click below to proceed with rental. You'll need to pay the entire rental amount in advance through Khalti.
+                Click below to proceed with rental. You'll need to pay the
+                entire rental amount in advance through Khalti.
               </p>
               <RentButton
                 onClick={() => setShowRentalForm(true)}

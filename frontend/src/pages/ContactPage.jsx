@@ -1,7 +1,6 @@
 // src/pages/ContactPage.jsx
 import React, { useState } from "react";
 import styled from "styled-components";
-import { MdEmail, MdPhone, MdLocationOn } from "react-icons/md";
 
 const Page = styled.div`
   min-height: 100vh;
@@ -314,7 +313,10 @@ const ContactPage = () => {
           <ContactGrid>
             <ContactBox>
               <ContactIcon>
-                <MdEmail size={32} />
+                <i
+                  className="fa-solid fa-envelope"
+                  style={{ fontSize: "32px", color: "#2563eb" }}
+                />
               </ContactIcon>
               <ContactLabel>Email</ContactLabel>
               <ContactValue>santosh@myrentals.com</ContactValue>
@@ -322,7 +324,10 @@ const ContactPage = () => {
 
             <ContactBox>
               <ContactIcon>
-                <MdPhone size={32} />
+                <i
+                  className="fa-solid fa-phone"
+                  style={{ fontSize: "32px", color: "#2563eb" }}
+                />
               </ContactIcon>
               <ContactLabel>Phone</ContactLabel>
               <ContactValue>+977 98XXXXXXXX</ContactValue>
@@ -330,7 +335,10 @@ const ContactPage = () => {
 
             <ContactBox>
               <ContactIcon>
-                <MdLocationOn size={32} />
+                <i
+                  className="fa-solid fa-location-dot"
+                  style={{ fontSize: "32px", color: "#2563eb" }}
+                />
               </ContactIcon>
               <ContactLabel>Location</ContactLabel>
               <ContactValue>Pokhara, Nepal</ContactValue>

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { CheckCircle, AlertCircle } from "lucide-react";
 
 const Page = styled.div`
   min-height: 100vh;
@@ -375,7 +374,10 @@ const PaymentSuccess = () => {
           {status === "success" && (
             <>
               <IconWrapper>
-                <CheckCircle />
+                <i
+                  className="fa-solid fa-circle-check"
+                  style={{ fontSize: "50px", color: "white" }}
+                />
               </IconWrapper>
               <Title>Payment Successful! ✨</Title>
               <Subtitle>

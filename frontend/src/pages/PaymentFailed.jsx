@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { AlertCircle, Home } from "lucide-react";
 
 const Page = styled.div`
   min-height: 100vh;
@@ -204,37 +203,47 @@ const PaymentFailed = () => {
     <Page>
       <Container>
         <Card>
-        <IconWrapper>
-          <AlertCircle />
-        </IconWrapper>
-        <Title>Payment Failed</Title>
-        <Subtitle>We were unable to process your payment through Khalti.</Subtitle>
+          <IconWrapper>
+            <i
+              className="fa-solid fa-circle-exclamation"
+              style={{ fontSize: "50px", color: "white" }}
+            />
+          </IconWrapper>
+          <Title>Payment Failed</Title>
+          <Subtitle>
+            We were unable to process your payment through Khalti.
+          </Subtitle>
 
-        <ErrorBox>
-          <p>{reason}</p>
-          <h3>What you can do:</h3>
-          <ul>
-            <li>Try the payment again</li>
-            <li>Verify your Khalti account balance</li>
-            <li>Check your internet connection</li>
-            <li>Try with a different payment method</li>
-            <li>Contact Khalti support if the problem persists</li>
-          </ul>
-        </ErrorBox>
+          <ErrorBox>
+            <p>{reason}</p>
+            <h3>What you can do:</h3>
+            <ul>
+              <li>Try the payment again</li>
+              <li>Verify your Khalti account balance</li>
+              <li>Check your internet connection</li>
+              <li>Try with a different payment method</li>
+              <li>Contact Khalti support if the problem persists</li>
+            </ul>
+          </ErrorBox>
 
-        <ButtonGroup>
-          <Button $primary onClick={() => navigate(-1)}>
-            Try Payment Again
-          </Button>
-          <Button onClick={() => navigate("/browse")}>
-            <Home size={18} />
-            Browse Other Rooms
-          </Button>
-        </ButtonGroup>
+          <ButtonGroup>
+            <Button $primary onClick={() => navigate(-1)}>
+              Try Payment Again
+            </Button>
+            <Button onClick={() => navigate("/browse")}>
+              <i
+                className="fa-solid fa-house"
+                style={{ fontSize: "18px", marginRight: "8px" }}
+              />
+              Browse Other Rooms
+            </Button>
+          </ButtonGroup>
 
-        <Subtitle style={{ marginTop: "20px", fontSize: "13px", color: "#6b7280" }}>
-          If you need assistance, please contact our support team.
-        </Subtitle>
+          <Subtitle
+            style={{ marginTop: "20px", fontSize: "13px", color: "#6b7280" }}
+          >
+            If you need assistance, please contact our support team.
+          </Subtitle>
         </Card>
       </Container>
     </Page>
