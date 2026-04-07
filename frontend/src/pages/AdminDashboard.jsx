@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import "../styles/AdminDashboard.css";
 import {
   PieChart,
   Pie,
@@ -20,7 +21,7 @@ import { usersAPI } from "../services/api";
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  const tabs = ["Overview", "Users", "Rooms", "Analytics", "Settings"];
+  const tabs = ["Overview", "Users", "Rooms", "Analytics"];
   const [active, setActive] = useState("Overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -44,18 +45,6 @@ export default function AdminDashboard() {
   const [revenueLoading, setRevenueLoading] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-
-  // Settings state
-  const [adminData, setAdminData] = useState(null);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [passwordFormData, setPasswordFormData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Normalize role to lowercase
   const normalizeRole = (role) =>
@@ -153,69 +142,6 @@ export default function AdminDashboard() {
     }
   }, [active, fromDate, toDate]);
 
-  const loadAdmin = async () => {
-    setAdminLoading(true);
-    try {
-      const res = await usersAPI.getMe();
-      setAdminData(res?.user || null);
-    } catch (e) {
-      console.error("Failed to load admin data:", e);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  // Load admin data when Settings tab is activated
-  useEffect(() => {
-    if (active === "Settings" && !adminData && !adminLoading) {
-      loadAdmin();
-    }
-  }, [active, adminData, adminLoading]);
-
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    setPasswordError("");
-    setPasswordSuccess("");
-
-    // Validation
-    if (
-      !passwordFormData.currentPassword ||
-      !passwordFormData.newPassword ||
-      !passwordFormData.confirmPassword
-    ) {
-      setPasswordError("All fields are required");
-      return;
-    }
-
-    if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
-      setPasswordError("New passwords do not match");
-      return;
-    }
-
-    if (passwordFormData.newPassword.length < 6) {
-      setPasswordError("New password must be at least 6 characters");
-      return;
-    }
-
-    setPasswordLoading(true);
-    try {
-      await usersAPI.updatePassword({
-        currentPassword: passwordFormData.currentPassword,
-        newPassword: passwordFormData.newPassword,
-      });
-      setPasswordSuccess("Password changed successfully!");
-      setPasswordFormData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (err) {
-      setPasswordError(err?.message || "Failed to change password");
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
-
   const counts = useMemo(() => {
     const total = users.length;
     const admins = users.filter(
@@ -295,23 +221,15 @@ export default function AdminDashboard() {
               </NavItem>
             ))}
           </Nav>
-
-          <SidebarFooter>
-            <DangerBtn onClick={() => navigate("/logout", { replace: true })}>
-              Logout
-            </DangerBtn>
-          </SidebarFooter>
         </Sidebar>
 
         <Content>
-          <Topbar>
-            <LeftTop>
-              <TitleBlock>
-                <h1>{active}</h1>
-                <p>Welcome back, Admin</p>
-              </TitleBlock>
-            </LeftTop>
-          </Topbar>
+          <div className="dashboard-header">
+            <div className="header-content">
+              <h1>{active}</h1>
+              <p>Manage your administrative tasks</p>
+            </div>
+          </div>
 
           <Section $pad="20px" $padMobile="14px">
             {loading && (
@@ -439,14 +357,7 @@ export default function AdminDashboard() {
 
             {!loading && !error && active === "Users" && (
               <Panel>
-                <PanelTitle>
-                  User Management{" "}
-                  <span
-                    style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}
-                  >
-                    ({pagination?.totalUsers ?? users.length})
-                  </span>
-                </PanelTitle>
+                <PanelTitle>User Management</PanelTitle>
 
                 {/* Role Filter Tabs */}
                 <TabRow>
@@ -454,25 +365,25 @@ export default function AdminDashboard() {
                     $active={userFilter === "all"}
                     onClick={() => setUserFilter("all")}
                   >
-                    All Users ({counts.total})
+                    All Users
                   </Tab>
                   <Tab
                     $active={userFilter === "admin"}
                     onClick={() => setUserFilter("admin")}
                   >
-                    Admins ({counts.admins})
+                    Admin
                   </Tab>
                   <Tab
                     $active={userFilter === "owner"}
                     onClick={() => setUserFilter("owner")}
                   >
-                    Owners ({counts.owners})
+                    Owners
                   </Tab>
                   <Tab
                     $active={userFilter === "tenant"}
                     onClick={() => setUserFilter("tenant")}
                   >
-                    Tenants ({counts.tenants})
+                    Tenants
                   </Tab>
                 </TabRow>
 
@@ -840,169 +751,12 @@ export default function AdminDashboard() {
               </>
             )}
 
-            {!loading && !error && active === "Settings" && (
-              <>
-                {adminLoading ? (
-                  <Panel>
-                    <PanelTitle>Loading settings...</PanelTitle>
-                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
-                      Fetching admin profile.
-                    </p>
-                  </Panel>
-                ) : !adminData ? (
-                  <Panel>
-                    <PanelTitle>Error</PanelTitle>
-                    <p style={{ margin: "12px 0 0", color: "#b42318" }}>
-                      Failed to load admin data.
-                    </p>
-                    <PrimaryBtn onClick={loadAdmin} style={{ marginTop: 12 }}>
-                      Try Again
-                    </PrimaryBtn>
-                  </Panel>
-                ) : (
-                  <>
-                    {/* Admin Profile Section */}
-                    <Panel>
-                      <PanelTitle>Admin Profile</PanelTitle>
-                      <ProfileGrid>
-                        <ProfileItem>
-                          <ProfileLabel>Full Name</ProfileLabel>
-                          <ProfileValue>
-                            {adminData.full_name || "-"}
-                          </ProfileValue>
-                        </ProfileItem>
-                        <ProfileItem>
-                          <ProfileLabel>Email</ProfileLabel>
-                          <ProfileValue>{adminData.email || "-"}</ProfileValue>
-                        </ProfileItem>
-                        <ProfileItem>
-                          <ProfileLabel>Role</ProfileLabel>
-                          <ProfileValue>
-                            <RolePill $role={normalizeRole(adminData.role)}>
-                              {normalizeRole(adminData.role) || "-"}
-                            </RolePill>
-                          </ProfileValue>
-                        </ProfileItem>
-                        <ProfileItem>
-                          <ProfileLabel>Account Status</ProfileLabel>
-                          <ProfileValue>
-                            <StatusBadge $active={adminData.is_active === 1}>
-                              {adminData.is_active === 1
-                                ? "Active"
-                                : "Inactive"}
-                            </StatusBadge>
-                          </ProfileValue>
-                        </ProfileItem>
-                        <ProfileItem>
-                          <ProfileLabel>Verified</ProfileLabel>
-                          <ProfileValue>
-                            <StatusBadge $active={adminData.is_verified === 1}>
-                              {adminData.is_verified === 1
-                                ? "Verified"
-                                : "Not Verified"}
-                            </StatusBadge>
-                          </ProfileValue>
-                        </ProfileItem>
-                        <ProfileItem>
-                          <ProfileLabel>Member Since</ProfileLabel>
-                          <ProfileValue>
-                            {new Date(
-                              adminData.created_at,
-                            ).toLocaleDateString()}
-                          </ProfileValue>
-                        </ProfileItem>
-                      </ProfileGrid>
-                    </Panel>
-
-                    {/* Change Password Section */}
-                    <Panel>
-                      <PanelTitle>Change Password</PanelTitle>
-                      <PasswordForm onSubmit={handlePasswordChange}>
-                        {passwordError && (
-                          <AlertMessage $error={true}>
-                            {passwordError}
-                          </AlertMessage>
-                        )}
-                        {passwordSuccess && (
-                          <AlertMessage $error={false}>
-                            {passwordSuccess}
-                          </AlertMessage>
-                        )}
-
-                        <FormGroup>
-                          <FormLabel htmlFor="currentPassword">
-                            Current Password
-                          </FormLabel>
-                          <FormInput
-                            id="currentPassword"
-                            type="password"
-                            placeholder="Enter your current password"
-                            value={passwordFormData.currentPassword}
-                            onChange={(e) =>
-                              setPasswordFormData({
-                                ...passwordFormData,
-                                currentPassword: e.target.value,
-                              })
-                            }
-                            disabled={passwordLoading}
-                          />
-                        </FormGroup>
-
-                        <FormGroup>
-                          <FormLabel htmlFor="newPassword">
-                            New Password
-                          </FormLabel>
-                          <FormInput
-                            id="newPassword"
-                            type="password"
-                            placeholder="Enter your new password"
-                            value={passwordFormData.newPassword}
-                            onChange={(e) =>
-                              setPasswordFormData({
-                                ...passwordFormData,
-                                newPassword: e.target.value,
-                              })
-                            }
-                            disabled={passwordLoading}
-                          />
-                        </FormGroup>
-
-                        <FormGroup>
-                          <FormLabel htmlFor="confirmPassword">
-                            Confirm Password
-                          </FormLabel>
-                          <FormInput
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="Confirm your new password"
-                            value={passwordFormData.confirmPassword}
-                            onChange={(e) =>
-                              setPasswordFormData({
-                                ...passwordFormData,
-                                confirmPassword: e.target.value,
-                              })
-                            }
-                            disabled={passwordLoading}
-                          />
-                        </FormGroup>
-
-                        <SubmitBtn type="submit" disabled={passwordLoading}>
-                          {passwordLoading ? "Updating..." : "Change Password"}
-                        </SubmitBtn>
-                      </PasswordForm>
-                    </Panel>
-                  </>
-                )}
-              </>
-            )}
-
             {!loading &&
               !error &&
               active !== "Overview" &&
               active !== "Users" &&
               active !== "Rooms" &&
-              active !== "Analytics" &&
-              active !== "Settings" && (
+              active !== "Analytics" && (
                 <Panel>
                   <PanelTitle>{active}</PanelTitle>
                   <p style={{ margin: 0, color: "#546173" }}>
@@ -1353,58 +1107,12 @@ const Table = styled.table`
 
 const RolePill = styled.span`
   display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #e7edf5;
-  background: #f3f6fb;
-  font-weight: 800;
-  text-transform: lowercase;
-  font-size: 12px;
-
-  ${(p) => {
-    switch (p.$role) {
-      case "admin":
-        return `
-          background: #fef3c7;
-          border-color: #fcd34d;
-          color: #92400e;
-        `;
-      case "owner":
-        return `
-          background: #dbeafe;
-          border-color: #93c5fd;
-          color: #1e40af;
-        `;
-      case "tenant":
-        return `
-          background: #dcfce7;
-          border-color: #86efac;
-          color: #166534;
-        `;
-      default:
-        return "";
-    }
-  }}
+  font-size: 14px;
 `;
 
 const StatusBadge = styled.span`
   display: inline-block;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 12px;
-  ${(p) =>
-    p.$active
-      ? `
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-  `
-      : `
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
-  `}
+  font-size: 14px;
 `;
 
 const ActionButton = styled.button`
@@ -1460,120 +1168,6 @@ const StatValue = styled.span`
   color: #0f172a;
   font-weight: 900;
   font-size: 16px;
-`;
-
-const ProfileGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-top: 12px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ProfileItem = styled.div`
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e7edf5;
-`;
-
-const ProfileLabel = styled.div`
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-`;
-
-const ProfileValue = styled.div`
-  font-size: 14px;
-  color: #0f172a;
-  font-weight: 600;
-`;
-
-const PasswordForm = styled.form`
-  margin-top: 12px;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 16px;
-`;
-
-const FormLabel = styled.label`
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1f2937;
-`;
-
-const FormInput = styled.input`
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e7edf5;
-  border-radius: 10px;
-  font-size: 14px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  &:disabled {
-    background: #f3f6fb;
-    color: #94a3b8;
-    cursor: not-allowed;
-  }
-`;
-
-const SubmitBtn = styled.button`
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid #cfe2ff;
-  background: #3b82f6;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: #2563eb;
-    border-color: #1d4ed8;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const AlertMessage = styled.div`
-  padding: 12px 14px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  font-weight: 600;
-  ${(p) =>
-    p.$error
-      ? `
-    background: #fee2e2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
-  `
-      : `
-    background: #dcfce7;
-    border: 1px solid #86efac;
-    color: #166534;
-  `}
 `;
 
 const FilterRow = styled.div`

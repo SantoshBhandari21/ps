@@ -372,6 +372,20 @@ const Header = () => {
               {label}
             </NavLink>
           ))}
+          {user?.role === "admin" && (
+            <>
+              <NavLink
+                to="/admin/dashboard"
+                className={isActive("/admin/dashboard")}
+              >
+                Admin Dashboard
+              </NavLink>
+              <ProfileIcon to="/profile" title="Profile">
+                <i className="fa-solid fa-circle-user"></i>
+                Profile
+              </ProfileIcon>
+            </>
+          )}
           {user?.role === "tenant" && (
             <>
               <NavLink
@@ -442,6 +456,15 @@ const Header = () => {
               {label}
             </MobileLink>
           ))}
+          {user?.role === "admin" && (
+            <MobileLink
+              to="/admin/dashboard"
+              className={isActive("/admin/dashboard")}
+              onClick={isMobile}
+            >
+              Admin Dashboard
+            </MobileLink>
+          )}
           {user?.role === "tenant" && (
             <MobileLink
               to="/tenant/dashboard"

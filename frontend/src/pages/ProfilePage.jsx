@@ -3,117 +3,179 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getStoredUser, authAPI } from "../services/api";
 
-const Page = styled.div`
+const PageWrapper = styled.div`
   min-height: 100vh;
-  background-color: #f5f7fa;
-  padding: 2rem;
-`;
-
-const Container = styled.div`
-  max-width: 600px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 2rem;
-
-  @media (max-width: 768px) {
-    padding: 1.5rem;
-  }
-
-  @media (max-width: 480px) {
-    padding: 1rem;
-  }
+  background-color: #f1f5f9;
 `;
 
 const Header = styled.div`
-  margin-bottom: 2rem;
-  border-bottom: 2px solid #e7edf5;
-  padding-bottom: 1rem;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: white;
+  padding: 40px 24px;
+
+  @media (max-width: 768px) {
+    padding: 32px 20px;
+  }
 `;
 
-const Title = styled.h1`
-  margin: 0;
-  font-size: 2rem;
-  color: #0f172a;
+const HeaderContent = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 900;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 15px;
+    opacity: 0.95;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+  }
+`;
+
+const Container = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+const ContentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
+`;
+
+const Card = styled.div`
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    padding: 18px;
+  }
+`;
+
+const CardTitle = styled.h2`
+  font-size: 18px;
   font-weight: 700;
-`;
-
-const Subtitle = styled.p`
-  margin: 0.5rem 0 0;
-  color: #64748b;
-  font-size: 0.95rem;
-`;
-
-const Section = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.1rem;
-  font-weight: 600;
   color: #0f172a;
-  margin: 0 0 1rem;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
 `;
 
-const InfoGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+const FormGroup = styled.div`
+  margin-bottom: 18px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const Label = styled.label`
-  font-size: 0.9rem;
+  display: block;
+  font-size: 13px;
   font-weight: 600;
   color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #cbd5e1;
-  font-size: 0.95rem;
+  font-size: 14px;
   background: #f8fafc;
   color: #0f172a;
   box-sizing: border-box;
+  font-family: inherit;
+  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: rgba(37, 99, 235, 0.6);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background: white;
   }
 
   &:disabled {
     background: #f1f5f9;
-    color: #64748b;
+    color: #94a3b8;
     cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: #cbd5e1;
   }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
 `;
 
 const Button = styled.button`
   padding: 12px 24px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
-  background: #2563eb;
-  color: white;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  flex: 1;
 
-  &:hover:not(:disabled) {
-    background: #1d4ed8;
-    transform: translateY(-2px);
-  }
+  ${(p) =>
+    p.$primary
+      ? `
+    background: #2563eb;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+  `
+      : `
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+
+    &:hover:not(:disabled) {
+      background: #e2e8f0;
+    }
+  `}
 
   &:disabled {
     opacity: 0.6;
@@ -121,35 +183,83 @@ const Button = styled.button`
   }
 `;
 
-const ErrorBox = styled.div`
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
+const AlertBox = styled.div`
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  animation: slideDown 0.3s ease-out;
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  ${(p) =>
+    p.$error
+      ? `
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  `
+      : `
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+  `}
 `;
 
-const SuccessBox = styled.div`
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #dcfce7;
-  border: 1px solid #bbf7d0;
-  color: #166534;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
+const InfoSection = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InfoBox = styled.div`
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a;
+    margin: 0;
+  }
 `;
 
 const RoleBadge = styled.span`
   display: inline-block;
   padding: 6px 12px;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  background: ${(props) => {
-    switch (props.$role) {
+  background: ${(p) => {
+    switch (p.$role) {
       case "admin":
         return "#fee2e2";
       case "owner":
@@ -160,8 +270,8 @@ const RoleBadge = styled.span`
         return "#f1f5f9";
     }
   }};
-  color: ${(props) => {
-    switch (props.$role) {
+  color: ${(p) => {
+    switch (p.$role) {
       case "admin":
         return "#991b1b";
       case "owner":
@@ -172,6 +282,21 @@ const RoleBadge = styled.span`
         return "#475569";
     }
   }};
+`;
+
+const HelpText = styled.p`
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 8px 0 0 0;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: #64748b;
+  font-size: 14px;
 `;
 
 const ProfilePage = () => {
@@ -213,7 +338,6 @@ const ProfilePage = () => {
     setError("");
     setSuccess("");
 
-    // Validation
     if (!formData.currentPassword) {
       setError("Current password is required");
       return;
@@ -246,14 +370,13 @@ const ProfilePage = () => {
         newPassword: formData.newPassword,
       });
 
-      setSuccess("Password updated successfully!");
+      setSuccess("Password updated successfully! Redirecting to login...");
       setFormData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
 
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -268,13 +391,16 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <Page>
+      <PageWrapper>
+        <Header>
+          <HeaderContent>
+            <h1>My Profile</h1>
+          </HeaderContent>
+        </Header>
         <Container>
-          <p style={{ textAlign: "center", color: "#64748b" }}>
-            Loading profile...
-          </p>
+          <LoadingContainer>Loading your profile...</LoadingContainer>
         </Container>
-      </Page>
+      </PageWrapper>
     );
   }
 
@@ -283,107 +409,103 @@ const ProfilePage = () => {
   }
 
   return (
-    <Page>
+    <PageWrapper>
+      <Header>
+        <HeaderContent>
+          <h1>My Profile</h1>
+          <p>Manage your account and security settings</p>
+        </HeaderContent>
+      </Header>
+
       <Container>
-        <Header>
-          <Title>My Profile</Title>
-          <Subtitle>Manage your account settings</Subtitle>
-        </Header>
+        <ContentGrid>
+          <Card>
+            <CardTitle>Account Information</CardTitle>
 
-        {error && <ErrorBox>{error}</ErrorBox>}
-        {success && <SuccessBox>{success}</SuccessBox>}
+            <InfoSection>
+              <InfoBox>
+                <label>Email Address</label>
+                <p>{user.email || "-"}</p>
+              </InfoBox>
 
-        {/* User Information */}
-        <Section>
-          <SectionTitle>Account Information</SectionTitle>
+              <InfoBox>
+                <label>Full Name</label>
+                <p>{user.full_name || "-"}</p>
+              </InfoBox>
 
-          <InfoGroup>
-            <Label>Email Address</Label>
-            <Input type="email" value={user.email || ""} disabled />
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "#94a3b8",
-                margin: "0.25rem 0 0",
-              }}
-            >
-              Email cannot be changed
-            </p>
-          </InfoGroup>
+              <InfoBox>
+                <label>Account Role</label>
+                <p>
+                  <RoleBadge $role={user.role}>{user.role}</RoleBadge>
+                </p>
+              </InfoBox>
 
-          <InfoGroup>
-            <Label>Full Name</Label>
-            <Input type="text" value={user.full_name || ""} disabled />
-          </InfoGroup>
+              {user.created_at && (
+                <InfoBox>
+                  <label>Member Since</label>
+                  <p>{new Date(user.created_at).toLocaleDateString()}</p>
+                </InfoBox>
+              )}
+            </InfoSection>
+          </Card>
 
-          <InfoGroup>
-            <Label>Role</Label>
-            <RoleBadge $role={user.role}>{user.role}</RoleBadge>
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "#94a3b8",
-                margin: "0.25rem 0 0",
-              }}
-            >
-              Role cannot be changed
-            </p>
-          </InfoGroup>
-        </Section>
+          <Card>
+            <CardTitle>Change Password</CardTitle>
 
-        {/* Change Password */}
-        <Section>
-          <SectionTitle>Change Password</SectionTitle>
+            {error && <AlertBox $error>{error}</AlertBox>}
+            {success && <AlertBox>{success}</AlertBox>}
 
-          <Form onSubmit={handlePasswordChange}>
-            <InfoGroup>
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleInputChange}
-                placeholder="Enter your current password"
-                disabled={submitting}
-              />
-            </InfoGroup>
+            <Form onSubmit={handlePasswordChange}>
+              <FormGroup>
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleInputChange}
+                  placeholder="Enter your current password"
+                  disabled={submitting}
+                />
+              </FormGroup>
 
-            <InfoGroup>
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleInputChange}
-                placeholder="Enter a new password"
-                disabled={submitting}
-              />
-            </InfoGroup>
+              <FormGroup>
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  placeholder="Enter a new password (min. 6 characters)"
+                  disabled={submitting}
+                />
+              </FormGroup>
 
-            <InfoGroup>
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                placeholder="Confirm your new password"
-                disabled={submitting}
-              />
-            </InfoGroup>
+              <FormGroup>
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Confirm your new password"
+                  disabled={submitting}
+                />
+              </FormGroup>
 
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Updating..." : "Update Password"}
-            </Button>
-          </Form>
-        </Section>
+              <ButtonGroup>
+                <Button $primary type="submit" disabled={submitting}>
+                  {submitting ? "Updating..." : "Update Password"}
+                </Button>
+              </ButtonGroup>
+            </Form>
+          </Card>
+        </ContentGrid>
       </Container>
-    </Page>
+    </PageWrapper>
   );
 };
 
 export default ProfilePage;
-
