@@ -2,643 +2,336 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { paymentsAPI } from "../services/api";
 
-const Overlay = styled.div`
+const AMENITY_ICONS = {
+  wifi: "fa-solid fa-wifi",
+  parking: "fa-solid fa-car",
+  kitchen: "fa-solid fa-utensils",
+  gym: "fa-solid fa-dumbbell",
+  balcony: "fa-solid fa-building",
+  furnished: "fa-solid fa-couch",
+  ac: "fa-solid fa-fan",
+  laundry: "fa-solid fa-person-hiking",
+  dishwasher: "fa-solid fa-plate-wheat",
+  "air conditioning": "fa-solid fa-snowflake",
+  "shared kitchen": "fa-solid fa-utensils",
+  "study area": "fa-solid fa-book",
+  "close to campus": "fa-solid fa-graduation-cap",
+};
+
+const Backdrop = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
-  overflow-y: auto;
+  z-index: 100;
 `;
 
 const Modal = styled.div`
+  width: 90%;
+  max-width: 600px;
   background: white;
   border-radius: 16px;
-  max-width: 800px;
-  width: 100%;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
   max-height: 90vh;
   overflow-y: auto;
-  position: relative;
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-  }
 `;
 
-const CloseBtn = styled.button`
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #f1f5f9;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: background 0.2s ease;
-
-  &:hover {
-    background: #e2e8f0;
-  }
-`;
-
-const Header = styled.div`
-  position: relative;
-  height: 300px;
-  overflow: hidden;
-  background: #f1f5f9;
-
-  @media (max-width: 768px) {
-    height: 250px;
-  }
-`;
-
-const HeaderImg = styled.img`
+const ImageSection = styled.div`
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: 300px;
+  background: #f1f5f9;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const Content = styled.div`
-  padding: 2rem;
-
-  @media (max-width: 768px) {
-    padding: 1.5rem;
-  }
+  padding: 24px;
 `;
 
-const Title = styled.h1`
-  margin: 0 0 0.5rem;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #0f172a;
-
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
-  }
-`;
-
-const LocationRow = styled.div`
+const Header = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 16px;
+
+  button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      color: #0f172a;
+    }
+  }
+`;
+
+const Title = styled.h2`
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #0f172a;
+`;
+
+const Location = styled.p`
+  margin: 0 0 12px;
   color: #64748b;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+  font-size: 14px;
+`;
+
+const Price = styled.div`
+  font-size: 20px;
+  font-weight: 900;
+  color: #2563eb;
+  margin-bottom: 16px;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+`;
+
+const StatBox = styled.div`
+  padding: 12px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  text-align: center;
+
+  .label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  .value {
+    font-size: 18px;
+    font-weight: 900;
+    color: #0f172a;
+  }
 `;
 
 const Description = styled.p`
+  font-size: 14px;
   color: #475569;
   line-height: 1.6;
-  margin: 0 0 1.5rem;
+  margin: 0 0 16px;
 `;
 
-const DetailsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-`;
-
-const DetailCard = styled.div`
-  background: #f8fafc;
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-
-  svg {
-    color: #2563eb;
-    flex-shrink: 0;
-  }
-`;
-
-const DetailText = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-
-  span:first-child {
-    font-size: 0.8rem;
-    color: #64748b;
-    font-weight: 600;
-  }
-
-  span:last-child {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #0f172a;
-  }
-`;
-
-const AmenitiesSection = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const SectionTitle = styled.h3`
-  margin: 0 0 1rem;
-  font-size: 1rem;
-  font-weight: 700;
+const AmenitiesLabel = styled.label`
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
   color: #0f172a;
+  margin-bottom: 8px;
+  text-transform: uppercase;
 `;
 
-const AmenitiesList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.75rem;
-`;
-
-const AmenityTag = styled.div`
+const Amenities = styled.div`
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+`;
+
+const AmenityTag = styled.span`
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: #eff6ff;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #dbeafe;
   border: 1px solid #bfdbfe;
   border-radius: 8px;
-  color: #1e40af;
-  font-size: 0.9rem;
-  font-weight: 500;
-`;
+  font-size: 13px;
+  color: #0c4a6e;
 
-const RentalSection = styled.div`
-  background: #f0f9ff;
-  border: 2px solid #0284c7;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-top: 2rem;
-`;
-
-const RentalTitle = styled.h3`
-  margin: 0 0 1.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #0f172a;
-`;
-
-const RentalForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const Label = styled.label`
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #1f2937;
-`;
-
-const Input = styled.input`
-  padding: 0.75rem 1rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  color: #0f172a;
-  background: white;
-
-  &:focus {
-    outline: none;
-    border-color: #0284c7;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
-  }
-
-  &:disabled {
-    background: #f1f5f9;
-    color: #94a3b8;
-    cursor: not-allowed;
-  }
-`;
-
-const PriceCalculation = styled.div`
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  margin: 1rem 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const PriceRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  ${(props) => props.$border && "border-bottom: 1px solid #e2e8f0;"}
-
-  span:first-child {
-    color: #64748b;
-    font-weight: 600;
-  }
-
-  span:last-child {
-    font-weight: 600;
-    color: #0f172a;
-  }
-`;
-
-const TotalPrice = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  padding-top: 1rem;
-  border-top: 2px solid #0284c7;
-
-  span:first-child {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  span:last-child {
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: #0284c7;
+  i {
+    font-size: 14px;
   }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 12px;
 `;
 
-const Button = styled.button`
+const Btn = styled.button`
   flex: 1;
-  padding: 0.875rem 1.5rem;
+  padding: 12px 16px;
+  border-radius: 10px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  transition: all 0.2s;
+
+  &.primary {
+    background: #2563eb;
+    color: white;
+    &:hover {
+      background: #1e40af;
+    }
+  }
+
+  &.outline {
+    background: white;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    &:hover {
+      background: #f8fafc;
+    }
+  }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.65;
     cursor: not-allowed;
   }
 `;
 
-const RentButton = styled(Button)`
-  background: #0284c7;
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: #0369a1;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
-  }
-`;
-
-const CancelButton = styled(Button)`
-  background: transparent;
-  color: #0284c7;
-  border: 1px solid #0284c7;
-
-  &:hover:not(:disabled) {
-    background: #f0f9ff;
-  }
-`;
-
-const Message = styled.div`
-  padding: 1rem;
+const Error = styled.div`
+  padding: 10px 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
   border-radius: 8px;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-
-  ${(props) =>
-    props.$type === "error"
-      ? `
-    background: #fee2e2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-  `
-      : `
-    background: #dcfce7;
-    border: 1px solid #bbf7d0;
-    color: #166534;
-  `}
+  color: #991b1b;
+  font-size: 13px;
+  margin-bottom: 12px;
 `;
-
-const getAmenityIcon = (amenity) => {
-  const name = typeof amenity === "string" ? amenity.toLowerCase() : "";
-  if (name.includes("wifi"))
-    return <i className="fa-solid fa-wifi" style={{ fontSize: "18px" }} />;
-  if (name.includes("parking"))
-    return <i className="fa-solid fa-car" style={{ fontSize: "18px" }} />;
-  if (name.includes("kitchen"))
-    return <i className="fa-solid fa-utensils" style={{ fontSize: "18px" }} />;
-  if (name.includes("gym"))
-    return <i className="fa-solid fa-dumbbell" style={{ fontSize: "18px" }} />;
-  return <i className="fa-solid fa-building" style={{ fontSize: "18px" }} />;
-};
 
 const RoomDetailsModal = ({ room, onClose }) => {
-  const [showRentalForm, setShowRentalForm] = useState(false);
-  const [months, setMonths] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [error, setError] = useState("");
+  const [imgError, setImgError] = useState(false);
 
-  const totalPrice = Math.max(1, months) * room.price;
+  const getAmenityIcon = (amenity) => {
+    const key = amenity.toLowerCase();
+    return AMENITY_ICONS[key] || "fa-solid fa-check";
+  };
 
-  const handleRent = async (e) => {
-    e.preventDefault();
+  const getImageUrl = () => {
+    const main = room.main_image || room.images?.[0];
+    if (!main) return "";
+    
+    // If it's already a full URL, return as-is
+    if (main.startsWith("http")) return main;
+    
+    // Otherwise, prepend API base URL
+    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    return apiBase.replace("/api", "") + main;
+  };
 
-    if (months < 1) {
-      setMessage({ type: "error", text: "Minimum rental period is 1 month" });
-      return;
-    }
-
+  const handlePayment = async () => {
     try {
       setLoading(true);
-      setMessage({ type: "", text: "" });
+      setError("");
 
-      const rentalData = {
-        roomId: room.id,
-        months: parseInt(months),
-        totalPrice: totalPrice,
-      };
-
-      // Step 1: Create rental
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/rentals`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(rentalData),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to submit rental request");
-      }
-
-      const bookingId = data.booking?.id;
-
-      if (!bookingId) {
-        throw new Error("Failed to retrieve booking ID from rental response");
-      }
-
-      setMessage({
-        type: "success",
-        text: "✓ Rental created! Redirecting to payment...",
+      // Initiate payment
+      const result = await paymentsAPI.initiatePayment({
+        bookingId: room.id,
+        amount: room.price,
       });
 
-      // Step 2: Initiate Khalti payment
-      try {
-        const paymentResponse = await paymentsAPI.initiatePayment({
-          bookingId: bookingId,
-          amount: totalPrice,
-        });
-
-        if (paymentResponse && paymentResponse.payment_url) {
-          // Redirect to Khalti payment page
-          window.location.href = paymentResponse.payment_url;
-        } else {
-          throw new Error("Failed to get Khalti payment URL");
-        }
-      } catch (paymentErr) {
-        setMessage({
-          type: "error",
-          text: `Payment initiation failed: ${paymentErr.message}. Your rental has been created but payment is pending.`,
-        });
+      if (result.payment_url) {
+        // Redirect to Khalti payment page
+        window.location.href = result.payment_url;
       }
     } catch (err) {
-      setMessage({ type: "error", text: err.message });
+      setError(err.message || "Payment initiation failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const amenities = (() => {
-    if (!room.amenities) return [];
-    if (typeof room.amenities === "string") {
-      try {
-        return JSON.parse(room.amenities);
-      } catch {
-        return [];
-      }
-    }
-    return Array.isArray(room.amenities) ? room.amenities : [];
-  })();
-
-  const imageUrl = room.main_image
-    ? room.main_image.startsWith("http")
-      ? room.main_image
-      : `http://localhost:5000${room.main_image}`
-    : "https://via.placeholder.com/800x300?text=Room+Image";
-
   return (
-    <Overlay onClick={onClose}>
+    <Backdrop onClick={onClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
-        <CloseBtn onClick={onClose} title="Close modal">
-          <i className="fa-solid fa-xmark" style={{ fontSize: "24px" }} />
-        </CloseBtn>
-
-        <Header>
-          <HeaderImg
-            src={imageUrl}
-            alt={room.title}
-            onError={(e) => {
-              e.target.src =
-                "https://via.placeholder.com/800x300?text=Room+Image";
-            }}
-          />
-        </Header>
+        <ImageSection>
+          {!imgError && getImageUrl() ? (
+            <img
+              src={getImageUrl()}
+              alt={room.title}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "18px", fontWeight: "900" }}>
+              <i className="fa-solid fa-image" style={{ fontSize: "48px" }}></i>
+            </div>
+          )}
+        </ImageSection>
 
         <Content>
-          <Title>{room.title}</Title>
+          <Header>
+            <div style={{ flex: 1 }}>
+              <Title>{room.title}</Title>
+              <Location>
+                <i className="fa-solid fa-location-dot"></i>{" "}
+                {room.address || room.location}
+              </Location>
+            </div>
+            <button onClick={onClose}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </Header>
 
-          <LocationRow>
-            <i className="fa-solid fa-map-pin" style={{ fontSize: "18px" }} />
-            {room.location}
-          </LocationRow>
+          <Price>Rs {room.price.toLocaleString()}/month</Price>
+
+          <Grid>
+            <StatBox>
+              <div className="label">Bedrooms</div>
+              <div className="value">{room.bedrooms}</div>
+            </StatBox>
+            <StatBox>
+              <div className="label">Bathrooms</div>
+              <div className="value">{room.bathrooms}</div>
+            </StatBox>
+            <StatBox>
+              <div className="label">Area</div>
+              <div className="value">{room.area} sq ft</div>
+            </StatBox>
+          </Grid>
 
           {room.description && <Description>{room.description}</Description>}
 
-          <DetailsGrid>
-            <DetailCard>
-              <i
-                className="fa-solid fa-bed"
-                style={{ fontSize: "20px", color: "#2563eb" }}
-              />
-              <DetailText>
-                <span>Bedrooms</span>
-                <span>{room.bedrooms}</span>
-              </DetailText>
-            </DetailCard>
-
-            <DetailCard>
-              <i
-                className="fa-solid fa-bath"
-                style={{ fontSize: "20px", color: "#2563eb" }}
-              />
-              <DetailText>
-                <span>Bathrooms</span>
-                <span>{room.bathrooms}</span>
-              </DetailText>
-            </DetailCard>
-
-            <DetailCard>
-              <span style={{ fontSize: "1.2rem", fontWeight: 700 }}>
-                Rs {room.price.toLocaleString()}
-              </span>
-              <DetailText>
-                <span>Price</span>
-                <span>/month</span>
-              </DetailText>
-            </DetailCard>
-          </DetailsGrid>
-
-          {amenities.length > 0 && (
-            <AmenitiesSection>
-              <SectionTitle>Amenities</SectionTitle>
-              <AmenitiesList>
-                {amenities.map((amenity, idx) => (
+          {room.amenities && room.amenities.length > 0 && (
+            <>
+              <AmenitiesLabel>Amenities</AmenitiesLabel>
+              <Amenities>
+                {room.amenities.map((amenity, idx) => (
                   <AmenityTag key={idx}>
-                    {getAmenityIcon(amenity)}
-                    {typeof amenity === "string"
-                      ? amenity
-                      : amenity.name || amenity}
+                    <i className={getAmenityIcon(amenity)}></i>
+                    {amenity}
                   </AmenityTag>
                 ))}
-              </AmenitiesList>
-            </AmenitiesSection>
+              </Amenities>
+            </>
           )}
 
-          {!showRentalForm ? (
-            <RentalSection>
-              <RentalTitle>Ready to rent this room?</RentalTitle>
-              <p style={{ color: "#64748b", marginBottom: "1.5rem" }}>
-                Click below to proceed with rental. You'll need to pay the
-                entire rental amount in advance through Khalti.
-              </p>
-              <RentButton
-                onClick={() => setShowRentalForm(true)}
-                style={{ width: "100%" }}
-              >
-                💰 Rent This Room
-              </RentButton>
-            </RentalSection>
-          ) : (
-            <RentalSection>
-              <RentalTitle>Rental Details</RentalTitle>
+          {error && <Error>{error}</Error>}
 
-              {message.text && (
-                <Message $type={message.type}>{message.text}</Message>
-              )}
-
-              <RentalForm onSubmit={handleRent}>
-                <FormGroup>
-                  <Label htmlFor="months">
-                    Number of Months <span style={{ color: "#e11d48" }}>*</span>
-                  </Label>
-                  <Input
-                    id="months"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={months}
-                    onChange={(e) =>
-                      setMonths(Math.max(1, parseInt(e.target.value) || 1))
-                    }
-                    disabled={loading}
-                    required
-                  />
-                  <p
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#64748b",
-                      margin: "0",
-                    }}
-                  >
-                    Minimum rental period: 1 month
-                  </p>
-                </FormGroup>
-
-                <PriceCalculation>
-                  <PriceRow>
-                    <span>Monthly Rate:</span>
-                    <span>Rs {room.price.toLocaleString()}</span>
-                  </PriceRow>
-                  <PriceRow $border>
-                    <span>Duration:</span>
-                    <span>
-                      {months} month{months !== 1 ? "s" : ""}
-                    </span>
-                  </PriceRow>
-                  <TotalPrice>
-                    <span>Total (Due in Advance):</span>
-                    <span>Rs {totalPrice.toLocaleString()}</span>
-                  </TotalPrice>
-                </PriceCalculation>
-
-                <p
-                  style={{
-                    color: "#7c3aed",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  ℹ️ You must pay {months} month{months !== 1 ? "s" : ""} of
-                  rent in advance ({months} × Rs {room.price.toLocaleString()} =
-                  Rs {totalPrice.toLocaleString()})
-                </p>
-
-                <ButtonGroup>
-                  <CancelButton
-                    type="button"
-                    onClick={() => {
-                      setShowRentalForm(false);
-                      setMessage({ type: "", text: "" });
-                      setMonths(1);
-                    }}
-                    disabled={loading}
-                  >
-                    Back
-                  </CancelButton>
-                  <RentButton type="submit" disabled={loading}>
-                    {loading ? "Processing payment..." : "💳 Pay for Room"}
-                  </RentButton>
-                </ButtonGroup>
-              </RentalForm>
-            </RentalSection>
-          )}
+          <ButtonGroup>
+            <Btn className="outline" onClick={onClose}>
+              Close
+            </Btn>
+            <Btn className="primary" onClick={handlePayment} disabled={loading}>
+              {loading
+                ? "Processing..."
+                : `Pay Rs ${room.price.toLocaleString()}`}
+            </Btn>
+          </ButtonGroup>
         </Content>
       </Modal>
-    </Overlay>
+    </Backdrop>
   );
 };
 

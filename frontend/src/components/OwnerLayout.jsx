@@ -7,10 +7,6 @@ const Container = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   min-height: 100vh;
-
-  @media (max-width: 960px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const Sidebar = styled.aside`
@@ -59,21 +55,9 @@ const Brand = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-`;
-
-const BrandText = styled.div`
-  display: flex;
-  align-items: center;
   font-weight: 700;
   color: #000000;
   font-size: 16px;
-`;
-
-const Nav = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
 `;
 
 const NavItem = styled.button`
@@ -179,29 +163,19 @@ const Overlay = styled.div`
 
 const OwnerLayout = () => {
   const navigate = useNavigate();
-  const [, setActive] = useState("My Rooms");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const handleNavigation = (tabName, path) => {
-    setActive(tabName);
-    if (path) {
-      navigate(path);
-    }
+  const handleNavigation = (path) => {
+    if (path) navigate(path);
   };
 
   return (
     <Container>
       <Sidebar $open={sidebarOpen}>
-        <SidebarHeader
-          onClick={() => handleNavigation("My Rooms", "/owner/dashboard")}
-        >
-          <Brand>
-            <BrandText>Owner Dashboard</BrandText>
-          </Brand>
+        <SidebarHeader onClick={() => handleNavigation("/owner/dashboard")}>
+          <Brand>Owner Dashboard</Brand>
         </SidebarHeader>
-
-        <Nav></Nav>
 
         <SidebarFooter>
           <NotificationBell
@@ -209,7 +183,7 @@ const OwnerLayout = () => {
             setIsOpen={setNotificationsOpen}
           />
           <ProfileButton
-            onClick={() => handleNavigation("Profile", "/profile")}
+            onClick={() => handleNavigation("/profile")}
             title="Profile"
           >
             <ProfileIconBtn>
@@ -223,7 +197,7 @@ const OwnerLayout = () => {
       <Overlay $open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 
       <Content>
-        <Outlet context={{ setActive }} />
+        <Outlet />
       </Content>
     </Container>
   );

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getStoredUser } from "../services/api";
 import NotificationBell from "./NotificationBell";
+import logo from "../../../logo.png";
 
 const HeaderWrapper = styled.header`
   width: 100%;
@@ -28,19 +29,23 @@ const HeaderContainer = styled.div`
   }
 `;
 
-const Logo = styled(Link)`
+const LogoImage = styled(Link)`
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #2563eb;
-  font-weight: 700;
-  font-size: 24px;
-  transition: color 0.2s ease;
+  transition: transform 0.2s ease;
   &:hover {
-    color: #1d4ed8;
+    transform: scale(1.05);
+  }
+  img {
+    height: 73px;
+    width: auto;
+    object-fit: contain;
   }
   @media (max-width: 480px) {
-    font-size: 20px;
+    img {
+      height: 80px;
+    }
   }
 `;
 
@@ -282,27 +287,6 @@ const ProfileIcon = styled(Link)`
   }
 `;
 
-const NotificationIconBtn = styled.button`
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 15px;
-  padding: 8px 14px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  position: relative;
-  &:hover {
-    color: #2563eb;
-    background-color: #f8fafc;
-  }
-`;
-
 const MobileProfileIcon = styled(Link)`
   width: 100%;
   padding: 12px 20px;
@@ -364,7 +348,9 @@ const Header = () => {
   return (
     <HeaderWrapper>
       <HeaderContainer>
-        <Logo to="/">myRentals</Logo>
+        <LogoImage to="/">
+          <img src={logo} alt="myRentals Logo" />
+        </LogoImage>
 
         <Nav>
           {NAV_LINKS.map(({ to, label }) => (
@@ -497,12 +483,7 @@ const Header = () => {
             </>
           ) : (
             <>
-              {user?.role === "tenant" && (
-                <MobileProfileIcon to="/profile" onClick={isMobile}>
-                  <i className="fa-solid fa-circle-user"></i> Profile
-                </MobileProfileIcon>
-              )}
-              {user?.role === "owner" && (
+              {(user?.role === "tenant" || user?.role === "owner") && (
                 <MobileProfileIcon to="/profile" onClick={isMobile}>
                   <i className="fa-solid fa-circle-user"></i> Profile
                 </MobileProfileIcon>

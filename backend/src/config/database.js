@@ -27,11 +27,11 @@ const initDatabase = () => {
       if (err) {
         console.log("No users_old table to clean up");
       } else {
-        console.log("✅ Cleaned up incomplete migration table");
+        console.log("Cleaned up incomplete migration table");
       }
     });
 
-    // ✅ USERS table
+    // USERS table
     db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -280,7 +280,7 @@ const seedDatabase = () => {
                 console.error(`Error creating ${user.role} user:`, err);
               } else {
                 console.log(
-                  `✅ Created ${user.role} user: ${user.email} (password: ${user.password})`,
+                  `Created ${user.role} user: ${user.email} (password: ${user.password})`,
                 );
               }
             },

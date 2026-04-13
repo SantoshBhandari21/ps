@@ -182,16 +182,15 @@ const MarkAllReadBtn = styled.button`
 const formatTime = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  const sameDay = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  if (sameDay) return `Today ${time}`;
+  if ((now - date) / 86400000 < 1) return `Yesterday ${time}`;
+  return `${date.toLocaleDateString()} ${time}`;
 };
 
 const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
@@ -234,37 +233,37 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      console.error("Notification error:", error.message);
     }
   };
 
-  const handleMarkAsRead = async (notificationId, e) => {
+  const apiCall = async (fn, callback) => {
+    try {
+      await fn();
+      callback();
+    } catch (error) {
+      console.error("Notification error:", error.message);
+    }
+  };
+
+  const handleMarkAsRead = (notificationId, e) => {
     e.stopPropagation();
-    try {
-      await notificationsAPI.markAsRead(notificationId);
-      fetchNotifications();
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-    }
+    apiCall(
+      () => notificationsAPI.markAsRead(notificationId),
+      fetchNotifications,
+    );
   };
 
-  const handleDelete = async (notificationId, e) => {
+  const handleDelete = (notificationId, e) => {
     e.stopPropagation();
-    try {
-      await notificationsAPI.deleteNotification(notificationId);
-      fetchNotifications();
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-    }
+    apiCall(
+      () => notificationsAPI.deleteNotification(notificationId),
+      fetchNotifications,
+    );
   };
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      await notificationsAPI.markAllAsRead();
-      fetchNotifications();
-    } catch (error) {
-      console.error("Failed to mark all as read:", error);
-    }
+  const handleMarkAllAsRead = () => {
+    apiCall(notificationsAPI.markAllAsRead, fetchNotifications);
   };
 
   return (
@@ -298,9 +297,7 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
             <NotificationItem
               key={notification.id}
               $isUnread={!notification.is_read}
-              onClick={() =>
-                handleMarkAsRead(notification.id, new Event("click"))
-              }
+              onClick={(e) => handleMarkAsRead(notification.id, e)}
             >
               <NotificationContent>
                 <NotificationMessage>
