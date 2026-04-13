@@ -222,10 +222,10 @@ const RoomDetailsModal = ({ room, onClose }) => {
   const getImageUrl = () => {
     const main = room.main_image || room.images?.[0];
     if (!main) return "";
-    
+
     // If it's already a full URL, return as-is
     if (main.startsWith("http")) return main;
-    
+
     // Otherwise, prepend API base URL
     const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
     return apiBase.replace("/api", "") + main;
@@ -264,7 +264,19 @@ const RoomDetailsModal = ({ room, onClose }) => {
               onError={() => setImgError(true)}
             />
           ) : (
-            <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "18px", fontWeight: "900" }}>
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontSize: "18px",
+                fontWeight: "900",
+              }}
+            >
               <i className="fa-solid fa-image" style={{ fontSize: "48px" }}></i>
             </div>
           )}
