@@ -59,8 +59,8 @@ const createRoom = async (req, res) => {
     const result = await runQuery(
       `INSERT INTO rooms 
        (owner_id, title, description, address, location, room_type, price, 
-        bedrooms, bathrooms, area, amenities, main_image) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        bedrooms, bathrooms, area, amenities, main_image, is_verified) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.user.id,
         title,
@@ -74,6 +74,7 @@ const createRoom = async (req, res) => {
         finalArea,
         amenitiesJson,
         mainImage,
+        0,
       ],
     );
 
@@ -132,7 +133,7 @@ const getRooms = async (req, res) => {
              (SELECT COUNT(*) FROM reviews WHERE room_id = r.id) as review_count
       FROM rooms r
       LEFT JOIN users u ON r.owner_id = u.id
-      WHERE r.is_available = 1
+      WHERE r.is_available = 1 AND r.is_verified = 1
     `;
 
     const params = [];
@@ -175,7 +176,7 @@ const getRooms = async (req, res) => {
     const rooms = await getAll(query, params);
 
     let countQuery =
-      "SELECT COUNT(*) as total FROM rooms WHERE is_available = 1";
+      "SELECT COUNT(*) as total FROM rooms WHERE is_available = 1 AND is_verified = 1";
     const countParams = [];
 
     if (location) {

@@ -326,18 +326,6 @@ const TypeBadge = styled.span`
   font-size: 12px;
 `;
 
-const FavBtn = styled.button`
-  padding: 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  background: rgba(255, 255, 255, 0.92);
-  cursor: pointer;
-
-  &:hover {
-    background: #fff;
-  }
-`;
-
 const ImageBadge = styled.div`
   position: absolute;
   bottom: 12px;
@@ -414,20 +402,6 @@ const BottomRow = styled.div`
   flex-wrap: wrap;
 `;
 
-const Rating = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #0f172a;
-  font-weight: 800;
-  font-size: 13px;
-
-  span {
-    color: #64748b;
-    font-weight: 700;
-  }
-`;
-
 const Price = styled.div`
   font-weight: 900;
   color: #1d4ed8;
@@ -462,7 +436,6 @@ const BrowseRooms = () => {
   const [location, setLocation] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [favorites, setFavorites] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -496,15 +469,6 @@ const BrowseRooms = () => {
 
     fetchRooms();
   }, []);
-  //add or remove favorites
-  const toggleFavorite = (roomId) => {
-    setFavorites((prev) =>
-      prev.includes(roomId)
-        ? prev.filter((id) => id !== roomId)
-        : [...prev, roomId],
-    );
-  };
-
   const setFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -585,7 +549,6 @@ const BrowseRooms = () => {
 
   //Room card component
   const RoomCard = ({ room, isListView }) => {
-    const isFavorite = favorites.includes(room.id);
     const imageUrl = room.main_image
       ? `http://localhost:5000${room.main_image}`
       : "https://via.placeholder.com/400x300?text=No+Image";
@@ -604,22 +567,7 @@ const BrowseRooms = () => {
 
           <BadgeRow>
             <div></div>
-
-            <FavBtn
-              type="button"
-              onClick={() => toggleFavorite(room.id)}
-              aria-label="favorite"
-            >
-              <i
-                className={
-                  isFavorite ? "fa-solid fa-heart" : "fa-regular fa-heart"
-                }
-                style={{
-                  color: isFavorite ? "#ef4444" : "#94a3b8",
-                  fontSize: "18px",
-                }}
-              />
-            </FavBtn>
+            <div></div>
           </BadgeRow>
         </ImgWrap>
 
@@ -685,19 +633,6 @@ const BrowseRooms = () => {
           </AmenityTags>
 
           <BottomRow>
-            <Rating>
-              <i
-                className="fa-solid fa-star"
-                style={{
-                  color: "#f59e0b",
-                  fontSize: "16px",
-                  marginRight: "4px",
-                }}
-              />
-              {room.avg_rating ? room.avg_rating.toFixed(1) : "N/A"}{" "}
-              <span>({room.review_count || 0})</span>
-            </Rating>
-
             <Price>Rs {room.price.toLocaleString()}/mo</Price>
 
             <DetailsBtn type="button" onClick={() => handleViewDetails(room)}>

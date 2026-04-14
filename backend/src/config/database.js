@@ -64,11 +64,31 @@ const initDatabase = () => {
       amenities TEXT,
       main_image TEXT,
       is_available INTEGER DEFAULT 1,
+      is_verified INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+
+    // Migration: Add is_verified column if it doesn't exist
+    db.run(
+      "ALTER TABLE rooms ADD COLUMN is_verified INTEGER DEFAULT 1",
+      (err) => {
+        if (err && !err.message.includes("duplicate column")) {
+          console.log("is_verified column already exists");
+        } else {
+          // Migrate existing rooms to verified (1)
+          db.run("UPDATE rooms SET is_verified = 1", (err) => {
+            if (err) {
+              console.error("Error migrating rooms to verified:", err);
+            } else {
+              console.log("Migrated existing rooms to verified");
+            }
+          });
+        }
+      },
+    );
 
     // Room images table
     db.run(`

@@ -21,7 +21,7 @@ import { usersAPI } from "../services/api";
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  const tabs = ["Overview", "Users", "Rooms", "Analytics"];
+  const tabs = ["Overview", "Users", "Rooms", "Payments", "Analytics"];
   const [active, setActive] = useState("Overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -36,6 +36,11 @@ export default function AdminDashboard() {
   const [rooms, setRooms] = useState([]);
   const [roomsPagination, setRoomsPagination] = useState(null);
   const [roomsLoading, setRoomsLoading] = useState(false);
+  const [roomActionLoading, setRoomActionLoading] = useState(null);
+
+  const [payments, setPayments] = useState([]);
+  const [paymentsPagination, setPaymentsPagination] = useState(null);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
 
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -103,6 +108,27 @@ export default function AdminDashboard() {
       loadRooms();
     }
   }, [active, rooms.length, roomsLoading]);
+
+  const loadPayments = async () => {
+    setPaymentsLoading(true);
+    try {
+      const res = await usersAPI.getAllPayments();
+      const list = res?.payments || [];
+      setPayments(list);
+      setPaymentsPagination(res?.pagination || null);
+    } catch (e) {
+      console.error("Failed to load payments:", e);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  };
+
+  // Load payments when Payments tab is activated
+  useEffect(() => {
+    if (active === "Payments" && payments.length === 0 && !paymentsLoading) {
+      loadPayments();
+    }
+  }, [active, payments.length, paymentsLoading]);
 
   const loadStats = async () => {
     setStatsLoading(true);
@@ -182,6 +208,26 @@ export default function AdminDashboard() {
       );
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // Handle verify/unverify room
+  const handleToggleRoomVerification = async (roomId, isCurrentlyVerified) => {
+    setRoomActionLoading(roomId);
+    try {
+      await usersAPI.updateRoomVerification(roomId, !isCurrentlyVerified);
+      setRooms((prevRooms) =>
+        prevRooms.map((r) =>
+          r.id === roomId
+            ? { ...r, is_verified: isCurrentlyVerified ? 0 : 1 }
+            : r,
+        ),
+      );
+    } catch (err) {
+      console.error("Error updating room verification:", err);
+      alert(`Failed to update room: ${err.message}`);
+    } finally {
+      setRoomActionLoading(null);
     }
   };
 
@@ -483,6 +529,8 @@ export default function AdminDashboard() {
                           <th>Location</th>
                           <th>Price</th>
                           <th>Available</th>
+                          <th>Status</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -497,6 +545,88 @@ export default function AdminDashboard() {
                               <StatusBadge $active={room.is_available === 1}>
                                 {room.is_available === 1 ? "Yes" : "No"}
                               </StatusBadge>
+                            </td>
+                            <td>
+                              <StatusBadge $active={room.is_verified === 1}>
+                                {room.is_verified === 1
+                                  ? "Verified"
+                                  : "Unverified"}
+                              </StatusBadge>
+                            </td>
+                            <td>
+                              <ActionButton
+                                onClick={() =>
+                                  handleToggleRoomVerification(
+                                    room.id,
+                                    room.is_verified === 1,
+                                  )
+                                }
+                                disabled={roomActionLoading === room.id}
+                                $danger={room.is_verified === 1}
+                              >
+                                {roomActionLoading === room.id
+                                  ? "..."
+                                  : room.is_verified === 1
+                                    ? "Unverify"
+                                    : "Verify"}
+                              </ActionButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableWrap>
+                )}
+              </Panel>
+            )}
+
+            {!loading && !error && active === "Payments" && (
+              <Panel>
+                <PanelTitle>
+                  Payment Records{" "}
+                  <span
+                    style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}
+                  >
+                    ({paymentsPagination?.totalPayments ?? payments.length})
+                  </span>
+                </PanelTitle>
+
+                {paymentsLoading ? (
+                  <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                    Loading payments...
+                  </p>
+                ) : payments.length === 0 ? (
+                  <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                    No payments found.
+                  </p>
+                ) : (
+                  <TableWrap>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <th>Tenant Name</th>
+                          <th>Email</th>
+                          <th>Room</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payments.map((p) => (
+                          <tr key={p.id}>
+                            <td>{p.tenant_name || "-"}</td>
+                            <td>{p.tenant_email || "-"}</td>
+                            <td>{p.room_title || "-"}</td>
+                            <td>Rs. {p.amount || "-"}</td>
+                            <td>
+                              <StatusBadge $active={p.status === "completed"}>
+                                {p.status?.charAt(0).toUpperCase() +
+                                  p.status?.slice(1) || "-"}
+                              </StatusBadge>
+                            </td>
+                            <td>
+                              {new Date(p.created_at).toLocaleDateString()}
                             </td>
                           </tr>
                         ))}
@@ -756,6 +886,7 @@ export default function AdminDashboard() {
               active !== "Overview" &&
               active !== "Users" &&
               active !== "Rooms" &&
+              active !== "Payments" &&
               active !== "Analytics" && (
                 <Panel>
                   <PanelTitle>{active}</PanelTitle>

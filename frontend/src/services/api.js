@@ -348,6 +348,17 @@ export const usersAPI = {
     return apiCall(`/admin/rooms/all?page=${page}&limit=${limit}`);
   },
 
+  updateRoomVerification: async (roomId, isVerified) => {
+    return apiCall(`/admin/rooms/${roomId}/verify`, {
+      method: "PATCH",
+      body: { is_verified: isVerified ? 1 : 0 },
+    });
+  },
+
+  getAllPayments: async (page = 1, limit = 20) => {
+    return apiCall(`/admin/payments/all?page=${page}&limit=${limit}`);
+  },
+
   getAllBookings: async (filters = {}) => {
     const queryParams = new URLSearchParams();
 

@@ -545,6 +545,94 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+/**
+ * PATCH /api/admin/rooms/:id/verify
+ */
+const updateRoomVerification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_verified } = req.body;
+
+    if (typeof is_verified !== "number" || ![0, 1].includes(is_verified)) {
+      return res.status(400).json({ message: "is_verified must be 0 or 1" });
+    }
+
+    await runQuery("UPDATE rooms SET is_verified = ? WHERE id = ?", [
+      is_verified,
+      id,
+    ]);
+
+    const room = await getOne("SELECT * FROM rooms WHERE id = ?", [id]);
+    return res.json({ message: "Room verification updated", room });
+  } catch (error) {
+    console.error("Update room verification error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * GET /api/admin/payments?search=&page=&limit=
+ */
+const getAllPayments = async (req, res) => {
+  try {
+    const { search, page = 1, limit = 20 } = req.query;
+
+    let query = `
+      SELECT 
+        kp.*, 
+        u.full_name as tenant_name,
+        u.email as tenant_email,
+        r.title as room_title,
+        r.price as room_price
+      FROM khalti_payments kp
+      LEFT JOIN users u ON kp.user_id = u.id
+      LEFT JOIN bookings b ON kp.booking_id = b.id
+      LEFT JOIN rooms r ON b.room_id = r.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (search) {
+      query += " AND (u.full_name LIKE ? OR u.email LIKE ? OR r.title LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    query += " ORDER BY kp.created_at DESC";
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offset = (pageNum - 1) * limitNum;
+
+    query += " LIMIT ? OFFSET ?";
+    params.push(limitNum, offset);
+
+    const payments = await getAll(query, params);
+
+    let countQuery =
+      "SELECT COUNT(*) as total FROM khalti_payments kp LEFT JOIN users u ON kp.user_id = u.id LEFT JOIN bookings b ON kp.booking_id = b.id LEFT JOIN rooms r ON b.room_id = r.id WHERE 1=1";
+    const countParams = [];
+    if (search) {
+      countQuery +=
+        " AND (u.full_name LIKE ? OR u.email LIKE ? OR r.title LIKE ?)";
+      countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    const countRow = await getOne(countQuery, countParams);
+    const total = countRow?.total ?? 0;
+
+    return res.json({
+      payments,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(total / limitNum),
+        totalPayments: total,
+        limit: limitNum,
+      },
+    });
+  } catch (error) {
+    console.error("Get all payments error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -555,5 +643,7 @@ module.exports = {
   getAdminStats,
   getRevenue,
   getAllRooms,
+  updateRoomVerification,
+  getAllPayments,
   getAllBookings,
 };

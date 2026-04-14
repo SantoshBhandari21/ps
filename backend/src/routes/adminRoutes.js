@@ -20,6 +20,8 @@ router.get("/revenue", admin.getRevenue);
 
 // Rooms & bookings (admin)
 router.get("/rooms/all", admin.getAllRooms);
+router.patch("/rooms/:id/verify", admin.updateRoomVerification);
+router.get("/payments/all", admin.getAllPayments);
 router.get("/bookings/all", admin.getAllBookings);
 
 module.exports = router;
