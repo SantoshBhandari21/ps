@@ -40,6 +40,7 @@ const Modal = styled.div`
 `;
 
 const ImageSection = styled.div`
+  position: relative;
   width: 100%;
   height: 300px;
   background: #f1f5f9;
@@ -49,6 +50,104 @@ const ImageSection = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const ImageNav = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  &.prev {
+    left: 12px;
+  }
+
+  &.next {
+    right: 12px;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+`;
+
+const ImageCounter = styled.div`
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+`;
+
+const ImageThumbnails = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  overflow-x: auto;
+  max-width: 100%;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+
+    &:hover {
+      background: #6b7280;
+    }
+  }
+`;
+
+const Thumbnail = styled.img`
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid ${(props) => (props.active ? "#2563eb" : "transparent")};
+  object-fit: cover;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: #2563eb;
+    transform: scale(1.05);
   }
 `;
 
@@ -209,26 +308,66 @@ const Error = styled.div`
   margin-bottom: 12px;
 `;
 
-const RoomDetailsModal = ({ room, onClose }) => {
+const RoomDetails = ({ room, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [imgError, setImgError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Get all images (including main_image and images from room_images table)
+  const getAllImages = () => {
+    const images = [];
+
+    // Add images from room_images table first
+    if (room.images && Array.isArray(room.images) && room.images.length > 0) {
+      room.images.forEach((img) => {
+        const url = img.image_url.startsWith("http")
+          ? img.image_url
+          : `http://localhost:5000${img.image_url}`;
+        images.push(url);
+      });
+    }
+
+    // Add main_image if not already added
+    if (
+      room.main_image &&
+      !images.some((img) => img.includes(room.main_image))
+    ) {
+      const url = room.main_image.startsWith("http")
+        ? room.main_image
+        : `http://localhost:5000${room.main_image}`;
+      images.push(url);
+    }
+
+    return images.length > 0
+      ? images
+      : [
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23f1f5f9' width='100' height='100'/%3E%3C/svg%3E",
+        ];
+  };
+
+  const allImages = getAllImages();
+  const currentImage = allImages[currentImageIndex];
+
+  const handlePreviousImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? allImages.length - 1 : prev - 1,
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === allImages.length - 1 ? 0 : prev + 1,
+    );
+  };
+
+  const handleSelectImage = (index) => {
+    setCurrentImageIndex(index);
+  };
 
   const getAmenityIcon = (amenity) => {
     const key = amenity.toLowerCase();
     return AMENITY_ICONS[key] || "fa-solid fa-check";
-  };
-
-  const getImageUrl = () => {
-    const main = room.main_image || room.images?.[0];
-    if (!main) return "";
-
-    // If it's already a full URL, return as-is
-    if (main.startsWith("http")) return main;
-
-    // Otherwise, prepend API base URL
-    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    return apiBase.replace("/api", "") + main;
   };
 
   const handlePayment = async () => {
@@ -257,10 +396,10 @@ const RoomDetailsModal = ({ room, onClose }) => {
     <Backdrop onClick={onClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
         <ImageSection>
-          {!imgError && getImageUrl() ? (
+          {!imgError && currentImage ? (
             <img
-              src={getImageUrl()}
-              alt={room.title}
+              src={currentImage}
+              alt={`${room.title} - Photo ${currentImageIndex + 1}`}
               onError={() => setImgError(true)}
             />
           ) : (
@@ -277,10 +416,48 @@ const RoomDetailsModal = ({ room, onClose }) => {
                 fontWeight: "900",
               }}
             >
-              <i className="fa-solid fa-image" style={{ fontSize: "48px" }}></i>
+              <i className="fa-solid fa-image" style={{ fontSize: "48px" }} />
             </div>
           )}
+
+          {allImages.length > 1 && (
+            <>
+              <ImageNav
+                className="prev"
+                onClick={handlePreviousImage}
+                disabled={allImages.length === 1}
+                title="Previous photo"
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </ImageNav>
+              <ImageNav
+                className="next"
+                onClick={handleNextImage}
+                disabled={allImages.length === 1}
+                title="Next photo"
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </ImageNav>
+              <ImageCounter>
+                {currentImageIndex + 1} / {allImages.length}
+              </ImageCounter>
+            </>
+          )}
         </ImageSection>
+
+        {allImages.length > 1 && (
+          <ImageThumbnails>
+            {allImages.map((image, index) => (
+              <Thumbnail
+                key={index}
+                src={image}
+                alt={`Thumbnail ${index + 1}`}
+                active={index === currentImageIndex}
+                onClick={() => handleSelectImage(index)}
+              />
+            ))}
+          </ImageThumbnails>
+        )}
 
         <Content>
           <Header>
@@ -347,4 +524,4 @@ const RoomDetailsModal = ({ room, onClose }) => {
   );
 };
 
-export default RoomDetailsModal;
+export default RoomDetails;

@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const { authenticate, authorize } = require("../middleware/auth");
-const { upload } = require("../middleware/upload");
+const { uploadImages } = require("../middleware/upload");
 const {
   createRoom,
   getRooms,
@@ -17,13 +17,7 @@ const {
 
 // Owner routes - MUST come before :id routes
 router.get("/owner/my-rooms", authenticate, authorize("owner"), getMyRooms);
-router.post(
-  "/",
-  authenticate,
-  authorize("owner"),
-  upload.single("mainImage"),
-  createRoom,
-);
+router.post("/", authenticate, authorize("owner"), uploadImages, createRoom);
 
 // Tenant routes - Favorites - MUST come before :id routes
 router.get("/user/favorites", authenticate, authorize("tenant"), getFavorites);
@@ -33,13 +27,7 @@ router.get("/", getRooms);
 
 // ID-based routes - MUST come after specific routes
 router.get("/:id", getRoomById);
-router.put(
-  "/:id",
-  authenticate,
-  authorize("owner"),
-  upload.single("mainImage"),
-  updateRoom,
-);
+router.put("/:id", authenticate, authorize("owner"), uploadImages, updateRoom);
 router.delete("/:id", authenticate, authorize("owner"), deleteRoom);
 router.post("/:id/favorite", authenticate, authorize("tenant"), addToFavorites);
 router.delete(

@@ -46,7 +46,11 @@ const createRoom = async (req, res) => {
       }
     }
 
-    const mainImage = req.file ? `/uploads/${req.file.filename}` : null;
+    // Get main image - use first uploaded image if available, otherwise null
+    const mainImage =
+      req.files && req.files.length > 0
+        ? `/uploads/${req.files[0].filename}`
+        : null;
 
     // Use sensible defaults for optional numeric fields
     const finalRoomType = roomType || "Single";
@@ -73,12 +77,29 @@ const createRoom = async (req, res) => {
       ],
     );
 
+    // Insert all uploaded images into room_images table
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const imageUrl = `/uploads/${file.filename}`;
+        await runQuery(
+          "INSERT INTO room_images (room_id, image_url) VALUES (?, ?)",
+          [result.id, imageUrl],
+        );
+      }
+    }
+
     const room = await getOne("SELECT * FROM rooms WHERE id = ?", [result.id]);
 
     // Parse amenities back before returning
     if (room && room.amenities) {
       room.amenities = JSON.parse(room.amenities);
     }
+
+    // Fetch all images for the new room
+    const images = await getAll("SELECT * FROM room_images WHERE room_id = ?", [
+      result.id,
+    ]);
+    room.images = images;
 
     return res.status(201).json({ message: "Room created successfully", room });
   } catch (error) {
@@ -185,10 +206,20 @@ const getRooms = async (req, res) => {
 
     const { total } = await getOne(countQuery, countParams);
 
-    const roomsWithParsedData = rooms.map((room) => ({
-      ...room,
-      amenities: room.amenities ? JSON.parse(room.amenities) : [],
-    }));
+    // Fetch images for each room
+    const roomsWithParsedData = await Promise.all(
+      rooms.map(async (room) => {
+        const images = await getAll(
+          "SELECT * FROM room_images WHERE room_id = ?",
+          [room.id],
+        );
+        return {
+          ...room,
+          amenities: room.amenities ? JSON.parse(room.amenities) : [],
+          images: images || [],
+        };
+      }),
+    );
 
     return res.json({
       rooms: roomsWithParsedData,
@@ -262,10 +293,20 @@ const getMyRooms = async (req, res) => {
       [req.user.id],
     );
 
-    const roomsWithParsedData = rooms.map((room) => ({
-      ...room,
-      amenities: room.amenities ? JSON.parse(room.amenities) : [],
-    }));
+    // Fetch images for each room
+    const roomsWithParsedData = await Promise.all(
+      rooms.map(async (room) => {
+        const images = await getAll(
+          "SELECT * FROM room_images WHERE room_id = ?",
+          [room.id],
+        );
+        return {
+          ...room,
+          amenities: room.amenities ? JSON.parse(room.amenities) : [],
+          images: images || [],
+        };
+      }),
+    );
 
     return res.json({ rooms: roomsWithParsedData });
   } catch (error) {
@@ -359,9 +400,21 @@ const updateRoom = async (req, res) => {
       updates.push("is_available = ?");
       values.push(isAvailable ? 1 : 0);
     }
-    if (req.file) {
+
+    // Handle multiple images
+    if (req.files && req.files.length > 0) {
+      // Update main_image to the first uploaded file
       updates.push("main_image = ?");
-      values.push(`/uploads/${req.file.filename}`);
+      values.push(`/uploads/${req.files[0].filename}`);
+
+      // Insert new images into room_images table
+      for (const file of req.files) {
+        const imageUrl = `/uploads/${file.filename}`;
+        await runQuery(
+          "INSERT INTO room_images (room_id, image_url) VALUES (?, ?)",
+          [req.params.id, imageUrl],
+        );
+      }
     }
 
     if (updates.length === 0)
@@ -381,6 +434,12 @@ const updateRoom = async (req, res) => {
     updatedRoom.amenities = updatedRoom.amenities
       ? JSON.parse(updatedRoom.amenities)
       : [];
+
+    // Fetch all images for the updated room
+    const images = await getAll("SELECT * FROM room_images WHERE room_id = ?", [
+      req.params.id,
+    ]);
+    updatedRoom.images = images;
 
     return res.json({
       message: "Room updated successfully",
@@ -491,10 +550,19 @@ const getFavorites = async (req, res) => {
       [req.user.id],
     );
 
-    const favoritesWithParsedData = favorites.map((room) => ({
-      ...room,
-      amenities: room.amenities ? JSON.parse(room.amenities) : [],
-    }));
+    const favoritesWithParsedData = await Promise.all(
+      favorites.map(async (room) => {
+        const images = await getAll(
+          "SELECT * FROM room_images WHERE room_id = ?",
+          [room.id],
+        );
+        return {
+          ...room,
+          amenities: room.amenities ? JSON.parse(room.amenities) : [],
+          images: images || [],
+        };
+      }),
+    );
 
     return res.json({ favorites: favoritesWithParsedData });
   } catch (error) {

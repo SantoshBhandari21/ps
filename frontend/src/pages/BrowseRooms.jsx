@@ -3,7 +3,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { roomsAPI, getStoredUser } from "../services/api";
-import RoomDetailsModal from "../components/RoomDetailsModal";
+import RoomDetails from "../components/RoomDetails";
 
 //Filtering options using amenities
 const AMENITIES = [
@@ -338,6 +338,22 @@ const FavBtn = styled.button`
   }
 `;
 
+const ImageBadge = styled.div`
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(4px);
+`;
+
 const CardBody = styled.div`
   padding: 14px 14px 16px;
 `;
@@ -455,7 +471,6 @@ const BrowseRooms = () => {
   //filtering fields
   const [filters, setFilters] = useState({
     priceRange: [0, 100000],
-    roomType: "all",
     amenities: [],
     bedrooms: "all",
     sortBy: "featured",
@@ -788,25 +803,6 @@ const BrowseRooms = () => {
                   </Field>
 
                   <Field>
-                    <Label>Room Type</Label>
-                    <Select
-                      value={filters.roomType}
-                      onChange={(e) => setFilter("roomType", e.target.value)}
-                    >
-                      <option value="all">All Types</option>
-                      <option value="Single">Single</option>
-                      <option value="Studio">Studio</option>
-                      <option value="1BHK">1BHK</option>
-                      <option value="2BHK">2BHK</option>
-                      <option value="3BHK">3BHK</option>
-                      <option value="4BHK">4BHK</option>
-                      <option value="Shared">Shared</option>
-                      <option value="Penthouse">Penthouse</option>
-                      <option value="Loft">Loft</option>
-                    </Select>
-                  </Field>
-
-                  <Field>
                     <Label>Bedrooms</Label>
                     <Select
                       value={filters.bedrooms}
@@ -929,7 +925,7 @@ const BrowseRooms = () => {
       </Container>
 
       {selectedRoom && (
-        <RoomDetailsModal
+        <RoomDetails
           room={selectedRoom}
           onClose={() => setSelectedRoom(null)}
         />

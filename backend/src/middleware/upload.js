@@ -44,7 +44,8 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
-// Export middleware for single file upload specific to field name
-const uploadImage = upload.single("file");
+// Export middleware for single file upload and multiple files upload
+const uploadImage = upload.single("mainImage");
+const uploadImages = upload.array("images", 10); // Max 10 images per room
 
-module.exports = { upload, uploadImage };
+module.exports = { upload, uploadImage, uploadImages };

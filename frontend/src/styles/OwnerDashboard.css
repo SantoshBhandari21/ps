@@ -327,26 +327,50 @@
 
 /* Delete Confirmation Dialog */
 .delete-confirm {
-  position: absolute;
-  bottom: -120px;
-  left: 0;
-  right: 0;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: white;
   border-radius: 12px;
-  padding: 1.2rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   animation: slideUp 0.3s ease;
-  z-index: 10;
+  z-index: 1001;
+  min-width: 350px;
+  max-width: 500px;
+  backdrop-filter: blur(4px);
+}
+
+/* Delete Overlay Backdrop */
+.delete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translate(-50%, -40%);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(-50%, -50%);
   }
 }
 

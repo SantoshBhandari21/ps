@@ -23,6 +23,7 @@ A comprehensive full-stack web application for room rental management system bui
 ## 🎯 Project Overview
 
 **Rental Platform** is a complete room rental management system that facilitates:
+
 - **Property Owners** to list and manage rental properties
 - **Tenants** to browse, book, and pay for room rentals
 - **Admins** to oversee the platform, manage users, and view analytics
@@ -34,6 +35,7 @@ The platform features a secure authentication system, payment integration via Kh
 ## 🛠️ Tech Stack
 
 ### **Frontend**
+
 - **React 18.2** - UI library for building interactive user interfaces
 - **Vite 7.1** - Fast build tool and development server
 - **React Router DOM 7.9** - tenant-side routing and navigation
@@ -45,6 +47,7 @@ The platform features a secure authentication system, payment integration via Kh
 - **ESLint** - Code quality and linting
 
 ### **Backend**
+
 - **Node.js & Express 4.18** - Server framework and HTTP utilities
 - **SQLite3 5.1** - Embedded SQL database
 - **JWT (jsonwebtoken 9.0)** - Secure authentication tokens
@@ -56,10 +59,12 @@ The platform features a secure authentication system, payment integration via Kh
 - **Nodemon 3.0** - Development auto-restart
 
 ### **Database**
+
 - **SQLite 3** - Lightweight, file-based SQL database
 - **Location**: `backend/rental.db`
 
 ### **Payment Gateway**
+
 - **Khalti Payment Gateway** - Mobile wallet and online payment solution for Nepal
 
 ---
@@ -67,6 +72,7 @@ The platform features a secure authentication system, payment integration via Kh
 ## ✨ Features
 
 ### **Tenant Features**
+
 - ✅ User registration and authentication
 - ✅ Browse available rental properties
 - ✅ View detailed room information with images
@@ -78,6 +84,7 @@ The platform features a secure authentication system, payment integration via Kh
 - ✅ Rate and review rental properties
 
 ### **Owner Features**
+
 - ✅ User registration and authentication
 - ✅ Create and manage property listings
 - ✅ Upload multiple images per property
@@ -88,6 +95,7 @@ The platform features a secure authentication system, payment integration via Kh
 - ✅ Receive notifications on new bookings
 
 ### **Admin Features**
+
 - ✅ User management (view, deactivate, verify users)
 - ✅ Property moderation
 - ✅ Transaction monitoring
@@ -101,6 +109,7 @@ The platform features a secure authentication system, payment integration via Kh
 ### **Tables**
 
 #### **users**
+
 ```
 id (PK)          - Unique user identifier
 full_name        - User's full name
@@ -115,6 +124,7 @@ updated_at       - Last update timestamp
 ```
 
 #### **rooms**
+
 ```
 id (PK)          - Unique room identifier
 owner_id (FK)    - Owner's user ID
@@ -135,6 +145,7 @@ updated_at       - Last update timestamp
 ```
 
 #### **room_images**
+
 ```
 id (PK)          - Unique image identifier
 room_id (FK)     - Associated room ID
@@ -143,6 +154,7 @@ created_at       - Upload timestamp
 ```
 
 #### **bookings**
+
 ```
 id (PK)          - Unique booking identifier
 room_id (FK)     - Room being booked
@@ -159,6 +171,7 @@ updated_at       - Last update timestamp
 ```
 
 #### **khalti_payments**
+
 ```
 id (PK)          - Unique payment record ID
 booking_id (FK)  - Associated booking ID
@@ -175,6 +188,7 @@ updated_at       - Last update timestamp
 ```
 
 #### **notifications**
+
 ```
 id (PK)          - Unique notification ID
 user_id (FK)     - Recipient user ID
@@ -186,6 +200,7 @@ created_at       - Notification timestamp
 ```
 
 #### **reviews**
+
 ```
 id (PK)          - Unique review ID
 room_id (FK)     - Reviewed room ID
@@ -196,6 +211,7 @@ created_at       - Review timestamp
 ```
 
 #### **favorites**
+
 ```
 id (PK)          - Unique favorite ID
 tenant_id (FK)   - Tenant's user ID
@@ -212,6 +228,7 @@ created_at       - Added to favorites timestamp
 The platform uses **Khalti** for secure payment processing. Khalti is a widely-used mobile wallet and online payment solution in Nepal.
 
 #### **Payment Flow**
+
 1. Tenant selects booking dates and initiates booking
 2. Booking created with status `pending_payment`
 3. Khalti payment page is displayed
@@ -225,12 +242,14 @@ The platform uses **Khalti** for secure payment processing. Khalti is a widely-u
 11. Receipt downloadable from Tenant Dashboard
 
 #### **Khalti Configuration**
+
 - **Public Key**: Used for frontend payment initiation
 - **Secret Key**: Used for backend payment verification
 - **Currency**: NPR (Nepalese Rupees)
 - **Payment Methods**: Mobile wallet, debit card, credit card
 
 #### **Payment Status Tracking**
+
 - `pending` - Payment initiated but not completed
 - `completed` - Payment successful
 - `failed` - Payment failed
@@ -291,7 +310,7 @@ rental-platform/
 │   │   │   ├── ProtectedRoute.jsx
 │   │   │   ├── NotificationBell.jsx
 │   │   │   ├── RoomForm.jsx
-│   │   │   ├── RoomDetailsModal.jsx
+│   │   │   ├── RoomDetails.jsx
 │   │   │   ├── OwnerLayout.jsx
 │   │   │   ├── RentalHistory.jsx  # Tenant rental history
 │   │   │   └── Receipts.jsx       # Payment receipts
@@ -332,6 +351,7 @@ rental-platform/
 ## 🚀 Installation & Setup
 
 ### **Prerequisites**
+
 - Node.js (v16 or higher)
 - npm (v7 or higher)
 - Git
@@ -339,16 +359,19 @@ rental-platform/
 ### **Backend Setup**
 
 1. **Navigate to backend directory**
+
    ```bash
    cd backend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Create `.env` file** in backend directory
+
    ```env
    PORT=5000
    NODE_ENV=development
@@ -364,11 +387,13 @@ rental-platform/
 ### **Frontend Setup**
 
 1. **Navigate to frontend directory**
+
    ```bash
    cd frontend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -384,20 +409,25 @@ rental-platform/
 ## ▶️ Running the Application
 
 ### **Start Backend Server**
+
 ```bash
 cd backend
 npm run dev
 ```
+
 Server runs on: `http://localhost:5000`
 
 ### **Start Frontend Development Server**
+
 ```bash
 cd frontend
 npm run dev
 ```
+
 Frontend runs on: `http://localhost:5173`
 
 ### **Build Frontend for Production**
+
 ```bash
 cd frontend
 npm run build
@@ -408,18 +438,21 @@ npm run build
 ## 🔌 API Endpoints
 
 ### **Authentication** (`/api/auth`)
+
 - `POST /register` - User registration
 - `POST /login` - User login
 - `POST /logout` - User logout
 - `GET /verify-email/:token` - Email verification
 
 ### **Users** (`/api/users`)
+
 - `GET /profile` - Get user profile
 - `PUT /profile` - Update profile
 - `GET /all` - Get all users (admin only)
 - `PUT /:id` - Update user (admin only)
 
 ### **Rooms** (`/api/rooms`)
+
 - `GET /` - Get all available rooms
 - `POST /` - Create new room (owner only)
 - `GET /:id` - Get room details
@@ -429,22 +462,26 @@ npm run build
 - `POST /:id/favorite` - Add to favorites (tenant only)
 
 ### **Rentals/Bookings** (`/api/rentals`)
+
 - `POST /` - Create booking (tenant only)
 - `GET /my-bookings` - Get user's bookings
 - `GET /:id` - Get booking details
 - `PUT /:id/status` - Update booking status (owner only)
 
 ### **Payments** (`/api/payments`)
+
 - `POST /initialize` - Initialize Khalti payment
 - `POST /verify` - Verify payment with Khalti
 - `GET /my-payments` - Get payment history (tenant only)
 - `GET /` - Get all payments (admin only)
 
 ### **Notifications** (`/api/notifications`)
+
 - `GET /` - Get user notifications
 - `PUT /:id/read` - Mark as read
 
 ### **Admin** (`/api/admin`)
+
 - `GET /stats` - Platform statistics
 - `GET /users` - All users list
 - `GET /rooms` - All rooms list
@@ -455,6 +492,7 @@ npm run build
 ## 👥 User Roles & Workflows
 
 ### **Tenant Workflow**
+
 1. Sign up with email and password
 2. Browse available rooms
 3. View room details and images
@@ -469,6 +507,7 @@ npm run build
 10. Rate and review properties
 
 ### **Owner Workflow**
+
 1. Sign up as property owner
 2. Create room listings
    - Add title, description, address
@@ -482,6 +521,7 @@ npm run build
 6. Track rental income
 
 ### **Admin Workflow**
+
 1. Access Admin Dashboard
 2. View platform statistics
 3. Manage user accounts
@@ -496,21 +536,25 @@ npm run build
 ### **Test User Accounts** (Seeded on first run)
 
 #### **Admin Account**
+
 - **Email**: `admin@rental.com`
 - **Password**: `admin123`
 - **Role**: Admin
 
 #### **Owner Account**
+
 - **Email**: `owner@rental.com`
 - **Password**: `owner123`
 - **Role**: Owner
 
 #### **Tenant Account**
+
 - **Email**: `tenant@rental.com`
 - **Password**: `tenant123`
 - **Role**: Tenant
 
 ### **Khalti Payment** (Sandbox/Test Mode)
+
 - **Test Mobile Number**: `981612345`
 - **Test PIN**: `1234`
 - **Test OTP**: `111111`
@@ -519,6 +563,7 @@ npm run build
 ### **Environment Variables Required**
 
 #### **Backend (.env)**
+
 ```
 PORT=5000
 NODE_ENV=development
@@ -530,6 +575,7 @@ KHALTI_API_URL=https://a.khalti.com/api
 ```
 
 #### **Frontend (.env)**
+
 ```
 VITE_API_BASE_URL=http://localhost:5000/api
 VITE_KHALTI_PUBLIC_KEY=test_public_key_from_khalti
@@ -540,20 +586,24 @@ VITE_KHALTI_PUBLIC_KEY=test_public_key_from_khalti
 ## 📝 Additional Information
 
 ### **Database File Location**
+
 - Path: `backend/rental.db`
 - Type: SQLite 3
 - Size: Grows with user uploads
 
 ### **File Uploads**
+
 - Directory: `backend/uploads/`
 - Supported formats: JPG, JPEG, PNG
 - Max file size: 5MB per image
 
 ### **Session Management**
+
 - JWT tokens stored in localStorage (24 hours expiry)
 - Automatic logout on token expiration
 
 ### **CORS Configuration**
+
 - Frontend Origin: `http://localhost:5173`
 - Backend allows cross-origin requests from frontend
 
@@ -568,4 +618,3 @@ For issues, questions, or contributions, please contact the development team.
 ---
 
 **Happy Renting! 🏠**
-

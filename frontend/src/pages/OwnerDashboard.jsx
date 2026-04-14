@@ -100,9 +100,16 @@ const OwnerDashboard = () => {
       setError("");
       await fetchMyRooms();
     } catch (err) {
-      const errorMsg = err.message || "Failed to delete room";
+      let errorMsg = err.message || "Failed to delete room";
       console.error("Delete room error:", errorMsg, err);
+
+      // Check if it's an active booking error
+      if (errorMsg.includes("active bookings")) {
+        errorMsg = `Cannot delete this room because it has active rental bookings. Please wait for current tenants to move out or cancel pending bookings first.`;
+      }
+
       setError(errorMsg);
+      setDeleteConfirm(null);
     }
   };
 
@@ -241,39 +248,45 @@ const OwnerDashboard = () => {
               </div>
 
               {deleteConfirm === room.id && (
-                <div className="delete-confirm">
-                  <div className="confirm-dialog">
-                    <p>
-                      <i
-                        className="fa-solid fa-exclamation-triangle"
-                        style={{ marginRight: "8px", color: "#dc2626" }}
-                      />
-                      Are you sure you want to remove this listing?
-                    </p>
-                    <div className="confirm-actions">
-                      <button
-                        className="btn-cancel"
-                        onClick={() => setDeleteConfirm(null)}
-                      >
+                <>
+                  <div
+                    className="delete-overlay"
+                    onClick={() => setDeleteConfirm(null)}
+                  />
+                  <div className="delete-confirm">
+                    <div className="confirm-dialog">
+                      <p>
                         <i
-                          className="fa-solid fa-arrow-left"
-                          style={{ marginRight: "6px" }}
+                          className="fa-solid fa-exclamation-triangle"
+                          style={{ marginRight: "8px", color: "#dc2626" }}
                         />
-                        Keep It
-                      </button>
-                      <button
-                        className="btn-confirm"
-                        onClick={() => handleDeleteRoom(room.id)}
-                      >
-                        <i
-                          className="fa-solid fa-check"
-                          style={{ marginRight: "6px" }}
-                        />
-                        Remove
-                      </button>
+                        Are you sure you want to remove this listing?
+                      </p>
+                      <div className="confirm-actions">
+                        <button
+                          className="btn-cancel"
+                          onClick={() => setDeleteConfirm(null)}
+                        >
+                          <i
+                            className="fa-solid fa-arrow-left"
+                            style={{ marginRight: "6px" }}
+                          />
+                          Keep It
+                        </button>
+                        <button
+                          className="btn-confirm"
+                          onClick={() => handleDeleteRoom(room.id)}
+                        >
+                          <i
+                            className="fa-solid fa-check"
+                            style={{ marginRight: "6px" }}
+                          />
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           ))}
