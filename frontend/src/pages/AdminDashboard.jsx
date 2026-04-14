@@ -51,6 +51,14 @@ export default function AdminDashboard() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  // Confirmation modal state for user status
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    userId: null,
+    currentStatus: null,
+    userName: "",
+  });
+
   // Normalize role to lowercase
   const normalizeRole = (role) =>
     String(role || "")
@@ -189,22 +197,42 @@ export default function AdminDashboard() {
   }, [users, userFilter]);
 
   // Handle activate/deactivate user
-  const handleToggleUserStatus = async (userId, isCurrentlyActive) => {
+  const handleToggleUserStatus = async (
+    userId,
+    isCurrentlyActive,
+    userName,
+  ) => {
+    setConfirmModal({
+      show: true,
+      userId,
+      currentStatus: isCurrentlyActive,
+      userName,
+    });
+  };
+
+  // Confirm status change
+  const confirmStatusChange = async () => {
+    const { userId, currentStatus } = confirmModal;
     setActionLoading(userId);
     try {
       await usersAPI.updateUser(userId, {
-        isActive: !isCurrentlyActive,
+        isActive: !currentStatus,
       });
-      // Update local state
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === userId ? { ...u, is_active: isCurrentlyActive ? 0 : 1 } : u,
+          u.id === userId ? { ...u, is_active: currentStatus ? 0 : 1 } : u,
         ),
       );
+      setConfirmModal({
+        show: false,
+        userId: null,
+        currentStatus: null,
+        userName: "",
+      });
     } catch (err) {
       console.error("Error toggling user status:", err);
       alert(
-        `Failed to ${isCurrentlyActive ? "deactivate" : "activate"} user: ${err.message}`,
+        `Failed to ${currentStatus ? "deactivate" : "activate"} user: ${err.message}`,
       );
     } finally {
       setActionLoading(null);
@@ -477,7 +505,11 @@ export default function AdminDashboard() {
                                   <ActionButton
                                     $danger={isActive}
                                     onClick={() =>
-                                      handleToggleUserStatus(u.id, isActive)
+                                      handleToggleUserStatus(
+                                        u.id,
+                                        isActive,
+                                        u.full_name,
+                                      )
                                     }
                                     disabled={actionLoading === u.id}
                                   >
@@ -671,14 +703,14 @@ export default function AdminDashboard() {
                         <CardHint>All listed rooms</CardHint>
                       </Card>
                       <Card>
-                        <CardLabel>Total Bookings</CardLabel>
+                        <CardLabel>Rooms on Rent</CardLabel>
                         <CardValue>{stats.bookings?.total ?? 0}</CardValue>
                         <CardHint>All bookings</CardHint>
                       </Card>
                       <Card>
-                        <CardLabel>Total Reviews</CardLabel>
-                        <CardValue>{stats.reviews?.total ?? 0}</CardValue>
-                        <CardHint>Platform reviews</CardHint>
+                        <CardLabel>Payments Done</CardLabel>
+                        <CardValue>{stats.payments?.total ?? 0}</CardValue>
+                        <CardHint>Total payments processed</CardHint>
                       </Card>
                     </Grid>
 
@@ -900,6 +932,44 @@ export default function AdminDashboard() {
       </Layout>
 
       {sidebarOpen && <Overlay onClick={() => setSidebarOpen(false)} />}
+
+      {/* Confirmation Modal */}
+      {confirmModal.show && (
+        <Modal>
+          <ModalContent>
+            <ModalTitle>
+              {confirmModal.currentStatus ? "Deactivate User" : "Activate User"}
+            </ModalTitle>
+            <ModalBody>
+              <p>
+                {confirmModal.currentStatus
+                  ? `Are you sure you want to deactivate ${confirmModal.userName}? They will be notified: "after reviewing your activity, we have confirmed your involvement on a suspicious act. to reactivate your account, contact admin asap."`
+                  : `Are you sure you want to activate ${confirmModal.userName}? They will be notified: "your account is activated successfully"`}
+              </p>
+            </ModalBody>
+            <ModalActions>
+              <CancelBtn
+                onClick={() =>
+                  setConfirmModal({
+                    show: false,
+                    userId: null,
+                    currentStatus: null,
+                    userName: "",
+                  })
+                }
+              >
+                Cancel
+              </CancelBtn>
+              <ConfirmBtn
+                $danger={confirmModal.currentStatus}
+                onClick={confirmStatusChange}
+              >
+                {confirmModal.currentStatus ? "Deactivate" : "Activate"}
+              </ConfirmBtn>
+            </ModalActions>
+          </ModalContent>
+        </Modal>
+      )}
     </Page>
   );
 }
@@ -1402,5 +1472,77 @@ const Overlay = styled.div`
 
   @media (min-width: 961px) {
     display: none;
+  }
+`;
+
+const Modal = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+`;
+
+const ModalContent = styled.div`
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalTitle = styled.h2`
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-size: 18px;
+`;
+
+const ModalBody = styled.div`
+  margin-bottom: 20px;
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+`;
+
+const CancelBtn = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #e7edf5;
+  background: #ffffff;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+`;
+
+const ConfirmBtn = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: ${(p) => (p.$danger ? "#ef4444" : "#22c55e")};
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${(p) => (p.$danger ? "#dc2626" : "#16a34a")};
   }
 `;

@@ -1,6 +1,7 @@
 // src/controllers/adminController.js
 const { runQuery, getOne, getAll } = require("../config/database");
 const bcrypt = require("bcryptjs");
+const { createNotification } = require("./notificationController");
 
 /**
  * GET /api/admin/users?role=&search=&page=&limit=
@@ -198,6 +199,13 @@ const updateUser = async (req, res) => {
     updates.push("updated_at = CURRENT_TIMESTAMP");
     values.push(req.params.id);
 
+    // Get user before update to check status change
+    const userBefore = await getOne(
+      "SELECT id, full_name, email, is_active FROM users WHERE id = ?",
+      [req.params.id],
+    );
+    if (!userBefore) return res.status(404).json({ message: "User not found" });
+
     await runQuery(
       `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
       values,
@@ -207,6 +215,20 @@ const updateUser = async (req, res) => {
       "SELECT id, full_name, email, role, is_verified, is_active, created_at FROM users WHERE id = ?",
       [req.params.id],
     );
+
+    // Send notification if status changed
+    if (isActive !== undefined && userBefore.is_active !== (isActive ? 1 : 0)) {
+      const message = isActive
+        ? "your account is activated successfully"
+        : "after reviewing your activity, we have confirmed your involvement on a suspicious act. to reactivate your account, contact admin asap.";
+
+      await createNotification(
+        req.params.id,
+        isActive ? "account_activated" : "account_deactivated",
+        isActive ? "Account Activated" : "Account Deactivated",
+        message,
+      );
+    }
 
     return res.json({
       message: "User updated successfully",
@@ -317,8 +339,10 @@ const getAdminStats = async (req, res) => {
     );
 
     const rowReviews = await getOne(
-      "SELECT COUNT(*) as total_reviews FROM reviews",
+      "SELECT COUNT(*) as total_payments FROM khalti_payments WHERE pidx IS NOT NULL AND transaction_id IS NOT NULL",
     );
+
+    console.log("Payments query result:", rowReviews);
 
     // Room price statistics
     const rowAvgPrice = await getOne(
@@ -375,8 +399,8 @@ const getAdminStats = async (req, res) => {
           pending: rowPending?.pending_bookings ?? 0,
           approved: rowApproved?.approved_bookings ?? 0,
         },
-        reviews: {
-          total: rowReviews?.total_reviews ?? 0,
+        payments: {
+          total: rowReviews?.total_payments ?? 0,
         },
       },
       recentUsers,
@@ -588,7 +612,7 @@ const getAllPayments = async (req, res) => {
       LEFT JOIN users u ON kp.user_id = u.id
       LEFT JOIN bookings b ON kp.booking_id = b.id
       LEFT JOIN rooms r ON b.room_id = r.id
-      WHERE 1=1
+      WHERE kp.status = 'completed'
     `;
     const params = [];
 
@@ -608,7 +632,7 @@ const getAllPayments = async (req, res) => {
     const payments = await getAll(query, params);
 
     let countQuery =
-      "SELECT COUNT(*) as total FROM khalti_payments kp LEFT JOIN users u ON kp.user_id = u.id LEFT JOIN bookings b ON kp.booking_id = b.id LEFT JOIN rooms r ON b.room_id = r.id WHERE 1=1";
+      "SELECT COUNT(*) as total FROM khalti_payments kp LEFT JOIN users u ON kp.user_id = u.id LEFT JOIN bookings b ON kp.booking_id = b.id LEFT JOIN rooms r ON b.room_id = r.id WHERE kp.status = 'completed'";
     const countParams = [];
     if (search) {
       countQuery +=
