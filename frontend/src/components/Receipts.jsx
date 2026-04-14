@@ -1,704 +1,385 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 import { paymentsAPI } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
-const Receipts = () => {
-  const [payments, setPayments] = useState([]);
+// List Styles
+const Container = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+`;
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+  p {
+    font-size: 16px;
+    margin: 0;
+  }
+`;
+const ReceiptsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+`;
+const ReceiptCard = styled.div`
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  &:hover {
+    border-color: rgba(53, 121, 197, 1);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  }
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+  }
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+`;
+const RoomTitle = styled.h3`
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+const CardInfo = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
+const Amount = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+  color: #2563eb;
+  white-space: nowrap;
+  text-align: right;
+  @media (max-width: 768px) {
+    text-align: left;
+  }
+`;
+const LoadingText = styled.p`
+  text-align: center;
+  color: #64748b;
+  padding: 40px 20px;
+  font-size: 15px;
+`;
+
+// Detail Styles
+const Page = styled.div`
+  padding: 30px 16px;
+  background: #f1f5f9;
+  min-height: 100vh;
+`;
+const Controls = styled.div`
+  max-width: 480px;
+  margin: 0 auto 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  @media print {
+    display: none;
+  }
+`;
+const Btn = styled.button`
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+const PrimaryBtn = styled(Btn)`
+  background: rgba(53, 121, 197, 1);
+  color: white;
+`;
+const SecondaryBtn = styled(Btn)`
+  background: white;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+`;
+const ReceiptBox = styled.div`
+  max-width: 480px;
+  margin: 0 auto;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
+`;
+const Logo = styled.img`
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 16px;
+`;
+const Header = styled.div`
+  text-align: center;
+  margin-bottom: 16px;
+`;
+const Title = styled.h1`
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #0f172a;
+`;
+const Divider = styled.div`
+  border-top: 1px dashed #cbd5e1;
+  margin: 12px 0;
+`;
+const Section = styled.div`
+  margin-bottom: 12px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+const SectionTitle = styled.p`
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+const InfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  span:first-child {
+    color: #64748b;
+  }
+  span:last-child {
+    color: #1e293b;
+    font-weight: 500;
+  }
+`;
+const AmountBox = styled.div`
+  padding: 12px 0;
+  border-top: 1px dashed #cbd5e1;
+  border-bottom: 1px dashed #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 700;
+  span:last-child {
+    color: #2563eb;
+  }
+`;
+const Footer = styled.div`
+  text-align: center;
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 12px;
+`;
+
+function Receipts() {
+  const { user } = useAuth();
+  const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    fetchPayments();
+    fetchReceipts();
   }, []);
 
-  const fetchPayments = async () => {
+  const fetchReceipts = async () => {
     try {
       setLoading(true);
-      setError("");
       const data = await paymentsAPI.getMyPayments();
-      // Sort payments by created_at in descending order (newest first)
-      const sortedPayments = (data.payments || []).sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      const successful = (data.payments || []).filter(
+        (r) => r.status === "completed",
       );
-      setPayments(sortedPayments);
+      setReceipts(successful);
     } catch (err) {
-      console.error("Error fetching payments:", err);
-      setError(err.message || "Failed to load receipts");
+      console.error("Error fetching receipts:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "completed":
-        return "status-completed";
-      case "pending":
-        return "status-pending";
-      case "initiated":
-        return "status-initiated";
-      case "failed":
-        return "status-failed";
-      case "cancelled":
-        return "status-cancelled";
-      default:
-        return "status-default";
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "pending":
-        return "Pending";
-      case "initiated":
-        return "Initiated";
-      case "failed":
-        return "Failed";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return status;
-    }
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString("en-NP", {
       year: "numeric",
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
+
+  const formatDateTime = (dateStr) => {
+    const date = new Date(dateStr);
+    return `${date.toLocaleDateString("en-NP")} at ${date.toLocaleTimeString(
+      "en-NP",
+      { hour: "2-digit", minute: "2-digit" },
+    )}`;
   };
 
-  const downloadReceipt = (payment) => {
-    const receiptContent = `
-=====================================
-        PAYMENT RECEIPT
-=====================================
-
-Room ID: #${payment.room_id}
-Room: ${payment.room_title}
-Location: ${payment.room_location}
-
-Owner: ${payment.owner_name}
-Email: ${payment.owner_email}
-
-===== RENTAL DETAILS =====
-Move-in: ${new Date(payment.move_in_date).toLocaleDateString()}
-Move-out: ${new Date(payment.move_out_date).toLocaleDateString()}
-
-===== PAYMENT DETAILS =====
-Amount: Rs. ${payment.amount}
-Payment Method: ${payment.payment_method || "Khalti"}
-Transaction ID: ${payment.transaction_id || "N/A"}
-Status: ${getStatusLabel(payment.status)}
-
-Payment Date: ${formatDate(payment.created_at)}
-
-=====================================
-    Thank you for your payment!
-=====================================
-    `;
-
-    const element = document.createElement("a");
-    element.setAttribute(
-      "href",
-      "data:text/plain;charset=utf-8," + encodeURIComponent(receiptContent),
-    );
-    element.setAttribute("download", `receipt-${payment.id}.txt`);
-    element.style.display = "none";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleDownloadPDF = async () => {
+    try {
+      setIsDownloading(true);
+      const element = document.querySelector("[data-receipt]");
+      if (!element) return;
+      const html2pdf = (await import("html2pdf.js")).default;
+      html2pdf()
+        .set({
+          margin: 10,
+          filename: `Receipt-${selected.id}.pdf`,
+          image: { type: "png", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+        })
+        .from(element)
+        .save();
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
-  const printReceipt = (payment) => {
-    const printWindow = window.open("", "", "width=600,height=800");
-    const receiptHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Payment Receipt</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .receipt { max-width: 600px; margin: 0 auto; border: 1px solid #ccc; padding: 20px; }
-          .header { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
-          .section { margin-bottom: 20px; }
-          .section-title { font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #999; }
-          .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-          .label { font-weight: 600; }
-          .footer { text-align: center; margin-top: 20px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="receipt">
-          <div class="header">PAYMENT RECEIPT</div>
-          
-          <div class="section">
-            <div class="section-title">Room Details</div>
-            <div class="row">
-              <span class="label">Room ID:</span>
-              <span>#${payment.room_id}</span>
-            </div>
-            <div class="row">
-              <span class="label">Room:</span>
-              <span>${payment.room_title}</span>
-            </div>
-            <div class="row">
-              <span class="label">Location:</span>
-              <span>${payment.room_location}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Owner Information</div>
-            <div class="row">
-              <span class="label">Name:</span>
-              <span>${payment.owner_name}</span>
-            </div>
-            <div class="row">
-              <span class="label">Email:</span>
-              <span>${payment.owner_email}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Rental Period</div>
-            <div class="row">
-              <span class="label">Move-in:</span>
-              <span>${new Date(payment.move_in_date).toLocaleDateString()}</span>
-            </div>
-            <div class="row">
-              <span class="label">Move-out:</span>
-              <span>${new Date(payment.move_out_date).toLocaleDateString()}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Payment Information</div>
-            <div class="row">
-              <span class="label">Amount:</span>
-              <span>Rs. ${payment.amount}</span>
-            </div>
-            <div class="row">
-              <span class="label">Method:</span>
-              <span>${payment.payment_method || "Khalti"}</span>
-            </div>
-            <div class="row">
-              <span class="label">Transaction ID:</span>
-              <span>${payment.transaction_id || "N/A"}</span>
-            </div>
-            <div class="row">
-              <span class="label">Status:</span>
-              <span style="color: ${payment.status === "completed" ? "green" : "orange"}; font-weight: bold;">
-                ${getStatusLabel(payment.status)}
-              </span>
-            </div>
-            <div class="row">
-              <span class="label">Date:</span>
-              <span>${formatDate(payment.created_at)}</span>
-            </div>
-          </div>
-
-          <div class="footer">
-            <p>Thank you for your payment!</p>
-            <p style="font-size: 12px; color: #999;">Generated on ${new Date().toLocaleString()}</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-    printWindow.document.write(receiptHTML);
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  if (loading) {
+  if (selected) {
     return (
-      <div className="receipts-container">
-        <div className="loading">Loading your receipts...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="receipts-container">
-        <div className="error-message">{error}</div>
-      </div>
+      <Page>
+        <Controls>
+          <PrimaryBtn onClick={handleDownloadPDF} disabled={isDownloading}>
+            Download Reciept
+          </PrimaryBtn>
+          <SecondaryBtn onClick={() => setSelected(null)}>← Back</SecondaryBtn>
+        </Controls>
+        <ReceiptBox data-receipt>
+          <Header>
+            <Logo src="/logo.png" alt="Logo" />
+            <Title>Payment Receipt</Title>
+          </Header>
+          <Divider />
+          <Section>
+            <SectionTitle>Tenant Information</SectionTitle>
+            <InfoRow>
+              <span>Name</span>
+              <span>{selected.tenant_name || user?.full_name || "N/A"}</span>
+            </InfoRow>
+          </Section>
+          <Divider />
+          <Section>
+            <SectionTitle>Room Details</SectionTitle>
+            <InfoRow>
+              <span>Room ID</span>
+              <span>#{selected.room_id}</span>
+            </InfoRow>
+            <InfoRow>
+              <span>Room Title</span>
+              <span>{selected.room_title}</span>
+            </InfoRow>
+            <InfoRow>
+              <span>Location</span>
+              <span>{selected.room_location}</span>
+            </InfoRow>
+          </Section>
+          <Divider />
+          <Section>
+            <SectionTitle>Rental Period</SectionTitle>
+            <InfoRow>
+              <span>Move In</span>
+              <span>{formatDate(selected.move_in_date)}</span>
+            </InfoRow>
+            <InfoRow>
+              <span>Move Out</span>
+              <span>{formatDate(selected.move_out_date)}</span>
+            </InfoRow>
+          </Section>
+          <Divider />
+          <Section>
+            <SectionTitle>Payment Details</SectionTitle>
+            <InfoRow>
+              <span>Amount</span>
+              <span>Rs {selected.amount}</span>
+            </InfoRow>
+            <InfoRow>
+              <span>Method</span>
+              <span>{selected.payment_method || "Khalti"}</span>
+            </InfoRow>
+            <InfoRow>
+              <span>Date & Time</span>
+              <span>{formatDateTime(selected.created_at)}</span>
+            </InfoRow>
+          </Section>
+          <Divider />
+          <Section>
+            <AmountBox>
+              <span>Total Amount Paid</span>
+              <span>Rs {selected.amount}</span>
+            </AmountBox>
+          </Section>
+          <Footer>
+            <p style={{ margin: "12px 0 0" }}>
+              VAT is already included in the amount. For refunds, contact your
+              Administrator. Thank you for using our service!
+            </p>
+            <p
+              style={{ margin: "4px 0 0", fontSize: "11px", color: "#94a3b8" }}
+            >
+              Generated on {formatDate(new Date())}
+            </p>
+          </Footer>
+        </ReceiptBox>
+        <style>{`
+          @media print {
+            body { background: white; }
+            [data-receipt] { box-shadow: none; border: none; }
+          }
+        `}</style>
+      </Page>
     );
   }
 
   return (
-    <div className="receipts-container">
-      <div className="receipts-header">
-        <h2>Payment Receipts</h2>
-        <p>View and download your payment receipts for room rentals</p>
-      </div>
-
-      {payments.length === 0 ? (
-        <div className="empty-state">
-          <p>
-            No payment receipts found. Start by making a payment for a room
-            rental.
-          </p>
-        </div>
+    <Container>
+      {loading ? (
+        <LoadingText>Loading receipts...</LoadingText>
+      ) : receipts.length === 0 ? (
+        <EmptyState>
+          <p>No payment receipts yet</p>
+        </EmptyState>
       ) : (
-        <div className="receipts-list">
-          {payments.map((payment) => (
-            <div key={payment.id} className="receipt-card">
-              <div className="receipt-header">
-                <div className="receipt-title">
-                  <h3>{payment.room_title}</h3>
-                  <p className="receipt-subtitle">
-                    Room ID: #{payment.room_id}
-                  </p>
-                </div>
-                <span
-                  className={`status-badge ${getStatusColor(payment.status)}`}
-                >
-                  {getStatusLabel(payment.status)}
-                </span>
-              </div>
-
-              <div className="receipt-content">
-                {/* Room Info */}
-                <div className="receipt-section">
-                  <h4 className="section-title">Room Information</h4>
-                  <div className="info-row">
-                    <span className="info-label">Location:</span>
-                    <span className="info-value">{payment.room_location}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Owner:</span>
-                    <span className="info-value">{payment.owner_name}</span>
-                  </div>
-                </div>
-
-                {/* Rental Period */}
-                <div className="receipt-section">
-                  <h4 className="section-title">Rental Period</h4>
-                  <div className="date-row">
-                    <div className="date-item">
-                      <span className="info-label">From:</span>
-                      <span className="info-value">
-                        {new Date(payment.move_in_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="date-item">
-                      <span className="info-label">To:</span>
-                      <span className="info-value">
-                        {new Date(payment.move_out_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Details */}
-                <div className="receipt-section payment-highlight">
-                  <h4 className="section-title">Payment Details</h4>
-                  <div className="amount-row">
-                    <span className="amount-label">Amount Paid:</span>
-                    <span className="amount-value">Rs. {payment.amount}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Method:</span>
-                    <span className="info-value">
-                      {payment.payment_method || "Khalti"}
-                    </span>
-                  </div>
-                  {payment.transaction_id && (
-                    <div className="info-row">
-                      <span className="info-label">Transaction ID:</span>
-                      <span className="info-value text-mono">
-                        {payment.transaction_id}
-                      </span>
-                    </div>
-                  )}
-                  <div className="info-row">
-                    <span className="info-label">Date:</span>
-                    <span className="info-value">
-                      {formatDate(payment.created_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="receipt-actions">
-                <button
-                  className="action-btn download-btn"
-                  onClick={() => downloadReceipt(payment)}
-                  title="Download receipt as text file"
-                >
-                  <i
-                    className="fa-solid fa-download"
-                    style={{ marginRight: "6px" }}
-                  />{" "}
-                  Download
-                </button>
-                <button
-                  className="action-btn print-btn"
-                  onClick={() => printReceipt(payment)}
-                  title="Print receipt"
-                >
-                  <i
-                    className="fa-solid fa-print"
-                    style={{ marginRight: "6px" }}
-                  />{" "}
-                  Print
-                </button>
-              </div>
-            </div>
+        <ReceiptsList>
+          {receipts.map((receipt) => (
+            <ReceiptCard key={receipt.id} onClick={() => setSelected(receipt)}>
+              <RoomTitle>{receipt.room_title}</RoomTitle>
+              <CardInfo>{receipt.room_location}</CardInfo>
+              <CardInfo>
+                {new Date(receipt.move_in_date).toLocaleDateString()} -{" "}
+                {new Date(receipt.move_out_date).toLocaleDateString()}
+              </CardInfo>
+              <Amount>Rs {receipt.amount}</Amount>
+            </ReceiptCard>
           ))}
-        </div>
+        </ReceiptsList>
       )}
-    </div>
+    </Container>
   );
-};
+}
 
 export default Receipts;
-
-const receiptsStyles = `
-.receipts-container {
-  padding: 40px 20px;
-  background-color: #f1f5f9;
-  min-height: 100vh;
-}
-
-.receipts-header {
-  max-width: 1200px;
-  margin: 0 auto 40px;
-  text-align: center;
-}
-
-.receipts-header h2 {
-  font-size: 32px;
-  font-weight: 900;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-
-.receipts-header p {
-  font-size: 15px;
-  color: #64748b;
-}
-
-/* Receipts List */
-.receipts-list {
-  max-width: 900px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Receipt Card */
-.receipt-card {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  border-left: 4px solid #cbd5e1;
-}
-
-.receipt-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateX(4px);
-}
-
-.receipt-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  gap: 12px;
-}
-
-.receipt-title h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.receipt-subtitle {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-completed {
-  background-color: #bbf7d0;
-  color: #065f46;
-}
-
-.status-pending {
-  background-color: #fed7aa;
-  color: #b45309;
-}
-
-.status-initiated {
-  background-color: #bfdbfe;
-  color: #1e40af;
-}
-
-.status-failed {
-  background-color: #fecaca;
-  color: #7f1d1d;
-}
-
-.status-cancelled {
-  background-color: #e5e7eb;
-  color: #374151;
-}
-
-.status-default {
-  background-color: #e5e7eb;
-  color: #4b5563;
-}
-
-/* Receipt Content */
-.receipt-content {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.receipt-section {
-  margin-bottom: 16px;
-}
-
-.receipt-section:last-child {
-  margin-bottom: 0;
-}
-
-.section-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
-  display: block;
-}
-
-/* Info Rows */
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.info-label {
-  color: #64748b;
-  font-weight: 600;
-}
-
-.info-value {
-  color: #1e293b;
-  font-weight: 600;
-  text-align: right;
-}
-
-.info-value.text-mono {
-  font-family: "Courier New", monospace;
-  font-size: 12px;
-}
-
-/* Date Row */
-.date-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.date-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.date-item .info-label {
-  display: block;
-}
-
-.date-item .info-value {
-  text-align: left;
-}
-
-/* Amount Row */
-.amount-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  background-color: #f0f4f8;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.amount-label {
-  font-size: 13px;
-  color: #475569;
-  font-weight: 600;
-}
-
-.amount-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: #64748b;
-}
-
-/* Payment Highlight Section */
-.payment-highlight {
-  background-color: #fafbfc;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-}
-
-/* Receipt Actions */
-.receipt-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.action-btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.download-btn {
-  background-color: #64748b;
-  color: white;
-}
-
-.download-btn:hover {
-  background-color: #475569;
-  box-shadow: 0 2px 8px rgba(71, 85, 105, 0.3);
-}
-
-.print-btn {
-  background-color: #64748b;
-  color: white;
-}
-
-.print-btn:hover {
-  background-color: #475569;
-  box-shadow: 0 2px 8px rgba(71, 85, 105, 0.3);
-}
-
-/* Empty State */
-.empty-state {
-  max-width: 900px;
-  margin: 0 auto;
-  text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.empty-state p {
-  font-size: 15px;
-  color: #64748b;
-}
-
-/* Loading State */
-.loading {
-  max-width: 900px;
-  margin: 0 auto;
-  text-align: center;
-  padding: 40px;
-  font-size: 15px;
-  color: #64748b;
-}
-
-.error-message {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #fee2e2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #991b1b;
-  font-size: 14px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .receipts-container {
-    padding: 20px 16px;
-  }
-
-  .receipts-header h2 {
-    font-size: 24px;
-  }
-
-  .receipt-card {
-    padding: 20px;
-  }
-
-  .receipt-header {
-    flex-direction: column;
-  }
-
-  .receipt-actions {
-    flex-direction: column;
-  }
-
-  .action-btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .receipts-header h2 {
-    font-size: 20px;
-  }
-
-  .receipt-card {
-    padding: 16px;
-  }
-
-  .receipt-title h3 {
-    font-size: 18px;
-  }
-
-  .date-row {
-    grid-template-columns: 1fr;
-  }
-}
-`;
-
-if (typeof document !== "undefined") {
-  const styleSheet = document.createElement("style");
-  styleSheet.textContent = receiptsStyles;
-  document.head.appendChild(styleSheet);
-}

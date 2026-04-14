@@ -65,22 +65,17 @@ const Input = styled.input`
   ${controlFocus}
 `;
 
-const FilterBtn = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
+const SortSelect = styled.select`
+  width: 100%;
+  padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #cbd5e1;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   color: #0f172a;
-  font-weight: 800;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    background: #fff;
-    border-color: #94a3b8;
-  }
+  ${controlFocus}
 `;
 
 const Container = styled.div`
@@ -118,87 +113,6 @@ const Info = styled.div`
   color: #475569;
   font-size: 13px;
   margin-bottom: 10px;
-`;
-
-const ViewToggle = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const IconBtn = styled.button`
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  background: ${(p) => (p.$active ? "#2563eb" : "white")};
-  color: ${(p) => (p.$active ? "white" : "#0f172a")};
-  cursor: pointer;
-  &:hover {
-    border-color: #94a3b8;
-  }
-`;
-
-const FiltersPanel = styled.div`
-  margin-top: 12px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
-`;
-
-const FiltersHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-`;
-
-const FiltersTitle = styled.div`
-  font-weight: 900;
-  color: #0f172a;
-`;
-
-const CloseBtn = styled.button`
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: #f1f5f9;
-  cursor: pointer;
-  &:hover {
-    background: #e2e8f0;
-  }
-`;
-
-const FiltersGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  @media (max-width: 1000px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (max-width: 520px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const Field = styled.div``;
-
-const Label = styled.label`
-  display: block;
-  font-size: 12px;
-  font-weight: 800;
-  color: #475569;
-  margin-bottom: 6px;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
-  ${controlFocus}
 `;
 
 const GridWrap = styled.div`
@@ -313,10 +227,8 @@ const RentalHistory = () => {
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [viewMode, setViewMode] = useState("grid");
-  const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({ status: "all", sortBy: "recent" });
+  const [sortBy, setSortBy] = useState("recent");
 
   useEffect(() => {
     (async () => {
@@ -336,19 +248,17 @@ const RentalHistory = () => {
 
   const filteredRentals = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return rentals.filter((r) => {
-      const search =
+    return rentals.filter(
+      (r) =>
         r.title.toLowerCase().includes(q) ||
         r.location.toLowerCase().includes(q) ||
-        r.owner_name.toLowerCase().includes(q);
-      const status = filters.status === "all" || r.status === filters.status;
-      return search && status;
-    });
-  }, [searchQuery, filters.status, rentals]);
+        r.owner_name.toLowerCase().includes(q),
+    );
+  }, [searchQuery, rentals]);
 
   const sortedRentals = useMemo(() => {
     const list = [...filteredRentals];
-    switch (filters.sortBy) {
+    switch (sortBy) {
       case "recent":
         return list.sort(
           (a, b) => new Date(b.move_in_date) - new Date(a.move_in_date),
@@ -364,7 +274,7 @@ const RentalHistory = () => {
       default:
         return list;
     }
-  }, [filteredRentals, filters.sortBy]);
+  }, [filteredRentals, sortBy]);
 
   const formatDate = (dateString) =>
     new Date(dateString).toLocaleDateString("en-US", {
@@ -441,62 +351,16 @@ const RentalHistory = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </InputWrap>
-              <div></div>
-              <FilterBtn
-                type="button"
-                onClick={() => setShowFilters((s) => !s)}
+              <SortSelect
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
               >
-                <i
-                  className="fa-solid fa-filter"
-                  style={{ fontSize: "18px", marginRight: "8px" }}
-                />
-                Filters
-              </FilterBtn>
+                <option value="recent">Most Recent</option>
+                <option value="oldest">Oldest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+              </SortSelect>
             </SearchGrid>
-
-            {showFilters && (
-              <FiltersPanel>
-                <FiltersHeader>
-                  <FiltersTitle>Filters</FiltersTitle>
-                  <CloseBtn type="button" onClick={() => setShowFilters(false)}>
-                    <i className="fa-solid fa-xmark" />
-                  </CloseBtn>
-                </FiltersHeader>
-                <FiltersGrid>
-                  <Field>
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      id="status"
-                      value={filters.status}
-                      onChange={(e) =>
-                        setFilters((p) => ({ ...p, status: e.target.value }))
-                      }
-                    >
-                      <option value="all">All</option>
-                      <option value="pending_payment">Pending Payment</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </Select>
-                  </Field>
-                  <Field>
-                    <Label htmlFor="sortBy">Sort By</Label>
-                    <Select
-                      id="sortBy"
-                      value={filters.sortBy}
-                      onChange={(e) =>
-                        setFilters((p) => ({ ...p, sortBy: e.target.value }))
-                      }
-                    >
-                      <option value="recent">Most Recent</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="price-low">Price: Low to High</option>
-                      <option value="price-high">Price: High to Low</option>
-                    </Select>
-                  </Field>
-                </FiltersGrid>
-              </FiltersPanel>
-            )}
           </SearchInner>
         </SearchPanel>
       </StickyTop>
@@ -521,37 +385,15 @@ const RentalHistory = () => {
                   {sortedRentals.length !== 1 ? "s" : ""}
                 </P>
               </TitleBlock>
-              <ViewToggle>
-                <IconBtn
-                  $active={viewMode === "grid"}
-                  onClick={() => setViewMode("grid")}
-                  title="Grid view"
-                >
-                  <i
-                    className="fa-solid fa-grip"
-                    style={{ fontSize: "18px" }}
-                  />
-                </IconBtn>
-                <IconBtn
-                  $active={viewMode === "list"}
-                  onClick={() => setViewMode("list")}
-                  title="List view"
-                >
-                  <i
-                    className="fa-solid fa-list"
-                    style={{ fontSize: "18px" }}
-                  />
-                </IconBtn>
-              </ViewToggle>
             </ResultsBar>
 
             {sortedRentals.length > 0 ? (
-              <GridWrap $view={viewMode}>
+              <GridWrap $view="grid">
                 {sortedRentals.map((rental) => (
                   <RentalCard
                     key={rental.id}
                     rental={rental}
-                    isListView={viewMode === "list"}
+                    isListView={false}
                   />
                 ))}
               </GridWrap>
@@ -573,9 +415,7 @@ const RentalHistory = () => {
                     opacity: "0.7",
                   }}
                 >
-                  {searchQuery || filters.status !== "all"
-                    ? "Try adjusting your filters"
-                    : "You haven't rented any rooms yet"}
+                  You haven't rented any rooms yet
                 </p>
               </Empty>
             )}

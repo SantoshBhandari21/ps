@@ -279,11 +279,9 @@ exports.verifyPayment = (req, res) => {
                       (roomErr) => {
                         if (roomErr) {
                           console.error("Database room update error:", roomErr);
-                          return res
-                            .status(500)
-                            .json({
-                              message: "Failed to update room availability",
-                            });
+                          return res.status(500).json({
+                            message: "Failed to update room availability",
+                          });
                         }
 
                         // Create notification
@@ -457,12 +455,15 @@ exports.getMyPayments = (req, res) => {
         b.total_price,
         r.title as room_title,
         r.location as room_location,
-        u.full_name as owner_name,
-        u.email as owner_email
+        tenant.full_name as tenant_name,
+        tenant.email as tenant_email,
+        owner.full_name as owner_name,
+        owner.email as owner_email
       FROM khalti_payments kp
       JOIN bookings b ON kp.booking_id = b.id
       JOIN rooms r ON b.room_id = r.id
-      JOIN users u ON b.owner_id = u.id
+      JOIN users tenant ON kp.user_id = tenant.id
+      JOIN users owner ON b.owner_id = owner.id
       WHERE kp.user_id = ?
       ORDER BY kp.created_at DESC
     `;
