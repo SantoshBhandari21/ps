@@ -1,23 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { Page, Card } from "../styles/CommonStyles";
 
-const Page = styled.div`
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: #f1f5f9;
-`;
-
-const Card = styled.div`
-  background: #ffffff;
-  padding: 26px 28px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
+const Message = styled.div`
   color: #0f172a;
   font-weight: 800;
 `;
@@ -26,11 +12,9 @@ const LogoutPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear auth data
     localStorage.removeItem("user");
     localStorage.removeItem("token");
 
-    // Redirect to login
     const timer = setTimeout(() => {
       navigate("/login", { replace: true });
     }, 800);
@@ -39,8 +23,18 @@ const LogoutPage = () => {
   }, [navigate]);
 
   return (
-    <Page>
-      <Card>You have been logged out.</Card>
+    <Page
+      $pad="24px"
+      $bg="#f1f5f9"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Card>
+        <Message>You have been logged out.</Message>
+      </Card>
     </Page>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 
 /* Styled Components */
@@ -390,7 +390,6 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [createdRoomId, setCreatedRoomId] = useState(null);
-  const [createdRoomTitle, setCreatedRoomTitle] = useState(null);
 
   const amenitiesOptions = [
     "WiFi",
@@ -439,6 +438,21 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
       }
     }
   }, [room]);
+
+  const handleCloseSuccess = useCallback(() => {
+    setSuccess(false);
+    setCreatedRoomId(null);
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        handleCloseSuccess();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, handleCloseSuccess]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -588,7 +602,6 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
       if (!room && result && result.room) {
         setSuccess(true);
         setCreatedRoomId(result.room.id);
-        setCreatedRoomTitle(result.room.title);
       } else if (room) {
         // For editing, just close the modal
         onClose();
@@ -601,13 +614,6 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
     }
   };
 
-  const handleCloseSuccess = () => {
-    setSuccess(false);
-    setCreatedRoomId(null);
-    setCreatedRoomTitle(null);
-    onClose();
-  };
-
   // Show success screen for new rooms
   if (success && !room) {
     return (
@@ -616,117 +622,20 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
           onClick={(e) => e.stopPropagation()}
           style={{
             textAlign: "center",
-            maxWidth: "500px",
+            maxWidth: "400px",
+            padding: "40px 20px",
           }}
         >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              margin: "20px auto",
-              backgroundColor: "#10b981",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "40px",
-            }}
-          >
-            <i className="fa-solid fa-check" style={{ color: "white" }} />
-          </div>
-
-          <h2 style={{ marginBottom: "10px", color: "#059669" }}>
-            <i
-              className="fa-solid fa-party-bell"
-              style={{ marginRight: "8px" }}
-            />
-            Room Created Successfully!
-          </h2>
-
           <p
             style={{
-              marginBottom: "20px",
-              color: "#666",
-              fontSize: "15px",
-              lineHeight: "1.6",
-            }}
-          >
-            Your room has been uploaded and is now live on the platform.
-          </p>
-
-          <div
-            style={{
-              background: "#f0fdf4",
-              border: "1px solid #bbf7d0",
-              borderRadius: "10px",
-              padding: "20px",
-              marginBottom: "30px",
-              textAlign: "left",
-            }}
-          >
-            <p
-              style={{
-                margin: "10px 0",
-                color: "#166534",
-                fontSize: "14px",
-              }}
-            >
-              <strong>Room Name:</strong> {createdRoomTitle}
-            </p>
-            <p
-              style={{
-                margin: "10px 0",
-                color: "#166534",
-                fontSize: "14px",
-              }}
-            >
-              <strong>Unique Room ID:</strong>{" "}
-              <span
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#059669",
-                }}
-              >
-                #{createdRoomId}
-              </span>
-            </p>
-            <p
-              style={{
-                margin: "10px 0",
-                color: "#166534",
-                fontSize: "13px",
-                fontStyle: "italic",
-              }}
-            >
-              Save this ID for your records
-            </p>
-          </div>
-
-          <button
-            onClick={handleCloseSuccess}
-            style={{
-              padding: "12px 32px",
-              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "15px",
+              color: "#10b981",
+              fontSize: "16px",
               fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = "translateY(-2px)";
-              e.target.style.boxShadow = "0 8px 20px rgba(37, 99, 235, 0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "none";
-              e.target.style.boxShadow = "none";
+              margin: "0",
             }}
           >
-            Done
-          </button>
+            Room with ID #{createdRoomId} listed successfully
+          </p>
         </ModalContent>
       </ModalOverlay>
     );

@@ -1,8 +1,18 @@
 // src/controllers/rentalController.js
-const { db } = require("../config/database");
+const { runQuery, getOne, getAll } = require("../config/database");
+
+// Helper function to calculate move-out date
+const calculateMoveOutDate = (months) => {
+  const moveOut = new Date();
+  moveOut.setMonth(moveOut.getMonth() + months);
+  return moveOut.toISOString().split("T")[0];
+};
+
+// Get today's date in YYYY-MM-DD format
+const getTodayDate = () => new Date().toISOString().split("T")[0];
 
 // Create a new rental request
-exports.createRental = (req, res) => {
+exports.createRental = async (req, res) => {
   try {
     const { roomId, months, totalPrice } = req.body;
     const clientId = req.user.id;
@@ -19,76 +29,50 @@ exports.createRental = (req, res) => {
     }
 
     // Get room details
-    db.get("SELECT * FROM rooms WHERE id = ?", [roomId], (err, room) => {
-      if (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ message: "Database error" });
-      }
+    const room = await getOne("SELECT * FROM rooms WHERE id = ?", [roomId]);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
 
-      if (!room) {
-        return res.status(404).json({ message: "Room not found" });
-      }
+    if (!room.is_available) {
+      return res
+        .status(400)
+        .json({ message: "Room is not available for rent" });
+    }
 
-      // Check if room is available
-      if (!room.is_available) {
-        return res
-          .status(400)
-          .json({ message: "Room is not available for rent" });
-      }
+    const moveInDate = getTodayDate();
+    const moveOutDate = calculateMoveOutDate(months);
 
-      const ownerId = room.owner_id;
-      const moveInDate = new Date().toISOString().split("T")[0]; // Today
-      const moveOutDate = new Date(
-        Date.now() + months * 30 * 24 * 60 * 60 * 1000,
-      )
-        .toISOString()
-        .split("T")[0]; // Approximate: months * 30 days
+    // Create booking
+    const result = await runQuery(
+      `INSERT INTO bookings 
+       (room_id, tenant_id, owner_id, booking_date, move_in_date, move_out_date, status, total_price)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        roomId,
+        clientId,
+        room.owner_id,
+        moveInDate,
+        moveInDate,
+        moveOutDate,
+        "pending_payment",
+        totalPrice,
+      ],
+    );
 
-      // Create rental (using bookings table)
-      const sql = `
-        INSERT INTO bookings (room_id, tenant_id, owner_id, booking_date, move_in_date, move_out_date, status, total_price)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const bookingDate = new Date().toISOString().split("T")[0];
-
-      db.run(
-        sql,
-        [
-          roomId,
-          clientId,
-          ownerId,
-          bookingDate,
-          moveInDate,
-          moveOutDate,
-          "pending_payment",
-          totalPrice,
-        ],
-        function (err) {
-          if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ message: "Failed to create rental" });
-          }
-
-          // Don't create notification until payment is completed
-          // Notification will be created by payment controller after successful payment
-
-          res.status(201).json({
-            message: "Rental created successfully. Please complete payment.",
-            booking: {
-              id: this.lastID,
-              roomId: roomId,
-              clientId: clientId,
-              ownerId: ownerId,
-              status: "pending_payment",
-              moveInDate: moveInDate,
-              moveOutDate: moveOutDate,
-              totalPrice: totalPrice,
-              months: months,
-            },
-          });
-        },
-      );
+    return res.status(201).json({
+      message: "Rental created successfully. Please complete payment.",
+      booking: {
+        id: result.id,
+        roomId,
+        clientId,
+        ownerId: room.owner_id,
+        status: "pending_payment",
+        moveInDate,
+        moveOutDate,
+        totalPrice,
+        months,
+      },
     });
   } catch (err) {
     console.error("Error creating rental:", err);
@@ -96,8 +80,8 @@ exports.createRental = (req, res) => {
   }
 };
 
-// Get my rentals (as tenant/tenant)
-exports.getMyRentals = (req, res) => {
+// Get my rentals (as tenant)
+exports.getMyRentals = async (req, res) => {
   try {
     const clientId = req.user.id;
     const { status } = req.query;
@@ -112,23 +96,13 @@ exports.getMyRentals = (req, res) => {
     `;
 
     const params = [clientId];
-
     if (status) {
-      sql = sql.replace(
-        "WHERE b.tenant_id = ?",
-        "WHERE b.tenant_id = ? AND b.status = ?",
-      );
+      sql += " AND b.status = ?";
       params.push(status);
     }
 
-    db.all(sql, params, (err, rentals) => {
-      if (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ message: "Database error" });
-      }
-
-      res.json({ rentals: rentals || [] });
-    });
+    const rentals = await getAll(sql, params);
+    res.json({ rentals: rentals || [] });
   } catch (err) {
     console.error("Error fetching rentals:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -136,7 +110,7 @@ exports.getMyRentals = (req, res) => {
 };
 
 // Get rental requests (as room owner)
-exports.getRentalRequests = (req, res) => {
+exports.getRentalRequests = async (req, res) => {
   try {
     const ownerId = req.user.id;
     const { status } = req.query;
@@ -151,23 +125,13 @@ exports.getRentalRequests = (req, res) => {
     `;
 
     const params = [ownerId];
-
     if (status) {
-      sql = sql.replace(
-        "WHERE b.owner_id = ?",
-        "WHERE b.owner_id = ? AND b.status = ?",
-      );
+      sql += " AND b.status = ?";
       params.push(status);
     }
 
-    db.all(sql, params, (err, requests) => {
-      if (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ message: "Database error" });
-      }
-
-      res.json({ requests: requests || [] });
-    });
+    const requests = await getAll(sql, params);
+    res.json({ requests: requests || [] });
   } catch (err) {
     console.error("Error fetching rental requests:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -175,35 +139,64 @@ exports.getRentalRequests = (req, res) => {
 };
 
 // Get rental details
-exports.getRentalById = (req, res) => {
+exports.getRentalById = async (req, res) => {
   try {
     const rentalId = req.params.id;
 
-    db.get(
-      `
-      SELECT b.*, r.title, r.description, r.price, r.bedrooms, r.bathrooms, r.main_image, r.location, 
-             u.full_name as owner_name, u.email as owner_email
-      FROM bookings b
-      JOIN rooms r ON b.room_id = r.id
-      JOIN users u ON b.owner_id = u.id
-      WHERE b.id = ?
-    `,
+    const rental = await getOne(
+      `SELECT b.*, r.title, r.description, r.price, r.bedrooms, r.bathrooms, r.main_image, r.location, 
+              u.full_name as owner_name, u.email as owner_email
+       FROM bookings b
+       JOIN rooms r ON b.room_id = r.id
+       JOIN users u ON b.owner_id = u.id
+       WHERE b.id = ?`,
       [rentalId],
-      (err, rental) => {
-        if (err) {
-          console.error("Database error:", err);
-          return res.status(500).json({ message: "Database error" });
-        }
-
-        if (!rental) {
-          return res.status(404).json({ message: "Rental not found" });
-        }
-
-        res.json(rental);
-      },
     );
+
+    if (!rental) {
+      return res.status(404).json({ message: "Rental not found" });
+    }
+
+    res.json({ rental });
   } catch (err) {
     console.error("Error fetching rental:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Stop/cancel a rental
+exports.stopRent = async (req, res) => {
+  try {
+    const rentalId = req.params.id;
+    const userId = req.user.id;
+
+    const rental = await getOne(
+      "SELECT id, tenant_id, room_id, status FROM bookings WHERE id = ?",
+      [rentalId],
+    );
+
+    if (!rental) {
+      return res.status(404).json({ message: "Rental not found" });
+    }
+
+    if (rental.tenant_id !== userId) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to cancel this rental" });
+    }
+
+    if (rental.status === "cancelled") {
+      return res.status(400).json({ message: "Rental is already cancelled" });
+    }
+
+    await runQuery(
+      "UPDATE bookings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      ["cancelled", rentalId],
+    );
+
+    res.json({ message: "Rental cancelled successfully" });
+  } catch (err) {
+    console.error("Error stopping rental:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };

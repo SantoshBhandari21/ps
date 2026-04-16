@@ -1,7 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
 import "../styles/AdminDashboard.css";
 import {
   PieChart,
@@ -19,8 +18,6 @@ import {
 import { usersAPI } from "../services/api";
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
-
   const tabs = ["Overview", "Users", "Rooms", "Payments", "Analytics"];
   const [active, setActive] = useState("Overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,17 +61,6 @@ export default function AdminDashboard() {
     String(role || "")
       .trim()
       .toLowerCase();
-
-  // COMMENTED OUT: Access control disabled
-  // // Verify admin access on component mount
-  // useEffect(() => {
-  //   const user = getStoredUser();
-  //   if (!user || normalizeRole(user.role) !== "admin") {
-  //     console.warn("Unauthorized: User is not an admin. Redirecting to home.");
-  //     navigate("/");
-  //     return;
-  //   }
-  // }, [navigate]);
 
   const loadUsers = async () => {
     setError("");

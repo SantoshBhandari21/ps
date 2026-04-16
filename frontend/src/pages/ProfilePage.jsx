@@ -306,6 +306,8 @@ const ProfilePage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -386,6 +388,41 @@ const ProfilePage = () => {
       setError(err.message || "Failed to update password");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!deletePassword) {
+      setError("Password is required to delete account");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "Are you sure you want to delete your account? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingAccount(true);
+      await authAPI.deleteAccount({ password: deletePassword });
+      setSuccess("Account deleted successfully. Redirecting to login...");
+      setTimeout(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+      }, 2000);
+    } catch (err) {
+      setError(err.message || "Failed to delete account");
+      setDeletePassword("");
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -502,6 +539,53 @@ const ProfilePage = () => {
               </ButtonGroup>
             </Form>
           </Card>
+
+          {user.role !== "admin" && (
+            <Card>
+              <CardTitle>Delete Account</CardTitle>
+              <HelpText>
+                Permanently delete your account and all associated data. This
+                action cannot be undone.
+              </HelpText>
+
+              {error && <AlertBox $error>{error}</AlertBox>}
+              {success && <AlertBox>{success}</AlertBox>}
+
+              <Form onSubmit={handleDeleteAccount}>
+                <FormGroup>
+                  <Label htmlFor="deletePassword">Password</Label>
+                  <Input
+                    id="deletePassword"
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => {
+                      setDeletePassword(e.target.value);
+                      setError("");
+                      setSuccess("");
+                    }}
+                    placeholder="Enter your password to delete account"
+                    disabled={deletingAccount}
+                  />
+                </FormGroup>
+
+                <ButtonGroup>
+                  <Button
+                    type="submit"
+                    disabled={deletingAccount}
+                    style={{ background: "#dc2626", color: "white" }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.background = "#b91c1c")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.background = "#dc2626")
+                    }
+                  >
+                    {deletingAccount ? "Deleting..." : "Delete Account"}
+                  </Button>
+                </ButtonGroup>
+              </Form>
+            </Card>
+          )}
         </ContentGrid>
       </Container>
     </PageWrapper>

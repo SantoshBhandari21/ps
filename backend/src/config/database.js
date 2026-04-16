@@ -3,10 +3,9 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const bcrypt = require("bcryptjs");
 
-// Database file path
 const DB_PATH = path.resolve(__dirname, "../../rental.db");
 
-// Create database connection
+// ============ DATABASE CONNECTION ============
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
     console.error("Error connecting to database:", err.message);
@@ -20,17 +19,7 @@ db.run("PRAGMA foreign_keys = ON");
 
 // Initialize database tables
 const initDatabase = () => {
-  // Clean up any incomplete migrations first
   db.serialize(() => {
-    // Drop users_old table if it exists (from incomplete migrations)
-    db.run("DROP TABLE IF EXISTS users_old", (err) => {
-      if (err) {
-        console.log("No users_old table to clean up");
-      } else {
-        console.log("Cleaned up incomplete migration table");
-      }
-    });
-
     // USERS table
     db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -70,25 +59,6 @@ const initDatabase = () => {
       FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
-
-    // Migration: Add is_verified column if it doesn't exist
-    db.run(
-      "ALTER TABLE rooms ADD COLUMN is_verified INTEGER DEFAULT 1",
-      (err) => {
-        if (err && !err.message.includes("duplicate column")) {
-          console.log("is_verified column already exists");
-        } else {
-          // Migrate existing rooms to verified (1)
-          db.run("UPDATE rooms SET is_verified = 1", (err) => {
-            if (err) {
-              console.error("Error migrating rooms to verified:", err);
-            } else {
-              console.log("Migrated existing rooms to verified");
-            }
-          });
-        }
-      },
-    );
 
     // Room images table
     db.run(`
@@ -187,7 +157,7 @@ const initDatabase = () => {
       payment_method TEXT DEFAULT 'khalti',
       purchase_order_id TEXT UNIQUE NOT NULL,
       pidx TEXT UNIQUE,
-      status TEXT DEFAULT 'initiated' CHECK(status IN ('initiated', 'pending', 'completed', 'failed', 'cancelled')),
+      status TEXT DEFAULT 'initiated' CHECK(status IN ('completed', 'failed')),
       transaction_id TEXT,
       payment_url TEXT,
       khalti_response TEXT,
@@ -198,120 +168,17 @@ const initDatabase = () => {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
-
-    // Add missing columns if they don't exist (for existing databases)
-    db.run(
-      `
-    PRAGMA table_info(users)
-  `,
-      (err, rows) => {
-        if (err) {
-          console.error("Error checking users table:", err);
-          return;
-        }
-
-        // Check if profile_photo column exists
-        db.all("PRAGMA table_info(users)", (err, columns) => {
-          if (err) {
-            console.error("Error getting table info:", err);
-            return;
-          }
-
-          const hasProfilePhoto = columns.some(
-            (col) => col.name === "profile_photo",
-          );
-
-          if (!hasProfilePhoto) {
-            db.run("ALTER TABLE users ADD COLUMN profile_photo TEXT", (err) => {
-              if (err) {
-                console.error("Error adding profile_photo column:", err);
-              } else {
-                console.log("Added profile_photo column to users table");
-              }
-            });
-          }
-        });
-      },
-    );
   });
 
   console.log("Database tables initialized successfully");
 };
 
-// Seed default test users
-const seedDatabase = () => {
-  const testUsers = [
-    {
-      full_name: "Admin User",
-      email: "admin@gmail.com",
-      password: "qwerty",
-      role: "admin",
-    },
-    {
-      full_name: "Owner User",
-      email: "owner@gmail.com",
-      password: "qwerty",
-      role: "owner",
-    },
-    {
-      full_name: "Tenant User",
-      email: "tenant@gmail.com",
-      password: "qwerty",
-      role: "tenant",
-    },
-  ];
-
-  // Check if admin already exists
-  db.get(
-    "SELECT id FROM users WHERE email = ?",
-    ["admin@gmail.com"],
-    (err, row) => {
-      if (err) {
-        console.error("Error checking for existing users:", err);
-        return;
-      }
-
-      // If admin already exists, skip seeding
-      if (row) {
-        console.log("Seed users already exist, skipping seeding");
-        return;
-      }
-
-      // Create seed users
-      console.log("Creating seed test users...");
-      testUsers.forEach((user) => {
-        // Hash password
-        bcrypt.hash(user.password, 10, (err, hashedPassword) => {
-          if (err) {
-            console.error("Error hashing password:", err);
-            return;
-          }
-
-          const sql = `
-            INSERT INTO users (full_name, email, password, role, is_verified, is_active)
-            VALUES (?, ?, ?, ?, 1, 1)
-          `;
-
-          db.run(
-            sql,
-            [user.full_name, user.email, hashedPassword, user.role],
-            function (err) {
-              if (err) {
-                console.error(`Error creating ${user.role} user:`, err);
-              } else {
-                console.log(
-                  `Created ${user.role} user: ${user.email} (password: ${user.password})`,
-                );
-              }
-            },
-          );
-        });
-      });
-    },
-  );
-};
-
-// Helper function to run queries with promises
+/**
+ * Execute INSERT/UPDATE/DELETE query and return inserted ID
+ * @param {string} sql - SQL query string
+ * @param {array} params - Query parameters
+ * @returns {Promise<{id: number, changes: number}>}
+ */
 const runQuery = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -321,7 +188,12 @@ const runQuery = (sql, params = []) => {
   });
 };
 
-// Helper function to get single row
+/**
+ * Get a single row from database
+ * @param {string} sql - SQL query string
+ * @param {array} params - Query parameters
+ * @returns {Promise<object|undefined>}
+ */
 const getOne = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
@@ -331,7 +203,12 @@ const getOne = (sql, params = []) => {
   });
 };
 
-// Helper function to get all rows
+/**
+ * Get multiple rows from database
+ * @param {string} sql - SQL query string
+ * @param {array} params - Query parameters
+ * @returns {Promise<array>}
+ */
 const getAll = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
@@ -344,7 +221,6 @@ const getAll = (sql, params = []) => {
 module.exports = {
   db,
   initDatabase,
-  seedDatabase,
   runQuery,
   getOne,
   getAll,

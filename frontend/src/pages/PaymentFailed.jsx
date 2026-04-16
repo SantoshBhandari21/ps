@@ -1,37 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding: 32px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+import { Page, Card, Title, Subtitle } from "../styles/CommonStyles";
 
 const Container = styled.div`
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-`;
-
-const Card = styled.div`
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 32px;
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
-  text-align: center;
-
-  @media (max-width: 768px) {
-    padding: 24px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 20px;
-  }
 `;
 
 const IconWrapper = styled.div`
@@ -44,47 +19,9 @@ const IconWrapper = styled.div`
   align-items: center;
   justify-content: center;
 
-  svg {
-    width: 50px;
-    height: 50px;
-    color: white;
-  }
-
   @media (max-width: 480px) {
     width: 80px;
     height: 80px;
-
-    svg {
-      width: 40px;
-      height: 40px;
-    }
-  }
-`;
-
-const Title = styled.h1`
-  margin: 0 0 8px;
-  font-size: 28px;
-  font-weight: 900;
-  color: #991b1b;
-
-  @media (max-width: 768px) {
-    font-size: 24px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 20px;
-  }
-`;
-
-const Subtitle = styled.p`
-  color: #475569;
-  font-size: 15px;
-  margin: 0 0 24px;
-  line-height: 1.6;
-
-  @media (max-width: 480px) {
-    margin: 0 0 20px;
-    font-size: 14px;
   }
 `;
 
@@ -126,10 +63,7 @@ const ErrorBox = styled.div`
     padding: 14px;
     margin-bottom: 16px;
 
-    h3 {
-      font-size: 13px;
-    }
-
+    h3,
     ul,
     p {
       font-size: 13px;
@@ -141,10 +75,6 @@ const ButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-
-  @media (max-width: 480px) {
-    gap: 10px;
-  }
 `;
 
 const Button = styled.button`
@@ -178,11 +108,6 @@ const Button = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-  }
-
-  @media (max-width: 480px) {
-    padding: 11px 20px;
-    font-size: 14px;
   }
 `;
 

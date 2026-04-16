@@ -1,75 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding: 32px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Container = styled.div`
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-`;
-
-const Card = styled.div`
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 32px;
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
-  text-align: center;
-
-  @media (max-width: 768px) {
-    padding: 24px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 20px;
-  }
-`;
-
-const IconWrapper = styled.div`
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 24px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 50px;
-    height: 50px;
-    color: white;
-  }
-
-  @media (max-width: 480px) {
-    width: 80px;
-    height: 80px;
-
-    svg {
-      width: 40px;
-      height: 40px;
-    }
-  }
-`;
+import { Page, Container, Card } from "../styles/CommonStyles";
 
 const Title = styled.h1`
   margin: 0 0 8px;
   font-size: 28px;
   font-weight: 900;
   color: #0f172a;
-
-  @media (max-width: 768px) {
-    font-size: 24px;
-  }
 
   @media (max-width: 480px) {
     font-size: 20px;
@@ -85,6 +23,22 @@ const Subtitle = styled.p`
   @media (max-width: 480px) {
     margin: 0 0 20px;
     font-size: 14px;
+  }
+`;
+
+const IconWrapper = styled.div`
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 480px) {
+    width: 80px;
+    height: 80px;
   }
 `;
 
@@ -133,9 +87,6 @@ const RoomDetailsBox = styled(InfoBox)`
 `;
 
 const PaymentReceiptBox = styled(InfoBox)`
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-
   p {
     color: #166534;
 
@@ -152,15 +103,6 @@ const SuccessMessage = styled(Subtitle)`
   margin-bottom: 24px;
   color: #059669;
   font-weight: 700;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 12px;
-
-  @media (max-width: 480px) {
-    gap: 10px;
-  }
 `;
 
 const Button = styled.button`
@@ -190,22 +132,6 @@ const Button = styled.button`
     padding: 11px 20px;
     font-size: 14px;
   }
-`;
-
-const SecondaryButton = styled(Button)`
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-
-  &:hover {
-    box-shadow: 0 8px 20px rgba(107, 114, 128, 0.3);
-  }
-`;
-
-const ErrorTitle = styled(Title)`
-  color: #991b1b;
-`;
-
-const ErrorSubtitle = styled(Subtitle)`
-  color: #991b1b;
 `;
 
 const ErrorIconWrapper = styled(IconWrapper)`

@@ -1,31 +1,15 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import {
+  Page,
+  Card,
+  Form,
+  Input,
+  Button as BaseButton,
+  ErrorBox,
+} from "../styles/CommonStyles";
 import { login } from "../services/authService";
-
-const Page = styled.div`
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
-  background: #f1f5f9;
-`;
-
-const Card = styled.div`
-  width: 100%;
-  max-width: 460px;
-  background: #ffffff;
-  padding: 32px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
-
-  @media (max-width: 480px) {
-    padding: 22px;
-  }
-`;
 
 const Title = styled.h2`
   margin: 0 0 8px;
@@ -33,63 +17,15 @@ const Title = styled.h2`
   color: #0f172a;
 `;
 
-const Sub = styled.p`
+const Subtitle = styled.p`
   margin: 0 0 18px;
   color: #475569;
   font-size: 14px;
 `;
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
-const Input = styled.input`
+const Button = styled(BaseButton)`
   width: 100%;
   padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  font-size: 14px;
-  background: #f8fafc;
-  color: #0f172a;
-
-  &:focus {
-    outline: none;
-    border-color: rgba(37, 99, 235, 0.6);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    background: #ffffff;
-  }
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  font-weight: 900;
-  cursor: pointer;
-
-  &:hover {
-    background: #1e40af;
-  }
-
-  &:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorBox = styled.div`
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  font-size: 13px;
 `;
 
 const Footer = styled.div`
@@ -106,6 +42,18 @@ const SmallLink = styled(Link)`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const LoginPageContainer = styled(Page)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+
+  ${Card} {
+    width: 100%;
+    max-width: 460px;
   }
 `;
 
@@ -153,10 +101,10 @@ const LoginPage = () => {
   };
 
   return (
-    <Page>
-      <Card>
+    <LoginPageContainer $bg="#f1f5f9">
+      <Card $pad="32px" $radius="14px">
         <Title>Login</Title>
-        <Sub>Enter your email and password.</Sub>
+        <Subtitle>Enter your email and password.</Subtitle>
 
         {error && <ErrorBox>{error}</ErrorBox>}
 
@@ -188,9 +136,8 @@ const LoginPage = () => {
           <SmallLink to="/register?type=tenant">Create an account</SmallLink>
         </Footer>
       </Card>
-    </Page>
+    </LoginPageContainer>
   );
 };
 
 export default LoginPage;
-

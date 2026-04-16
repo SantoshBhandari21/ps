@@ -7,10 +7,10 @@ const { authenticate } = require("../middleware/auth");
 const {
   register,
   login,
-  getMe,
-  updatePassword,
-  updateProfile,
   updateProfilePhoto,
+  forgotPassword,
+  resetPassword,
+  deleteAccount,
 } = require("../controllers/authController");
 
 // Import upload middleware
@@ -37,9 +37,9 @@ const loginValidation = [
 // Routes
 router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
-router.get("/me", authenticate, getMe);
-router.put("/password", authenticate, updatePassword);
-router.put("/profile", authenticate, updateProfile);
 router.post("/profile-photo", authenticate, uploadImage, updateProfilePhoto);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
+router.delete("/account", authenticate, deleteAccount);
 
 module.exports = router;

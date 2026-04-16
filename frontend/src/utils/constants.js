@@ -1,0 +1,15 @@
+export const AMENITY_ICONS = {
+  wifi: "fa-solid fa-wifi",
+  parking: "fa-solid fa-car",
+  kitchen: "fa-solid fa-utensils",
+  gym: "fa-solid fa-dumbbell",
+  balcony: "fa-solid fa-building",
+  furnished: "fa-solid fa-couch",
+  ac: "fa-solid fa-fan",
+  laundry: "fa-solid fa-person-hiking",
+  dishwasher: "fa-solid fa-plate-wheat",
+  "air conditioning": "fa-solid fa-snowflake",
+  "shared kitchen": "fa-solid fa-utensils",
+  "study area": "fa-solid fa-book",
+  "close to campus": "fa-solid fa-graduation-cap",
+};

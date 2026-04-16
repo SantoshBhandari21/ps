@@ -1,7 +1,18 @@
 // src/controllers/authController.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const { runQuery, getOne } = require("../config/database");
+
+// Setup email transporter (requires EMAIL_USER and EMAIL_PASS in .env)
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // Generate JWT token
 const generateToken = (id, role) => {
@@ -119,99 +130,6 @@ const login = async (req, res) => {
   }
 };
 
-// ------------------------------
-// GET ME
-// GET /api/auth/me
-// ------------------------------
-const getMe = async (req, res) => {
-  try {
-    const user = await getOne(
-      `SELECT id, full_name, email, role, is_verified, is_active, created_at
-       FROM users WHERE id = ?`,
-      [req.user.id],
-    );
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-    return res.json({ user });
-  } catch (error) {
-    console.error("Get me error:", error);
-    return res.status(500).json({ message: error.message || "Server error" });
-  }
-};
-
-// ------------------------------
-// UPDATE PASSWORD
-// PUT /api/auth/password
-// ------------------------------
-const updatePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        message: "Please provide current and new password",
-      });
-    }
-
-    const user = await getOne("SELECT password FROM users WHERE id = ?", [
-      req.user.id,
-    ]);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Current password is incorrect" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    await runQuery(
-      "UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [hashedPassword, req.user.id],
-    );
-
-    return res.json({ message: "Password updated successfully" });
-  } catch (error) {
-    console.error("Update password error:", error);
-    return res.status(500).json({ message: error.message || "Server error" });
-  }
-};
-
-// ------------------------------
-// UPDATE PROFILE
-// PUT /api/auth/profile
-// Body expected: { fullName }
-// ------------------------------
-const updateProfile = async (req, res) => {
-  try {
-    const { fullName } = req.body;
-
-    if (!fullName) {
-      return res.status(400).json({ message: "fullName is required" });
-    }
-
-    await runQuery(
-      "UPDATE users SET full_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [fullName, req.user.id],
-    );
-
-    const user = await getOne(
-      `SELECT id, full_name, email, role, is_verified, is_active, created_at
-       FROM users WHERE id = ?`,
-      [req.user.id],
-    );
-
-    return res.json({
-      message: "Profile updated successfully",
-      user,
-    });
-  } catch (error) {
-    console.error("Update profile error:", error);
-    return res.status(500).json({ message: error.message || "Server error" });
-  }
-};
-
 // UPDATE PROFILE PHOTO
 // POST /api/auth/profile-photo
 // Multipart form data with file: { file }
@@ -273,12 +191,148 @@ const updateProfilePhoto = async (req, res) => {
   }
 };
 
+// ------------------------------
+// FORGOT PASSWORD
+// POST /api/auth/forgot-password
+// Body expected: { email }
+// ------------------------------
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await getOne(
+      "SELECT id, full_name, email FROM users WHERE email = ?",
+      [email],
+    );
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    const resetTokenExpires = Date.now() + 3600000; // 1 hour
+
+    await runQuery(
+      "UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?",
+      [resetTokenHash, resetTokenExpires, user.id],
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset Request",
+      html: `<p>Hi ${user.full_name},</p>
+             <p>Click the link below to reset your password (expires in 1 hour):</p>
+             <a href="${resetLink}">${resetLink}</a>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return res.json({ message: "Password reset link sent to your email" });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
+// ------------------------------
+// RESET PASSWORD
+// POST /api/auth/reset-password/:token
+// Body expected: { newPassword }
+// ------------------------------
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Token and new password are required" });
+    }
+
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+    const user = await getOne(
+      "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > ?",
+      [resetTokenHash, Date.now()],
+    );
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await runQuery(
+      "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
+      [hashedPassword, user.id],
+    );
+
+    return res.json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
+// ------------------------------
+// DELETE ACCOUNT
+// DELETE /api/auth/account
+// Body expected: { password }
+// Requires authentication
+// ------------------------------
+const deleteAccount = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const userId = req.user.id;
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    if (req.user.role === "admin") {
+      return res
+        .status(403)
+        .json({ message: "Admin accounts cannot be deleted" });
+    }
+
+    const user = await getOne("SELECT * FROM users WHERE id = ?", [userId]);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    await runQuery("DELETE FROM users WHERE id = ?", [userId]);
+
+    return res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
 module.exports = {
   register,
   login,
-  getMe,
-  updatePassword,
-  updateProfile,
   updateProfilePhoto,
+  forgotPassword,
+  resetPassword,
+  deleteAccount,
 };
-

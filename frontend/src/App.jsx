@@ -60,8 +60,14 @@ function App() {
               <Route path="/logout" element={<LogoutPage />} />
 
               {/* Payment Routes */}
-              <Route path="/rental/payment-success" element={<PaymentSuccess />} />
-              <Route path="/rental/payment-failed" element={<PaymentFailed />} />
+              <Route
+                path="/rental/payment-success"
+                element={<PaymentSuccess />}
+              />
+              <Route
+                path="/rental/payment-failed"
+                element={<PaymentFailed />}
+              />
 
               {/* COMMENTED OUT: Access control disabled */}
               {/* Protected: Profile (Any authenticated user) */}

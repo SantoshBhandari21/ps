@@ -1,27 +1,7 @@
-// src/pages/AboutPage.jsx
 import React from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding: 32px 16px;
-`;
-
-const Container = styled.div`
-  max-width: 1100px;
-  margin: 0 auto;
-`;
-
-const Card = styled.div`
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 32px;
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
-  margin-bottom: 24px;
-`;
+import { Page, Container, Card, Section } from "../styles/CommonStyles";
 
 const Title = styled.h1`
   margin: 0 0 16px;

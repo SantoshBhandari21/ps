@@ -599,7 +599,7 @@ const BrowseRooms = () => {
             </Spec>
           </Specs>
 
-          {isListView && <P style={{ marginBottom: 10 }}>{room.description}</P>}
+          <P style={{ marginBottom: 10 }}>{room.description}</P>
 
           <AmenityTags>
             {(() => {

@@ -140,6 +140,13 @@ export const authAPI = {
     return data;
   },
 
+  deleteAccount: async (passwordData) => {
+    return apiCall("/auth/account", {
+      method: "DELETE",
+      body: passwordData,
+    });
+  },
+
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -269,6 +276,12 @@ export const rentalsAPI = {
 
   getRentalById: async (id) => {
     return apiCall(`/rentals/${id}`);
+  },
+
+  stopRent: async (id) => {
+    return apiCall(`/rentals/${id}/stop`, {
+      method: "PUT",
+    });
   },
 };
 

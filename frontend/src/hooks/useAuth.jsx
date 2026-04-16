@@ -1,4 +1,3 @@
-// src/hooks/useAuth.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { logout as logoutUser } from "../services/authService";
 
@@ -14,8 +13,6 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userType, setUserType] = useState(null); // 'landlord' or 'tenant'
-  const [loading, setLoading] = useState(false);
 
   // Load user from localStorage on app initialization
   useEffect(() => {
@@ -24,70 +21,20 @@ export const AuthProvider = ({ children }) => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-        setUserType(parsedUser.role);
       } catch (error) {
         console.error("Failed to parse stored user:", error);
-        // Only clear if there's actually bad data
         localStorage.removeItem("user");
         localStorage.removeItem("token");
       }
     }
   }, []);
 
-  const login = async (credentials) => {
-    setLoading(true);
-    try {
-      // TODO: Implement actual login logic
-      console.log("Login:", credentials);
-
-      // Simulate API call
-      setTimeout(() => {
-        setUser({ id: 1, email: credentials.email, name: "Test User" });
-        setUserType(credentials.userType || "tenant");
-        setLoading(false);
-      }, 1000);
-
-      return { success: true };
-    } catch (error) {
-      setLoading(false);
-      return { success: false, error: error.message };
-    }
-  };
-
   const logout = () => {
     setUser(null);
-    setUserType(null);
     logoutUser();
   };
 
-  const register = async (userData) => {
-    setLoading(true);
-    try {
-      // TODO: Implement actual registration logic
-      console.log("Register:", userData);
-
-      // Simulate API call
-      setTimeout(() => {
-        setUser({ id: 1, email: userData.email, name: userData.name });
-        setUserType(userData.userType);
-        setLoading(false);
-      }, 1000);
-
-      return { success: true };
-    } catch (error) {
-      setLoading(false);
-      return { success: false, error: error.message };
-    }
-  };
-
-  const value = {
-    user,
-    userType,
-    loading,
-    login,
-    logout,
-    register,
-  };
+  const value = { user, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

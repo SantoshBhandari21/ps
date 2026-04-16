@@ -202,6 +202,26 @@ const DateValue = styled.div`
 const Price = styled.div`
   font-weight: 900;
   color: #1d4ed8;
+  margin-bottom: 10px;
+`;
+const StopButton = styled.button`
+  width: 100%;
+  padding: 10px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  &:hover {
+    background: #dc2626;
+  }
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
 `;
 const Empty = styled.div`
   text-align: center;
@@ -229,6 +249,7 @@ const RentalHistory = () => {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recent");
+  const [stoppingId, setStoppingId] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -283,6 +304,26 @@ const RentalHistory = () => {
       day: "numeric",
     });
 
+  const handleStopRent = async (rentalId) => {
+    if (!window.confirm("Are you sure you want to stop this rental?")) {
+      return;
+    }
+    try {
+      setStoppingId(rentalId);
+      await rentalsAPI.stopRent(rentalId);
+      setRentals(
+        rentals.map((r) =>
+          r.id === rentalId ? { ...r, status: "cancelled" } : r,
+        ),
+      );
+      setError("");
+    } catch (err) {
+      setError(err.message || "Failed to stop rental");
+    } finally {
+      setStoppingId(null);
+    }
+  };
+
   const RentalCard = ({ rental, isListView }) => {
     const imageUrl = rental.main_image
       ? `http://localhost:5000${rental.main_image}`
@@ -326,6 +367,14 @@ const RentalHistory = () => {
             </DateBox>
           </DatesRow>
           <Price>Rs {rental.total_price.toLocaleString()}</Price>
+          {rental.status !== "cancelled" && (
+            <StopButton
+              onClick={() => handleStopRent(rental.id)}
+              disabled={stoppingId === rental.id}
+            >
+              {stoppingId === rental.id ? "Stopping..." : "Stop Rent"}
+            </StopButton>
+          )}
         </CardBody>
       </Card>
     );

@@ -205,28 +205,10 @@ const MobileActions = styled.div`
   border-top: 1px solid #e2e8f0;
 `;
 
-const MobileBtn = styled(Link)`
+const MobileBtn = styled(Btn)`
   padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 14px;
-  text-decoration: none;
-  transition: all 0.2s ease;
+  width: 100%;
   text-align: center;
-  ${({ $outline }) =>
-    $outline
-      ? `
-    background: transparent;
-    color: #2563eb;
-    border: 1px solid #2563eb;
-    &:hover { background: #2563eb; color: white; }
-  `
-      : `
-    background: #2563eb;
-    color: white;
-    border: 1px solid #2563eb;
-    &:hover { background: #1d4ed8; border-color: #1d4ed8; }
-  `}
 `;
 
 const LogoutBtn = styled.button`
@@ -247,22 +229,9 @@ const LogoutBtn = styled.button`
   }
 `;
 
-const MobileLogoutBtn = styled.button`
+const MobileLogoutBtn = styled(LogoutBtn)`
   padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 14px;
-  background: transparent;
-  color: #2563eb;
-  border: 1px solid #2563eb;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
   width: 100%;
-  &:hover {
-    background: #2563eb;
-    color: white;
-  }
 `;
 
 const ProfileIcon = styled(Link)`
@@ -287,21 +256,14 @@ const ProfileIcon = styled(Link)`
   }
 `;
 
-const MobileProfileIcon = styled(Link)`
+const MobileProfileIcon = styled(ProfileIcon)`
   width: 100%;
   padding: 12px 20px;
-  border-radius: 6px;
   background: transparent;
   color: #2563eb;
   border: 1px solid #2563eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
-  text-decoration: none;
-  font-weight: 500;
   font-size: 14px;
-  transition: all 0.2s ease;
   &:hover {
     background: #2563eb;
     color: white;
