@@ -152,8 +152,8 @@ exports.verifyPayment = async (req, res) => {
   try {
     const { pidx, status, transaction_id, purchase_order_id } = req.query;
 
-    // Validate callback parameters
-    if (!pidx || !status || !purchase_order_id) {
+    // Validate callback parameters - only pidx and status required
+    if (!pidx || !status) {
       return res.status(400).json({
         message: "Invalid callback parameters",
         received: { pidx, status, purchase_order_id },

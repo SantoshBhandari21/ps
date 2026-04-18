@@ -168,7 +168,7 @@ const getRooms = async (req, res) => {
              (SELECT COUNT(*) FROM reviews WHERE room_id = r.id) as review_count
       FROM rooms r
       LEFT JOIN users u ON r.owner_id = u.id
-      WHERE r.is_available = 1 AND r.is_verified = 1
+      WHERE r.is_available = 1 AND r.is_verified = 1 AND u.is_active = 1
     `;
 
     const params = [];
@@ -226,7 +226,7 @@ const getRooms = async (req, res) => {
 
     // Get total count with same filters
     let countQuery =
-      "SELECT COUNT(*) as total FROM rooms WHERE is_available = 1 AND is_verified = 1";
+      "SELECT COUNT(*) as total FROM rooms r LEFT JOIN users u ON r.owner_id = u.id WHERE r.is_available = 1 AND r.is_verified = 1 AND u.is_active = 1";
     const countParams = [];
 
     filterConditions.forEach(({ condition, text, value }) => {
@@ -271,7 +271,7 @@ const getRoomById = async (req, res) => {
               (SELECT COUNT(*) FROM reviews WHERE room_id = r.id) as review_count
        FROM rooms r
        LEFT JOIN users u ON r.owner_id = u.id
-       WHERE r.id = ?`,
+       WHERE r.id = ? AND u.is_active = 1`,
       [req.params.id],
     );
 
@@ -348,6 +348,7 @@ const updateRoom = async (req, res) => {
       area,
       amenities,
       isAvailable,
+      keepImageIds,
     } = req.body;
 
     const updates = [];
@@ -397,6 +398,29 @@ const updateRoom = async (req, res) => {
     if (isAvailable !== undefined) {
       updates.push("is_available = ?");
       values.push(isAvailable ? 1 : 0);
+    }
+
+    // Handle image deletion - delete images not in keepImageIds list
+    if (keepImageIds) {
+      try {
+        const keepIds = JSON.parse(keepImageIds);
+        if (Array.isArray(keepIds) && keepIds.length > 0) {
+          // Delete all images for this room that are NOT in the keep list
+          const placeholders = keepIds.map(() => "?").join(",");
+          await runQuery(
+            `DELETE FROM room_images WHERE room_id = ? AND id NOT IN (${placeholders})`,
+            [req.params.id, ...keepIds],
+          );
+        } else {
+          // If keepImageIds is empty array, delete all images
+          await runQuery("DELETE FROM room_images WHERE room_id = ?", [
+            req.params.id,
+          ]);
+        }
+      } catch (error) {
+        console.error("Error parsing keepImageIds:", error);
+        // Continue even if parsing fails
+      }
     }
 
     // Handle image uploads

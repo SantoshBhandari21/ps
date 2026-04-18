@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import styled from "styled-components";
 import { paymentsAPI, rentalsAPI } from "../services/api";
 import { AMENITY_ICONS } from "../utils/constants";
@@ -29,11 +29,109 @@ const ImageSection = styled.div`
   height: 300px;
   background: #f1f5f9;
   overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+`;
+
+const ImageNav = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.2s;
+  z-index: 10;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  &.prev {
+    left: 12px;
+  }
+
+  &.next {
+    right: 12px;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+`;
+
+const ImageCounter = styled.div`
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+`;
+
+const ImageThumbnails = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  overflow-x: auto;
+  justify-content: center;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+`;
+
+const Thumbnail = styled.button`
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border: 2px solid ${(p) => (p.$active ? "#2563eb" : "#cbd5e1")};
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+  transition: all 0.2s;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &:hover {
+    border-color: #2563eb;
   }
 `;
 
@@ -72,6 +170,33 @@ const Location = styled.p`
   margin: 0 0 12px;
   color: #64748b;
   font-size: 14px;
+`;
+
+const OwnerInfo = styled.div`
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    color: #2563eb;
+    font-size: 16px;
+  }
+
+  .owner-name {
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .owner-label {
+    color: #64748b;
+    font-size: 13px;
+  }
 `;
 
 const Price = styled.div`
@@ -223,23 +348,74 @@ const RoomDetails = ({ room, onClose }) => {
   const [imgError, setImgError] = useState(false);
   const [months, setMonths] = useState(1);
   const [showPayment, setShowPayment] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
   const totalCost = room.price * months;
+
+  // Get all available images
+  const getAllImages = () => {
+    const images = [];
+    if (room.main_image) {
+      images.push(room.main_image);
+    }
+    if (room.images && Array.isArray(room.images)) {
+      room.images.forEach((img) => {
+        const imageUrl = img.image_url || img;
+        if (imageUrl && !images.includes(imageUrl)) {
+          images.push(imageUrl);
+        }
+      });
+    }
+    return images.length > 0 ? images : [null];
+  };
+
+  const images = getAllImages();
+  const currentImage = images[currentImageIndex];
+
+  const getFullImageUrl = (image) => {
+    if (!image) return "";
+    if (image.startsWith("http")) return image;
+    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    return apiBase.replace("/api", "") + image;
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setImgError(false);
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setImgError(false);
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX.current;
+
+    // Swipe left (show next image)
+    if (diff > 50) {
+      handleNextImage();
+    }
+    // Swipe right (show previous image)
+    else if (diff < -50) {
+      handlePrevImage();
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowLeft") handlePrevImage();
+    if (e.key === "ArrowRight") handleNextImage();
+  };
 
   const getAmenityIcon = (amenity) => {
     const key = amenity.toLowerCase();
     return AMENITY_ICONS[key] || "fa-solid fa-check";
-  };
-
-  const getImageUrl = () => {
-    const main = room.main_image || room.images?.[0];
-    if (!main) return "";
-
-    // If it's already a full URL, return as-is
-    if (main.startsWith("http")) return main;
-
-    // Otherwise, prepend API base URL
-    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    return apiBase.replace("/api", "") + main;
   };
 
   const handlePayment = async () => {
@@ -276,10 +452,15 @@ const RoomDetails = ({ room, onClose }) => {
   return (
     <Backdrop onClick={onClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
-        <ImageSection>
-          {!imgError && getImageUrl() ? (
+        <ImageSection
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+        >
+          {!imgError && currentImage ? (
             <img
-              src={getImageUrl()}
+              src={getFullImageUrl(currentImage)}
               alt={room.title}
               onError={() => setImgError(true)}
             />
@@ -300,7 +481,46 @@ const RoomDetails = ({ room, onClose }) => {
               <i className="fa-solid fa-image" style={{ fontSize: "48px" }}></i>
             </div>
           )}
+
+          {images.length > 1 && (
+            <>
+              <ImageNav
+                className="prev"
+                onClick={handlePrevImage}
+                title="Previous image (← or swipe)"
+              >
+                <i className="fa-solid fa-chevron-left"></i>
+              </ImageNav>
+              <ImageNav
+                className="next"
+                onClick={handleNextImage}
+                title="Next image (→ or swipe)"
+              >
+                <i className="fa-solid fa-chevron-right"></i>
+              </ImageNav>
+              <ImageCounter>
+                {currentImageIndex + 1} / {images.length}
+              </ImageCounter>
+            </>
+          )}
         </ImageSection>
+
+        {images.length > 1 && (
+          <ImageThumbnails>
+            {images.map((img, idx) => (
+              <Thumbnail
+                key={idx}
+                $active={idx === currentImageIndex}
+                onClick={() => {
+                  setCurrentImageIndex(idx);
+                  setImgError(false);
+                }}
+              >
+                <img src={getFullImageUrl(img)} alt={`Thumbnail ${idx + 1}`} />
+              </Thumbnail>
+            ))}
+          </ImageThumbnails>
+        )}
 
         <Content>
           <Header>
@@ -310,6 +530,15 @@ const RoomDetails = ({ room, onClose }) => {
                 <i className="fa-solid fa-location-dot"></i>{" "}
                 {room.address || room.location}
               </Location>
+              {room.owner_name && (
+                <OwnerInfo>
+                  <i className="fa-solid fa-user-circle"></i>
+                  <div>
+                    <div className="owner-label">Listed by</div>
+                    <div className="owner-name">{room.owner_name}</div>
+                  </div>
+                </OwnerInfo>
+              )}
             </div>
             <button onClick={onClose}>
               <i className="fa-solid fa-xmark"></i>

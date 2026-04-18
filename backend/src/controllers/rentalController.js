@@ -92,7 +92,6 @@ exports.getMyRentals = async (req, res) => {
       JOIN rooms r ON b.room_id = r.id
       JOIN users u ON b.owner_id = u.id
       WHERE b.tenant_id = ?
-      ORDER BY b.created_at DESC
     `;
 
     const params = [clientId];
@@ -100,6 +99,8 @@ exports.getMyRentals = async (req, res) => {
       sql += " AND b.status = ?";
       params.push(status);
     }
+
+    sql += " ORDER BY b.created_at DESC";
 
     const rentals = await getAll(sql, params);
     res.json({ rentals: rentals || [] });
@@ -121,7 +122,6 @@ exports.getRentalRequests = async (req, res) => {
       JOIN rooms r ON b.room_id = r.id
       JOIN users u ON b.tenant_id = u.id
       WHERE b.owner_id = ?
-      ORDER BY b.created_at DESC
     `;
 
     const params = [ownerId];
@@ -129,6 +129,8 @@ exports.getRentalRequests = async (req, res) => {
       sql += " AND b.status = ?";
       params.push(status);
     }
+
+    sql += " ORDER BY b.created_at DESC";
 
     const requests = await getAll(sql, params);
     res.json({ requests: requests || [] });

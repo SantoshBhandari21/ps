@@ -266,6 +266,11 @@ const deleteUser = async (req, res) => {
           .status(400)
           .json({ message: "Cannot delete owner with active bookings" });
       }
+      // Delete all rooms owned by this owner
+      await runQuery("DELETE FROM rooms WHERE owner_id = ?", [user.id]);
+    } else if (user.role === "tenant") {
+      // Delete all bookings made by this tenant
+      await runQuery("DELETE FROM bookings WHERE tenant_id = ?", [user.id]);
     }
 
     await runQuery("DELETE FROM users WHERE id = ?", [user.id]);

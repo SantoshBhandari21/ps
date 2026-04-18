@@ -38,7 +38,7 @@ const LogoImage = styled(Link)`
     transform: scale(1.05);
   }
   img {
-    height: 73px;
+    height: 68px;
     width: auto;
     object-fit: contain;
   }
@@ -369,12 +369,10 @@ const Header = () => {
         <NavActions>
           {!user ? (
             <>
-              <Btn as={Link} to="/login" $outline>
+              <Btn to="/login" $outline>
                 Login
               </Btn>
-              <Btn as={Link} to="/register">
-                Sign Up
-              </Btn>
+              <Btn to="/register">Sign Up</Btn>
             </>
           ) : (
             <>
@@ -436,10 +434,10 @@ const Header = () => {
         <MobileActions>
           {!user ? (
             <>
-              <MobileBtn as={Link} to="/login" $outline onClick={isMobile}>
+              <MobileBtn to="/login" $outline onClick={isMobile}>
                 Login
               </MobileBtn>
-              <MobileBtn as={Link} to="/register" onClick={isMobile}>
+              <MobileBtn to="/register" onClick={isMobile}>
                 Sign Up
               </MobileBtn>
             </>

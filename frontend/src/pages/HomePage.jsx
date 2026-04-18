@@ -21,10 +21,10 @@ const Page = styled.div`
 
 const Section = styled.section`
   width: 100%;
-  padding: ${(p) => p.$pad || "80px 0"};
+  padding: ${(p) => p.$pad || "50px 0"};
 
   @media (max-width: 768px) {
-    padding: ${(p) => p.$padMobile || "60px 0"};
+    padding: ${(p) => p.$padMobile || "40px 0"};
   }
 `;
 
@@ -58,7 +58,7 @@ const HeroContent = styled.div`
 const H1 = styled.h1`
   font-size: 48px;
   font-weight: 700;
-  margin: 0 0 24px;
+  margin: 0 0 20px;
   line-height: 1.2;
   color: white;
 
@@ -70,14 +70,14 @@ const H1 = styled.h1`
 
 const HeroText = styled.p`
   font-size: 20px;
-  margin: 0 0 48px;
+  margin: 0 0 40px;
   opacity: 0.95;
   line-height: 1.6;
   color: white;
 
   @media (max-width: 768px) {
     font-size: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
 `;
 
@@ -85,19 +85,19 @@ const Form = styled.form`
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  padding: 32px;
-  margin-bottom: 24px;
+  padding: 28px;
+  margin-bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
 
   @media (max-width: 768px) {
-    padding: 24px;
+    padding: 20px;
   }
 `;
 
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr auto;
-  gap: 16px;
+  gap: 14px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -154,7 +154,7 @@ const Button = styled.button`
 const LinkRow = styled.div`
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
 `;
 
@@ -189,33 +189,33 @@ const Features = styled(Section)`
 const SectionTitle = styled.h2`
   text-align: center;
   font-size: 40px;
-  margin: 0 0 60px;
+  margin: 0 0 40px;
   color: #1e293b;
   font-weight: 700;
 
   @media (max-width: 768px) {
     font-size: 28px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
   }
 `;
 
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 32px;
+  gap: 28px;
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
   }
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 `;
 
 const Card = styled.div`
   text-align: center;
-  padding: 32px;
+  padding: 28px;
   border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -230,7 +230,7 @@ const Card = styled.div`
 
 const Icon = styled.div`
   font-size: 44px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: center;
   color: #2563eb;
@@ -238,7 +238,7 @@ const Icon = styled.div`
 
 const CardTitle = styled.h3`
   font-size: 20px;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: #1e293b;
   font-weight: 700;
 `;
@@ -258,7 +258,7 @@ const CTA = styled(Section)`
 const CTAGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 40px;
+  gap: 32px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -268,7 +268,7 @@ const CTAGrid = styled.div`
 
 const CTACard = styled.div`
   background: white;
-  padding: 48px;
+  padding: 40px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
   border: 1px solid #e2e8f0;
@@ -281,7 +281,7 @@ const CTACard = styled.div`
 
 const CTATitle = styled.h3`
   font-size: 28px;
-  margin: 0 0 16px;
+  margin: 0 0 14px;
   color: #2563eb;
   font-weight: 700;
 
@@ -291,20 +291,20 @@ const CTATitle = styled.h3`
 `;
 
 const CTAText = styled.p`
-  margin: 0 0 32px;
+  margin: 0 0 28px;
   font-size: 16px;
   line-height: 1.6;
   color: #64748b;
 
   @media (max-width: 768px) {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     font-size: 15px;
   }
 `;
 
 const BtnRow = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 
   @media (max-width: 768px) {
@@ -371,7 +371,7 @@ const HomePage = () => {
 
   return (
     <Page>
-      <Hero $pad="80px 0" $padMobile="60px 0">
+      <Hero $pad="60px 0" $padMobile="50px 0">
         <Container>
           <HeroContent>
             <H1>Find Your Perfect Room</H1>
@@ -405,60 +405,6 @@ const HomePage = () => {
           </HeroContent>
         </Container>
       </Hero>
-
-      <Features>
-        <Container>
-          <SectionTitle>Why Choose myRentals?</SectionTitle>
-
-          <Grid>
-            <Card>
-              <Icon>
-                <i
-                  className="fa-solid fa-magnifying-glass"
-                  style={{ fontSize: "44px", color: "#2563eb" }}
-                />
-              </Icon>
-              <CardTitle>Easy Search</CardTitle>
-              <CardText>
-                Find rooms that match your preferences with filters.
-              </CardText>
-            </Card>
-
-            <Card>
-              <Icon>
-                <i
-                  className="fa-solid fa-circle-check"
-                  style={{ fontSize: "44px", color: "#2563eb" }}
-                />
-              </Icon>
-              <CardTitle>Trusted Listings</CardTitle>
-              <CardText>Verified room details from registered owners.</CardText>
-            </Card>
-
-            <Card>
-              <Icon>
-                <i
-                  className="fa-solid fa-credit-card"
-                  style={{ fontSize: "44px", color: "#2563eb" }}
-                />
-              </Icon>
-              <CardTitle>Payments & Invoices</CardTitle>
-              <CardText>eSewa payments with auto-generated invoices.</CardText>
-            </Card>
-
-            <Card>
-              <Icon>
-                <i
-                  className="fa-solid fa-star"
-                  style={{ fontSize: "44px", color: "#2563eb" }}
-                />
-              </Icon>
-              <CardTitle>Reviews</CardTitle>
-              <CardText>Only booked tenants can leave room reviews.</CardText>
-            </Card>
-          </Grid>
-        </Container>
-      </Features>
 
       <CTA>
         <Container>

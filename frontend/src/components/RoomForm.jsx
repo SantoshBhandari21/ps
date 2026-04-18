@@ -583,6 +583,17 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
         submitData.append("images", file);
       });
 
+      // If editing, send list of existing images to keep
+      if (room && imagePreviewsLocal.length > 0) {
+        const existingImageIds = imagePreviewsLocal
+          .filter((img) => img.isExisting)
+          .map((img) => img.id);
+
+        if (existingImageIds.length > 0) {
+          submitData.append("keepImageIds", JSON.stringify(existingImageIds));
+        }
+      }
+
       console.log("Submitting room data:", {
         title: formData.title,
         description: formData.description,

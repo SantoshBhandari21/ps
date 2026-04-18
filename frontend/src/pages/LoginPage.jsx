@@ -1,143 +1,160 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import {
-  Page,
-  Card,
-  Form,
-  Input,
-  Button as BaseButton,
-  ErrorBox,
-} from "../styles/CommonStyles";
+import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/authService";
+import { useAuth } from "../hooks/useAuth";
 
-const Title = styled.h2`
-  margin: 0 0 8px;
-  font-weight: 900;
-  color: #0f172a;
-`;
+const styles = {
+  container: {
+    minHeight: "85vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 40%)",
+    padding: "30px",
+  },
+  card: {
+    background: "white",
+    borderRadius: "8px",
+    padding: "40px",
+    maxWidth: "400px",
+    width: "100%",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+  },
+  title: {
+    fontSize: "24px",
+    fontWeight: "600",
+    marginBottom: "20px",
+    textAlign: "center",
+    margin: 0,
+  },
+  group: { marginBottom: "15px" },
+  label: {
+    display: "block",
+    fontSize: "14px",
+    marginBottom: "5px",
+    fontWeight: "500",
+  },
+  input: {
+    width: "100%",
+    padding: "10px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    fontSize: "14px",
+    boxSizing: "border-box",
+  },
+  button: {
+    width: "100%",
+    padding: "10px",
+    background: "#667eea",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    marginTop: "10px",
+  },
+  error: {
+    background: "#fee",
+    color: "#c33",
+    padding: "10px",
+    borderRadius: "4px",
+    marginBottom: "15px",
+    fontSize: "13px",
+  },
+  footer: { textAlign: "center", fontSize: "13px", marginTop: "15px" },
+  termsText: {
+    fontSize: "12px",
+    color: "#999",
+    textAlign: "center",
+    marginBottom: "12px",
+    lineHeight: "1.4",
+  },
+  link: { color: "#667eea", textDecoration: "none", fontWeight: "600" },
+  forgotPassword: {
+    display: "block",
+    color: "#667eea",
+    textDecoration: "none",
+    fontWeight: "600",
+    marginTop: "8px",
+  },
+};
 
-const Subtitle = styled.p`
-  margin: 0 0 18px;
-  color: #475569;
-  font-size: 14px;
-`;
-
-const Button = styled(BaseButton)`
-  width: 100%;
-  padding: 12px 14px;
-`;
-
-const Footer = styled.div`
-  margin-top: 14px;
-  display: flex;
-  justify-content: center;
-  font-size: 14px;
-`;
-
-const SmallLink = styled(Link)`
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 800;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const LoginPageContainer = styled(Page)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
-
-  ${Card} {
-    width: 100%;
-    max-width: 460px;
-  }
-`;
-
-const LoginPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const returnTo = location.state?.returnTo;
-
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  React.useEffect(() => {
+    if (user) navigate("/");
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
     setLoading(true);
-
     try {
-      const user = await login(email, password);
-
-      // Owner/Admin always go to their dashboards
-      if (user.role === "owner") {
-        navigate("/owner/dashboard", { replace: true });
-        return;
-      }
-
-      if (user.role === "admin") {
-        navigate("/admin/dashboard", { replace: true });
-        return;
-      }
-
-      // Tenant/tenant: return to intended room if available
-      if (returnTo) {
-        navigate(returnTo, { replace: true });
-      } else {
-        navigate("/tenant/dashboard", { replace: true });
-      }
+      await login(email, password);
+      navigate("/");
     } catch (err) {
-      setError(err?.message || "Login failed.");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <LoginPageContainer $bg="#f1f5f9">
-      <Card $pad="32px" $radius="14px">
-        <Title>Login</Title>
-        <Subtitle>Enter your email and password.</Subtitle>
-
-        {error && <ErrorBox>{error}</ErrorBox>}
-
-        <Form onSubmit={handleSubmit}>
-          <Input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-
-          <Button type="submit" disabled={loading}>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h1 style={styles.title}>myRentals</h1>
+        {error && <div style={styles.error}>{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div style={styles.group}>
+            <label style={styles.label}>Email</label>
+            <input
+              style={styles.input}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              disabled={loading}
+            />
+          </div>
+          <div style={styles.group}>
+            <label style={styles.label}>Password</label>
+            <input
+              style={styles.input}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              disabled={loading}
+            />
+          </div>
+          <button style={styles.button} type="submit" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
-          </Button>
-        </Form>
-
-        <Footer>
-          <SmallLink to="/register?type=tenant">Create an account</SmallLink>
-        </Footer>
-      </Card>
-    </LoginPageContainer>
+          </button>
+        </form>
+        <div style={styles.termsText}>
+          By logging in you accept all the terms and conditions of myRentals.
+        </div>
+        <div style={styles.footer}>
+          Don't have an account?{" "}
+          <Link to="/register" style={styles.link}>
+            Sign up
+          </Link>
+          <Link to="/forgot-password" style={styles.forgotPassword}>
+            Forgot password?
+          </Link>
+        </div>
+      </div>
+    </div>
   );
-};
-
-export default LoginPage;
+}
