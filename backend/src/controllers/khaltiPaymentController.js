@@ -1,6 +1,10 @@
 // src/controllers/khaltiPaymentController.js
 const { runQuery, getOne, getAll } = require("../config/database");
 const axios = require("axios");
+const {
+  sendBookingConfirmationEmail,
+  sendNewBookingNotificationEmail,
+} = require("../services/emailService");
 
 // ============ KHALTI CONFIGURATION ============
 const KHALTI_CONFIG = {
@@ -212,20 +216,28 @@ exports.verifyPayment = async (req, res) => {
       ],
     );
 
-    // Get booking details
+    // Get booking details with tenant and owner information
     const paymentRecord = await getOne(
       `SELECT 
-        kp.booking_id, 
+        kp.booking_id,
+        kp.id as payment_id,
         b.room_id, 
         b.tenant_id,
         b.move_in_date, 
         b.move_out_date, 
         r.title as room_title, 
         r.location as room_location, 
-        r.price as room_price
+        r.price as room_price,
+        r.owner_id,
+        t.email as tenant_email,
+        t.full_name as tenant_name,
+        o.email as owner_email,
+        o.full_name as owner_name
        FROM khalti_payments kp
        JOIN bookings b ON kp.booking_id = b.id
        JOIN rooms r ON b.room_id = r.id
+       JOIN users t ON b.tenant_id = t.id
+       JOIN users o ON r.owner_id = o.id
        WHERE kp.pidx = ?`,
       [pidx],
     );
@@ -257,6 +269,33 @@ exports.verifyPayment = async (req, res) => {
       console.error("Notification creation error:", notifErr);
       // Don't fail payment if notification fails
     }
+
+    // Send booking confirmation email to tenant (non-blocking)
+    sendBookingConfirmationEmail(
+      paymentRecord.tenant_email,
+      paymentRecord.tenant_name,
+      paymentRecord.room_title,
+      paymentRecord.room_location,
+      paymentRecord.move_in_date,
+      paymentRecord.move_out_date,
+      khaltiResponse.total_amount / 100, // Convert from paisa to rupees
+      paymentRecord.booking_id,
+    ).catch((err) =>
+      console.error("Failed to send booking confirmation email:", err),
+    );
+
+    // Send notification to owner (non-blocking)
+    sendNewBookingNotificationEmail(
+      paymentRecord.owner_email,
+      paymentRecord.owner_name,
+      paymentRecord.tenant_name,
+      paymentRecord.room_title,
+      paymentRecord.move_in_date,
+      paymentRecord.move_out_date,
+      khaltiResponse.total_amount / 100, // Convert from paisa to rupees
+    ).catch((err) =>
+      console.error("Failed to send owner notification email:", err),
+    );
 
     // Calculate months for response
     const monthsRented = calculateMonthsFromDates(

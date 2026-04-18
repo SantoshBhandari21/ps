@@ -27,6 +27,31 @@ export async function register(payload) {
   return data;
 }
 
+export async function forgotPassword(email) {
+  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await res.json();
+  if (!res.ok)
+    throw new Error(data.message || "Forgot password request failed");
+  return data;
+}
+
+export async function resetPassword(token, newPassword) {
+  const res = await fetch(`${API_BASE}/auth/reset-password/${token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ newPassword }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Password reset failed");
+  return data;
+}
+
 export function getUser() {
   const raw = localStorage.getItem("user");
   return raw ? JSON.parse(raw) : null;

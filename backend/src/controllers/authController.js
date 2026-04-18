@@ -2,17 +2,13 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const { runQuery, getOne } = require("../config/database");
-
-// Setup email transporter (requires EMAIL_USER and EMAIL_PASS in .env)
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const {
+  sendWelcomeEmail,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendPasswordResetSuccessEmail,
+} = require("../services/emailService");
 
 // Generate JWT token
 const generateToken = (id, role) => {
@@ -55,10 +51,25 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenHash = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+    const verificationTokenExpires = Date.now() + 24 * 3600000; // 24 hours
+
     const result = await runQuery(
-      `INSERT INTO users (full_name, email, password, role)
-       VALUES (?, ?, ?, ?)`,
-      [name, email, hashedPassword, role],
+      `INSERT INTO users (full_name, email, password, role, verification_token, verification_token_expires)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        name,
+        email,
+        hashedPassword,
+        role,
+        verificationTokenHash,
+        verificationTokenExpires,
+      ],
     );
 
     const user = await getOne(
@@ -67,10 +78,21 @@ const register = async (req, res) => {
       [result.id],
     );
 
+    // ✅ Send welcome email (non-blocking)
+    sendWelcomeEmail(email, name, role).catch((err) =>
+      console.error("Failed to send welcome email:", err),
+    );
+
+    // ✅ Send verification email (non-blocking)
+    sendVerificationEmail(email, name, verificationToken).catch((err) =>
+      console.error("Failed to send verification email:", err),
+    );
+
     const token = generateToken(user.id, user.role);
 
     return res.status(201).json({
-      message: "User registered successfully",
+      message:
+        "User registered successfully. Please check your email to verify your account.",
       user,
       token,
     });
@@ -224,17 +246,9 @@ const forgotPassword = async (req, res) => {
       [resetTokenHash, resetTokenExpires, user.id],
     );
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Password Reset Request",
-      html: `<p>Hi ${user.full_name},</p>
-             <p>Click the link below to reset your password (expires in 1 hour):</p>
-             <a href="${resetLink}">${resetLink}</a>`,
-    };
+    // ✅ Send password reset email using the new service
+    await sendPasswordResetEmail(email, user.full_name, resetToken);
 
-    await transporter.sendMail(mailOptions);
     return res.json({ message: "Password reset link sent to your email" });
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -263,7 +277,7 @@ const resetPassword = async (req, res) => {
       .update(token)
       .digest("hex");
     const user = await getOne(
-      "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > ?",
+      "SELECT id, full_name, email FROM users WHERE reset_token = ? AND reset_token_expires > ?",
       [resetTokenHash, Date.now()],
     );
 
@@ -279,6 +293,11 @@ const resetPassword = async (req, res) => {
     await runQuery(
       "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
       [hashedPassword, user.id],
+    );
+
+    // Send password reset success email (non-blocking)
+    sendPasswordResetSuccessEmail(user.email, user.full_name).catch((err) =>
+      console.error("Failed to send password reset success email:", err),
     );
 
     return res.json({ message: "Password reset successfully" });

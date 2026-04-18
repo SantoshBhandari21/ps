@@ -1,5 +1,6 @@
 // src/controllers/roomController.js
 const { runQuery, getOne, getAll } = require("../config/database");
+const { sendRoomListedEmail } = require("../services/emailService");
 
 // ============ HELPER FUNCTIONS ============
 
@@ -133,6 +134,14 @@ const createRoom = async (req, res) => {
 
     const room = await getOne("SELECT * FROM rooms WHERE id = ?", [result.id]);
     const roomWithDetails = await attachRoomDetails(room);
+
+    // Send room listing confirmation email (non-blocking)
+    sendRoomListedEmail(
+      req.user.email,
+      req.user.full_name,
+      title,
+      result.id,
+    ).catch((err) => console.error("Failed to send room listing email:", err));
 
     return res
       .status(201)
