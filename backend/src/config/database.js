@@ -136,7 +136,7 @@ const initDatabase = () => {
     CREATE TABLE IF NOT EXISTS notifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('booking_request', 'booking_approved', 'booking_rejected')),
+      type TEXT NOT NULL CHECK(type IN ('booking_request', 'booking_approved', 'booking_rejected', 'room_verification', 'payment_success', 'contact_message')),
       title TEXT NOT NULL,
       message TEXT NOT NULL,
       booking_id INTEGER,

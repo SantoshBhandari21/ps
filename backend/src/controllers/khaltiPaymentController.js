@@ -5,6 +5,7 @@ const {
   sendBookingConfirmationEmail,
   sendNewBookingNotificationEmail,
 } = require("../services/emailService");
+const { createNotification } = require("./notificationController");
 
 // ============ KHALTI CONFIGURATION ============
 const KHALTI_CONFIG = {
@@ -268,6 +269,24 @@ exports.verifyPayment = async (req, res) => {
     } catch (notifErr) {
       console.error("Notification creation error:", notifErr);
       // Don't fail payment if notification fails
+    }
+
+    // Notify all admins about successful payment
+    try {
+      const admins = await getAll(
+        "SELECT id FROM users WHERE role = 'admin' AND is_active = 1",
+        [],
+      );
+      for (const admin of admins) {
+        await createNotification(
+          admin.id,
+          "payment_success",
+          "Payment Received",
+          `Payment of Rs ${khaltiResponse.total_amount / 100} received from ${paymentRecord.tenant_name} for room "${paymentRecord.room_title}"`,
+        );
+      }
+    } catch (adminNotifErr) {
+      console.error("Failed to notify admins about payment:", adminNotifErr);
     }
 
     // Send booking confirmation email to tenant (non-blocking)

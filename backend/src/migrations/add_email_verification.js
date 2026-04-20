@@ -31,7 +31,7 @@ db.serialize(() => {
         if (err) {
           console.error("Error adding verification_token:", err);
         } else {
-          console.log("✅ Added verification_token column");
+          console.log("Added verification_token column");
         }
       });
     }
@@ -44,13 +44,13 @@ db.serialize(() => {
           if (err) {
             console.error("Error adding verification_token_expires:", err);
           } else {
-            console.log("✅ Added verification_token_expires column");
+            console.log("Added verification_token_expires column");
           }
         },
       );
     }
 
-    console.log("✅ Email verification migration completed!");
+    console.log("Email verification migration completed!");
     db.close();
   });
 });

@@ -9,6 +9,7 @@ const BellContainer = styled.div`
 const BellIcon = styled.button`
   background: none;
   border: none;
+  outline: none;
   color: ${(props) => (props.$isNav ? "#64748b" : "inherit")};
   font-size: ${(props) => (props.$isNav ? "15px" : "24px")};
   padding: ${(props) => (props.$isNav ? "8px 14px" : "0")};
@@ -22,6 +23,11 @@ const BellIcon = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: ${(props) => (props.$isNav ? "500" : "normal")};
+
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
 
   ${(props) =>
     props.$isNav &&

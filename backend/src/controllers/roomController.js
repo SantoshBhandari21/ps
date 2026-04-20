@@ -1,6 +1,7 @@
 // src/controllers/roomController.js
 const { runQuery, getOne, getAll } = require("../config/database");
 const { sendRoomListedEmail } = require("../services/emailService");
+const { createNotification } = require("./notificationController");
 
 // ============ HELPER FUNCTIONS ============
 
@@ -142,6 +143,24 @@ const createRoom = async (req, res) => {
       title,
       result.id,
     ).catch((err) => console.error("Failed to send room listing email:", err));
+
+    // Notify all admins about new room listing that needs verification
+    try {
+      const admins = await getAll(
+        "SELECT id FROM users WHERE role = 'admin' AND is_active = 1",
+        [],
+      );
+      for (const admin of admins) {
+        await createNotification(
+          admin.id,
+          "room_verification",
+          "New Room Listing",
+          `New room listing "${title}" from ${req.user.full_name} needs verification`,
+        );
+      }
+    } catch (notifErr) {
+      console.error("Failed to notify admins:", notifErr);
+    }
 
     return res
       .status(201)

@@ -66,9 +66,13 @@ const NavLink = styled(Link)`
   padding: 8px 14px;
   border-radius: 6px;
   transition: all 0.2s ease;
+  outline: none;
   &:hover {
     color: #2563eb;
     background-color: #f8fafc;
+  }
+  &:focus {
+    outline: none;
   }
   &.active {
     color: #2563eb;
@@ -93,6 +97,7 @@ const Btn = styled(Link)`
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
+  outline: none;
   ${({ $outline }) =>
     $outline
       ? `
@@ -102,7 +107,6 @@ const Btn = styled(Link)`
     &:hover {
       background: #2563eb;
       color: white;
-      transform: translateY(-1px);
     }
   `
       : `
@@ -112,7 +116,6 @@ const Btn = styled(Link)`
     &:hover {
       background: #1d4ed8;
       border-color: #1d4ed8;
-      transform: translateY(-1px);
     }
   `}
 `;
@@ -121,8 +124,12 @@ const MobileMenuBtn = styled.button`
   display: none;
   background: none;
   border: none;
+  outline: none;
   padding: 8px;
   cursor: pointer;
+  &:focus {
+    outline: none;
+  }
   @media (max-width: 768px) {
     display: block;
   }
@@ -187,9 +194,13 @@ const MobileLink = styled(Link)`
   font-weight: 500;
   font-size: 15px;
   transition: all 0.2s ease;
+  outline: none;
   &:hover {
     background-color: #f8fafc;
     color: #2563eb;
+  }
+  &:focus {
+    outline: none;
   }
   &.active {
     background-color: #2563eb;
@@ -225,13 +236,18 @@ const LogoutBtn = styled.button`
   &:hover {
     background: #2563eb;
     color: white;
-    transform: translateY(-1px);
+  }
+  &:focus {
+    outline: none;
   }
 `;
 
 const MobileLogoutBtn = styled(LogoutBtn)`
   padding: 12px 20px;
   width: 100%;
+  &:focus {
+    outline: none;
+  }
 `;
 
 const ProfileIcon = styled(Link)`
@@ -246,9 +262,13 @@ const ProfileIcon = styled(Link)`
   align-items: center;
   justify-content: center;
   gap: 6px;
+  outline: none;
   &:hover {
     color: #2563eb;
     background-color: #f8fafc;
+  }
+  &:focus {
+    outline: none;
   }
   &.active {
     color: #2563eb;
@@ -267,6 +287,9 @@ const MobileProfileIcon = styled(ProfileIcon)`
   &:hover {
     background: #2563eb;
     color: white;
+  }
+  &:focus {
+    outline: none;
   }
 `;
 
@@ -328,6 +351,7 @@ const Header = () => {
               >
                 Admin Dashboard
               </NavLink>
+              <NotificationBell isNav={true} />
               <ProfileIcon to="/profile" title="Profile">
                 <i className="fa-solid fa-circle-user"></i>
                 Profile

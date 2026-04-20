@@ -305,15 +305,8 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
-
-  const [formData, setFormData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
 
   useEffect(() => {
     const currentUser = getStoredUser();
@@ -324,72 +317,6 @@ const ProfilePage = () => {
     setUser(currentUser);
     setLoading(false);
   }, [navigate]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setError("");
-    setSuccess("");
-  };
-
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    if (!formData.currentPassword) {
-      setError("Current password is required");
-      return;
-    }
-
-    if (!formData.newPassword) {
-      setError("New password is required");
-      return;
-    }
-
-    if (formData.newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
-      return;
-    }
-
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (formData.currentPassword === formData.newPassword) {
-      setError("New password must be different from current password");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      await authAPI.updatePassword({
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword,
-      });
-
-      setSuccess("Password updated successfully! Redirecting to login...");
-      setFormData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-
-      setTimeout(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/login");
-      }, 2000);
-    } catch (err) {
-      setError(err.message || "Failed to update password");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
@@ -484,60 +411,6 @@ const ProfilePage = () => {
                 </InfoBox>
               )}
             </InfoSection>
-          </Card>
-
-          <Card>
-            <CardTitle>Change Password</CardTitle>
-
-            {error && <AlertBox $error>{error}</AlertBox>}
-            {success && <AlertBox>{success}</AlertBox>}
-
-            <Form onSubmit={handlePasswordChange}>
-              <FormGroup>
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  name="currentPassword"
-                  value={formData.currentPassword}
-                  onChange={handleInputChange}
-                  placeholder="Enter your current password"
-                  disabled={submitting}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  name="newPassword"
-                  value={formData.newPassword}
-                  onChange={handleInputChange}
-                  placeholder="Enter a new password (min. 6 characters)"
-                  disabled={submitting}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="Confirm your new password"
-                  disabled={submitting}
-                />
-              </FormGroup>
-
-              <ButtonGroup>
-                <Button $primary type="submit" disabled={submitting}>
-                  {submitting ? "Updating..." : "Update Password"}
-                </Button>
-              </ButtonGroup>
-            </Form>
           </Card>
 
           {user.role !== "admin" && (

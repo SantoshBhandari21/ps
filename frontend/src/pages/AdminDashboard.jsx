@@ -18,7 +18,7 @@ import {
 import { usersAPI } from "../services/api";
 
 export default function AdminDashboard() {
-  const tabs = ["Overview", "Users", "Rooms", "Payments", "Analytics"];
+  const tabs = ["Overview", "Users", "Rooms", "Payments"];
   const [active, setActive] = useState("Overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -136,9 +136,9 @@ export default function AdminDashboard() {
     }
   };
 
-  // Load stats when Analytics tab is activated
+  // Load stats when Overview tab is activated
   useEffect(() => {
-    if (active === "Analytics" && !stats && !statsLoading) {
+    if (active === "Overview" && !stats && !statsLoading) {
       loadStats();
     }
   }, [active, stats, statsLoading]);
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
                   ))}
                 </Grid>
 
-                <Panel>
+                <Panel style={{ marginTop: 12, marginBottom: 12 }}>
                   <PanelTitle>Revenue Collection</PanelTitle>
                   <FilterRow>
                     <FilterGroup>
@@ -371,18 +371,17 @@ export default function AdminDashboard() {
                           {revenue.totalPayments || 0}
                         </RevenueValue>
                       </RevenueItem>
-                      {revenue.totalPayments > 0 && (
-                        <RevenueItem>
-                          <RevenueLabel>Average Payment</RevenueLabel>
-                          <RevenueValue>
-                            Rs{" "}
-                            {Math.round(
-                              (revenue.totalRevenue || 0) /
-                                (revenue.totalPayments || 1),
-                            ).toLocaleString("en-US")}
-                          </RevenueValue>
-                        </RevenueItem>
-                      )}
+                      <RevenueItem>
+                        <RevenueLabel>
+                          Revenue generated to Company (20%)
+                        </RevenueLabel>
+                        <RevenueValue>
+                          Rs{" "}
+                          {Math.round(
+                            (revenue.totalRevenue || 0) * 0.2,
+                          ).toLocaleString("en-US")}
+                        </RevenueValue>
+                      </RevenueItem>
                     </RevenueInfo>
                   ) : (
                     <p style={{ margin: "12px 0 0", color: "#546173" }}>
@@ -391,27 +390,261 @@ export default function AdminDashboard() {
                   )}
                 </Panel>
 
-                <TwoCol>
-                  <Panel>
-                    <PanelTitle>Summary</PanelTitle>
-                    <List>
-                      <li>
-                        Total users: {pagination?.totalUsers ?? users.length}
-                      </li>
-                      <li>Owners: {counts.owners}</li>
-                      <li>Tenants: {counts.tenants}</li>
-                    </List>
+                {statsLoading ? (
+                  <Panel style={{ marginTop: 12 }}>
+                    <PanelTitle>Loading Analytics...</PanelTitle>
+                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
+                      Fetching platform analytics.
+                    </p>
                   </Panel>
+                ) : !stats ? (
+                  <Panel style={{ marginTop: 12 }}>
+                    <PanelTitle>Error Loading Analytics</PanelTitle>
+                    <p style={{ margin: "12px 0 0", color: "#b42318" }}>
+                      Failed to load analytics data.
+                    </p>
+                    <PrimaryBtn onClick={loadStats} style={{ marginTop: 12 }}>
+                      Try Again
+                    </PrimaryBtn>
+                  </Panel>
+                ) : (
+                  <>
+                    {/* Stats Cards from API */}
+                    <Grid style={{ marginTop: 0 }}>
+                      <Card>
+                        <CardLabel>Total Users</CardLabel>
+                        <CardValue>{stats.users?.total ?? 0}</CardValue>
+                        <CardHint>All registered users</CardHint>
+                      </Card>
+                      <Card>
+                        <CardLabel>Total Rooms</CardLabel>
+                        <CardValue>{stats.rooms?.total ?? 0}</CardValue>
+                        <CardHint>All listed rooms</CardHint>
+                      </Card>
+                      <Card>
+                        <CardLabel>Rooms on Rent</CardLabel>
+                        <CardValue>{stats.bookings?.total ?? 0}</CardValue>
+                        <CardHint>All bookings</CardHint>
+                      </Card>
+                      <Card>
+                        <CardLabel>Payments Done</CardLabel>
+                        <CardValue>{stats.payments?.total ?? 0}</CardValue>
+                        <CardHint>Total payments processed</CardHint>
+                      </Card>
+                    </Grid>
 
-                  <Panel>
-                    <PanelTitle>Quick Actions</PanelTitle>
-                    <ActionRow>
-                      <PrimaryBtn onClick={() => setActive("Users")}>
-                        View Users
-                      </PrimaryBtn>
-                    </ActionRow>
-                  </Panel>
-                </TwoCol>
+                    {/* Charts */}
+                    <div style={{ marginTop: 24 }}>
+                      <h3
+                        style={{
+                          margin: "0 0 12px 0",
+                          color: "#0f172a",
+                          fontSize: 16,
+                          fontWeight: 600,
+                        }}
+                      >
+                        System Analytics
+                      </h3>
+                      <TwoCol style={{ marginBottom: 12 }}>
+                        <Panel>
+                          <PanelTitle>User Distribution by Role</PanelTitle>
+                          <ChartContainer>
+                            <ResponsiveContainer width="100%" height={280}>
+                              <PieChart>
+                                <Pie
+                                  data={[
+                                    {
+                                      name: "Admins",
+                                      value: stats.users?.admins ?? 0,
+                                      fill: "#fcd34d",
+                                    },
+                                    {
+                                      name: "Owners",
+                                      value: stats.users?.owners ?? 0,
+                                      fill: "#93c5fd",
+                                    },
+                                    {
+                                      name: "Tenants",
+                                      value: stats.users?.tenants ?? 0,
+                                      fill: "#86efac",
+                                    },
+                                  ]}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={({ name, value }) =>
+                                    `${name}: ${value}`
+                                  }
+                                  outerRadius={80}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  <Cell fill="#fcd34d" />
+                                  <Cell fill="#93c5fd" />
+                                  <Cell fill="#86efac" />
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        </Panel>
+
+                        <Panel>
+                          <PanelTitle>Room Availability</PanelTitle>
+                          <ChartContainer>
+                            <ResponsiveContainer width="100%" height={280}>
+                              <PieChart>
+                                <Pie
+                                  data={[
+                                    {
+                                      name: "Available",
+                                      value: stats.rooms?.available ?? 0,
+                                      fill: "#86efac",
+                                    },
+                                    {
+                                      name: "Unavailable",
+                                      value:
+                                        (stats.rooms?.total ?? 0) -
+                                        (stats.rooms?.available ?? 0),
+                                      fill: "#fca5a5",
+                                    },
+                                  ]}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={({ name, value }) =>
+                                    `${name}: ${value}`
+                                  }
+                                  outerRadius={80}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  <Cell fill="#86efac" />
+                                  <Cell fill="#fca5a5" />
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        </Panel>
+                      </TwoCol>
+                    </div>
+
+                    {/* Room Price Distribution Bar Chart */}
+                    <Panel style={{ marginTop: 12 }}>
+                      <PanelTitle>Room Price Distribution</PanelTitle>
+                      <ChartContainer>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart
+                            data={[
+                              {
+                                range: "Budget (0-5K)",
+                                count: stats.priceRanges?.budget ?? 0,
+                              },
+                              {
+                                range: "Mid-Range (5K-15K)",
+                                count: stats.priceRanges?.mid ?? 0,
+                              },
+                              {
+                                range: "High (15K-30K)",
+                                count: stats.priceRanges?.high ?? 0,
+                              },
+                              {
+                                range: "Premium (30K+)",
+                                count: stats.priceRanges?.premium ?? 0,
+                              },
+                            ]}
+                            margin={{ top: 20, right: 30, left: 0, bottom: 80 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="range"
+                              angle={-45}
+                              textAnchor="end"
+                              height={100}
+                            />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar
+                              dataKey="count"
+                              radius={[8, 8, 0, 0]}
+                              name="Number of Rooms"
+                            >
+                              <Cell fill="#10b981" />
+                              <Cell fill="#3b82f6" />
+                              <Cell fill="#f59e0b" />
+                              <Cell fill="#ef4444" />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </Panel>
+
+                    {/* Summary Stats */}
+                    <TwoCol>
+                      <Panel>
+                        <PanelTitle>User Summary</PanelTitle>
+                        <List>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Admins:</StatLabel>
+                              <StatValue>{stats.users?.admins ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Owners:</StatLabel>
+                              <StatValue>{stats.users?.owners ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Tenants:</StatLabel>
+                              <StatValue>{stats.users?.tenants ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                        </List>
+                      </Panel>
+
+                      <Panel>
+                        <PanelTitle>Room & Pricing Summary</PanelTitle>
+                        <List>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Total Rooms:</StatLabel>
+                              <StatValue>{stats.rooms?.total ?? 0}</StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Available:</StatLabel>
+                              <StatValue>
+                                {stats.rooms?.available ?? 0}
+                              </StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Avg Price:</StatLabel>
+                              <StatValue>
+                                Rs. {stats.rooms?.avgPrice ?? 0}
+                              </StatValue>
+                            </StatItem>
+                          </li>
+                          <li>
+                            <StatItem>
+                              <StatLabel>Price Range:</StatLabel>
+                              <StatValue>
+                                Rs. {stats.rooms?.minPrice ?? 0} -{" "}
+                                {stats.rooms?.maxPrice ?? 0}
+                              </StatValue>
+                            </StatItem>
+                          </li>
+                        </List>
+                      </Panel>
+                    </TwoCol>
+                  </>
+                )}
               </>
             )}
 
@@ -655,257 +888,12 @@ export default function AdminDashboard() {
               </Panel>
             )}
 
-            {!loading && !error && active === "Analytics" && (
-              <>
-                {statsLoading ? (
-                  <Panel>
-                    <PanelTitle>Loading Analytics...</PanelTitle>
-                    <p style={{ margin: "12px 0 0", color: "#546173" }}>
-                      Fetching platform analytics.
-                    </p>
-                  </Panel>
-                ) : !stats ? (
-                  <Panel>
-                    <PanelTitle>Error Loading Analytics</PanelTitle>
-                    <p style={{ margin: "12px 0 0", color: "#b42318" }}>
-                      Failed to load analytics data.
-                    </p>
-                    <PrimaryBtn onClick={loadStats} style={{ marginTop: 12 }}>
-                      Try Again
-                    </PrimaryBtn>
-                  </Panel>
-                ) : (
-                  <>
-                    {/* Stats Cards */}
-                    <Grid>
-                      <Card>
-                        <CardLabel>Total Users</CardLabel>
-                        <CardValue>{stats.users?.total ?? 0}</CardValue>
-                        <CardHint>All registered users</CardHint>
-                      </Card>
-                      <Card>
-                        <CardLabel>Total Rooms</CardLabel>
-                        <CardValue>{stats.rooms?.total ?? 0}</CardValue>
-                        <CardHint>All listed rooms</CardHint>
-                      </Card>
-                      <Card>
-                        <CardLabel>Rooms on Rent</CardLabel>
-                        <CardValue>{stats.bookings?.total ?? 0}</CardValue>
-                        <CardHint>All bookings</CardHint>
-                      </Card>
-                      <Card>
-                        <CardLabel>Payments Done</CardLabel>
-                        <CardValue>{stats.payments?.total ?? 0}</CardValue>
-                        <CardHint>Total payments processed</CardHint>
-                      </Card>
-                    </Grid>
-
-                    {/* Charts */}
-                    <TwoCol>
-                      <Panel>
-                        <PanelTitle>User Distribution by Role</PanelTitle>
-                        <ChartContainer>
-                          <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  {
-                                    name: "Admins",
-                                    value: stats.users?.admins ?? 0,
-                                    fill: "#fcd34d",
-                                  },
-                                  {
-                                    name: "Owners",
-                                    value: stats.users?.owners ?? 0,
-                                    fill: "#93c5fd",
-                                  },
-                                  {
-                                    name: "Tenants",
-                                    value: stats.users?.tenants ?? 0,
-                                    fill: "#86efac",
-                                  },
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, value }) => `${name}: ${value}`}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                              >
-                                <Cell fill="#fcd34d" />
-                                <Cell fill="#93c5fd" />
-                                <Cell fill="#86efac" />
-                              </Pie>
-                              <Tooltip />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
-                      </Panel>
-
-                      <Panel>
-                        <PanelTitle>Room Availability</PanelTitle>
-                        <ChartContainer>
-                          <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  {
-                                    name: "Available",
-                                    value: stats.rooms?.available ?? 0,
-                                    fill: "#86efac",
-                                  },
-                                  {
-                                    name: "Unavailable",
-                                    value:
-                                      (stats.rooms?.total ?? 0) -
-                                      (stats.rooms?.available ?? 0),
-                                    fill: "#fca5a5",
-                                  },
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, value }) => `${name}: ${value}`}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                              >
-                                <Cell fill="#86efac" />
-                                <Cell fill="#fca5a5" />
-                              </Pie>
-                              <Tooltip />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
-                      </Panel>
-                    </TwoCol>
-
-                    {/* Room Price Distribution Bar Chart */}
-                    <Panel>
-                      <PanelTitle>Room Price Distribution</PanelTitle>
-                      <ChartContainer>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <BarChart
-                            data={[
-                              {
-                                range: "Budget (0-5K)",
-                                count: stats.priceRanges?.budget ?? 0,
-                              },
-                              {
-                                range: "Mid-Range (5K-15K)",
-                                count: stats.priceRanges?.mid ?? 0,
-                              },
-                              {
-                                range: "High (15K-30K)",
-                                count: stats.priceRanges?.high ?? 0,
-                              },
-                              {
-                                range: "Premium (30K+)",
-                                count: stats.priceRanges?.premium ?? 0,
-                              },
-                            ]}
-                            margin={{ top: 20, right: 30, left: 0, bottom: 80 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              dataKey="range"
-                              angle={-45}
-                              textAnchor="end"
-                              height={100}
-                            />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar
-                              dataKey="count"
-                              radius={[8, 8, 0, 0]}
-                              name="Number of Rooms"
-                            >
-                              <Cell fill="#10b981" />
-                              <Cell fill="#3b82f6" />
-                              <Cell fill="#f59e0b" />
-                              <Cell fill="#ef4444" />
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    </Panel>
-
-                    {/* Summary Stats */}
-                    <TwoCol>
-                      <Panel>
-                        <PanelTitle>User Summary</PanelTitle>
-                        <List>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Admins:</StatLabel>
-                              <StatValue>{stats.users?.admins ?? 0}</StatValue>
-                            </StatItem>
-                          </li>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Owners:</StatLabel>
-                              <StatValue>{stats.users?.owners ?? 0}</StatValue>
-                            </StatItem>
-                          </li>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Tenants:</StatLabel>
-                              <StatValue>{stats.users?.tenants ?? 0}</StatValue>
-                            </StatItem>
-                          </li>
-                        </List>
-                      </Panel>
-
-                      <Panel>
-                        <PanelTitle>Room & Pricing Summary</PanelTitle>
-                        <List>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Total Rooms:</StatLabel>
-                              <StatValue>{stats.rooms?.total ?? 0}</StatValue>
-                            </StatItem>
-                          </li>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Available:</StatLabel>
-                              <StatValue>
-                                {stats.rooms?.available ?? 0}
-                              </StatValue>
-                            </StatItem>
-                          </li>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Avg Price:</StatLabel>
-                              <StatValue>
-                                Rs. {stats.rooms?.avgPrice ?? 0}
-                              </StatValue>
-                            </StatItem>
-                          </li>
-                          <li>
-                            <StatItem>
-                              <StatLabel>Price Range:</StatLabel>
-                              <StatValue>
-                                Rs. {stats.rooms?.minPrice ?? 0} -{" "}
-                                {stats.rooms?.maxPrice ?? 0}
-                              </StatValue>
-                            </StatItem>
-                          </li>
-                        </List>
-                      </Panel>
-                    </TwoCol>
-                  </>
-                )}
-              </>
-            )}
-
             {!loading &&
               !error &&
               active !== "Overview" &&
               active !== "Users" &&
               active !== "Rooms" &&
-              active !== "Payments" &&
-              active !== "Analytics" && (
+              active !== "Payments" && (
                 <Panel>
                   <PanelTitle>{active}</PanelTitle>
                   <p style={{ margin: 0, color: "#546173" }}>
