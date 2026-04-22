@@ -1,7 +1,9 @@
+// Importing dependencies
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { register } from "../services/authService";
 
+// Inline styles for signup page
 const styles = {
   container: {
     minHeight: "65vh",
@@ -86,6 +88,7 @@ const styles = {
   },
 };
 
+// Signup page component
 export default function SignUpPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();

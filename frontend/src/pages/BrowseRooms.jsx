@@ -1,11 +1,11 @@
-//IMPORTS
+// Importing dependencies
 import React, { useMemo, useState, useEffect } from "react";
 import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { roomsAPI, getStoredUser } from "../services/api";
 import RoomDetails from "../components/RoomDetails";
 
-//Filtering options using amenities
+// Amenities filter options
 const AMENITIES = [
   { id: "wifi", label: "WiFi", iconClass: "fa-solid fa-wifi" },
   { id: "parking", label: "Parking", iconClass: "fa-solid fa-car" },
@@ -14,7 +14,7 @@ const AMENITIES = [
   { id: "gym", label: "Gym", iconClass: "fa-solid fa-dumbbell" },
 ];
 
-/* -------------------- Styles -------------------- */
+// Focus state styling for controls
 const controlFocus = css`
   &:focus {
     outline: none;
@@ -23,30 +23,33 @@ const controlFocus = css`
     background: #fff;
   }
 `;
-//page layout style
+// Main page container
 const Page = styled.div`
   min-height: 100vh;
   width: 100%;
   background: #f1f5f9;
 `;
 
+// Sticky header container
 const StickyTop = styled.div`
   position: sticky;
   top: 0;
   z-index: 50;
 `;
 
+// Search panel with gradient background
 const SearchPanel = styled.div`
   background: linear-gradient(135deg, #dbeafe 0%, #eef2ff 100%);
   border-bottom: 1px solid #e2e8f0;
 `;
 
+// Search controls wrapper
 const SearchInner = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 18px 16px;
 `;
-//Searh bar layout style
+// Search grid layout
 const SearchGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr auto;
@@ -57,10 +60,12 @@ const SearchGrid = styled.div`
   }
 `;
 
+// Input wrapper with icon
 const InputWrap = styled.div`
   position: relative;
 `;
 
+// Left icon positioning
 const IconLeft = styled.div`
   position: absolute;
   left: 12px;
@@ -69,6 +74,7 @@ const IconLeft = styled.div`
   color: #64748b;
 `;
 
+// Search input field
 const Input = styled.input`
   width: 100%;
   padding: 12px 12px 12px 40px;
@@ -80,6 +86,7 @@ const Input = styled.input`
   ${controlFocus}
 `;
 
+// Filter button
 const FilterBtn = styled.button`
   display: inline-flex;
   align-items: center;

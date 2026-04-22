@@ -1,7 +1,7 @@
-// src/controllers/notificationController.js
+// Importing database query functions for notification data access
 const { runQuery, getOne, getAll } = require("../config/database");
 
-// Get all unread notifications for a user
+// Retrieving user notifications with optional unread filter and booking details
 const getNotifications = async (req, res) => {
   try {
     const { status } = req.query; // unread or all
@@ -39,7 +39,7 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// Mark notification as read
+// Marking single notification as read by user
 const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
@@ -62,7 +62,7 @@ const markAsRead = async (req, res) => {
   }
 };
 
-// Mark all notifications as read
+// Marking all user notifications as read at once
 const markAllAsRead = async (req, res) => {
   try {
     await runQuery(
@@ -77,7 +77,7 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
-// Delete notification
+// Deleting notification from user's notification list
 const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,7 +100,7 @@ const deleteNotification = async (req, res) => {
   }
 };
 
-// Create notification (internal use)
+// Creating notification records for users with type, title, and message
 const createNotification = async (
   userId,
   type,
@@ -119,6 +119,7 @@ const createNotification = async (
   }
 };
 
+// Exporting notification handler functions for use in routes
 module.exports = {
   getNotifications,
   markAsRead,

@@ -1,7 +1,9 @@
+// Importing dependencies
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { resetPassword } from "../services/authService";
 
+// Inline styles for reset password page
 const styles = {
   container: {
     minHeight: "85vh",

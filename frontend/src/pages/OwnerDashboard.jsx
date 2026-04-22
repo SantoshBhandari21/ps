@@ -1,9 +1,11 @@
+// Importing dependencies
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import "../styles/OwnerDashboard.css";
 import { roomsAPI, roomAPI, rentalsAPI } from "../services/api";
 import RoomForm from "../components/RoomForm";
 
+// Content wrapper container
 const ContentWrapper = styled.div`
   padding: 18px;
 
@@ -12,20 +14,21 @@ const ContentWrapper = styled.div`
   }
 `;
 
+// Owner dashboard component
 const OwnerDashboard = () => {
+  // Room management states
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [rentalRequests, setRentalRequests] = useState([]);
-
+  // Loading owner rooms
   useEffect(() => {
     fetchMyRooms();
-    fetchRentalRequests();
   }, []);
 
+  // Fetching owner's rooms
   const fetchMyRooms = async () => {
     try {
       setLoading(true);
@@ -40,16 +43,6 @@ const OwnerDashboard = () => {
       setError(errorMsg);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchRentalRequests = async () => {
-    try {
-      const data = await rentalsAPI.getRentalRequests("approved");
-      console.log("Rental requests fetched:", data);
-      setRentalRequests(data.requests || []);
-    } catch (err) {
-      console.error("Fetch rental requests error:", err);
     }
   };
 
@@ -141,19 +134,6 @@ const OwnerDashboard = () => {
               {rooms.filter((r) => r.is_available).length}
             </div>
             <div className="analytics-hint">Ready to book</div>
-          </div>
-          <div className="analytics-card">
-            <div className="analytics-label">Rooms on Rent</div>
-            <div className="analytics-value">
-              {
-                new Set(
-                  rentalRequests
-                    .filter((req) => req.status === "approved")
-                    .map((req) => req.room_id),
-                ).size
-              }
-            </div>
-            <div className="analytics-hint">Successfully rented</div>
           </div>
         </div>
       )}

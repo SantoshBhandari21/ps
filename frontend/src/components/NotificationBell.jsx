@@ -1,11 +1,14 @@
+// Importing dependencies
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { notificationsAPI } from "../services/api";
 
+// Container for bell icon
 const BellContainer = styled.div`
   position: relative;
 `;
 
+// Styling bell button icon
 const BellIcon = styled.button`
   background: none;
   border: none;
@@ -39,6 +42,7 @@ const BellIcon = styled.button`
   `}
 `;
 
+// Notification count badge
 const Badge = styled.span`
   position: absolute;
   top: ${(props) => (props.$isNav ? "-4px" : "0")};
@@ -55,6 +59,7 @@ const Badge = styled.span`
   font-weight: bold;
 `;
 
+// Dropdown menu for notifications
 const NotificationDropdown = styled.div`
   position: absolute;
   top: 100%;
@@ -87,6 +92,7 @@ const NotificationDropdown = styled.div`
   }
 `;
 
+// Header with title and actions
 const NotificationHeader = styled.div`
   padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
@@ -95,6 +101,7 @@ const NotificationHeader = styled.div`
   align-items: center;
 `;
 
+// Dropdown title
 const NotificationTitle = styled.h3`
   margin: 0;
   font-size: 16px;
@@ -102,6 +109,7 @@ const NotificationTitle = styled.h3`
   color: #1f2937;
 `;
 
+// Individual notification item
 const NotificationItem = styled.div`
   padding: 12px 16px;
   border-bottom: 1px solid #f3f4f6;
@@ -118,17 +126,20 @@ const NotificationItem = styled.div`
   }
 `;
 
+// Layout for notification content
 const NotificationContent = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 `;
 
+// Message text container
 const NotificationMessage = styled.div`
   flex: 1;
   margin-right: 8px;
 `;
 
+// Title text styling
 const NotificationItemTitle = styled.p`
   margin: 0 0 4px 0;
   font-weight: 600;
@@ -136,6 +147,7 @@ const NotificationItemTitle = styled.p`
   font-size: 14px;
 `;
 
+// Message text styling
 const NotificationItemText = styled.p`
   margin: 0;
   color: #6b7280;
@@ -143,12 +155,14 @@ const NotificationItemText = styled.p`
   line-height: 1.4;
 `;
 
+// Timestamp styling
 const NotificationItemTime = styled.p`
   margin: 4px 0 0 0;
   color: #9ca3af;
   font-size: 12px;
 `;
 
+// Delete button styling
 const DeleteBtn = styled.button`
   background: none;
   border: none;
@@ -164,6 +178,7 @@ const DeleteBtn = styled.button`
   }
 `;
 
+// Empty state message
 const EmptyState = styled.div`
   padding: 32px 16px;
   text-align: center;
@@ -171,6 +186,7 @@ const EmptyState = styled.div`
   font-size: 14px;
 `;
 
+// Mark all as read button
 const MarkAllReadBtn = styled.button`
   background: none;
   border: none;
@@ -185,6 +201,7 @@ const MarkAllReadBtn = styled.button`
   }
 `;
 
+// Formatting notification timestamp
 const formatTime = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -199,23 +216,26 @@ const formatTime = (dateString) => {
   return `${date.toLocaleDateString()} ${time}`;
 };
 
+// Notification bell component
 const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
+  // State management for notifications
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [localOpen, setLocalOpen] = useState(false);
   const containerRef = useRef(null);
 
+  // Determining open state based on context
   const open = isNav ? localOpen : isOpen;
   const setOpen = isNav ? setLocalOpen : setIsOpen;
 
+  // Fetching notifications on mount and refresh interval
   useEffect(() => {
     fetchNotifications();
-    // Refresh notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Handle clicking outside the notification dropdown
+  // Closing dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -233,6 +253,7 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
     }
   }, [open, setOpen]);
 
+  // Getting notifications from API
   const fetchNotifications = async () => {
     try {
       const data = await notificationsAPI.getNotifications();
@@ -243,6 +264,7 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
     }
   };
 
+  // Handling API calls with error management
   const apiCall = async (fn, callback) => {
     try {
       await fn();
@@ -252,6 +274,7 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
     }
   };
 
+  // Marking notification as read
   const handleMarkAsRead = (notificationId, e) => {
     e.stopPropagation();
     apiCall(
@@ -260,6 +283,7 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
     );
   };
 
+  // Deleting notification
   const handleDelete = (notificationId, e) => {
     e.stopPropagation();
     apiCall(
@@ -268,10 +292,12 @@ const NotificationBell = ({ isNav = false, isOpen, setIsOpen }) => {
     );
   };
 
+  // Marking all notifications as read
   const handleMarkAllAsRead = () => {
     apiCall(notificationsAPI.markAllAsRead, fetchNotifications);
   };
 
+  // Rendering bell component with dropdown
   return (
     <BellContainer ref={containerRef}>
       <BellIcon

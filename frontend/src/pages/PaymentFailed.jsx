@@ -1,14 +1,17 @@
+// Importing dependencies
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Page, Card, Title, Subtitle } from "../styles/CommonStyles";
 
+// Main content container
 const Container = styled.div`
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
 `;
 
+// Error icon wrapper
 const IconWrapper = styled.div`
   width: 100px;
   height: 100px;
@@ -25,6 +28,7 @@ const IconWrapper = styled.div`
   }
 `;
 
+// Error message box
 const ErrorBox = styled.div`
   background: #fef2f2;
   border: 1px solid #fecaca;

@@ -1,8 +1,10 @@
+// Importing dependencies
 import React from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Page, Container, Card, Section } from "../styles/CommonStyles";
 
+// Page title heading
 const Title = styled.h1`
   margin: 0 0 16px;
   color: #0f172a;
@@ -10,6 +12,7 @@ const Title = styled.h1`
   font-weight: 900;
 `;
 
+// Section heading styling
 const SectionTitle = styled.h2`
   margin: 24px 0 16px;
   color: #0f172a;
@@ -19,6 +22,7 @@ const SectionTitle = styled.h2`
   padding-bottom: 8px;
 `;
 
+// Paragraph text styling
 const P = styled.p`
   margin: 0 0 16px;
   color: #475569;
@@ -26,6 +30,7 @@ const P = styled.p`
   font-size: 15px;
 `;
 
+// Grid layout for features
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -33,6 +38,7 @@ const Grid = styled.div`
   margin: 20px 0;
 `;
 
+// Feature box with hover effect
 const Box = styled.div`
   padding: 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
@@ -90,6 +96,7 @@ const Box = styled.div`
   }
 `;
 
+// Statistics display grid
 const Stats = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -1,15 +1,18 @@
-// src/styles/GlobalStyles.js
-import { createGlobalStyle } from 'styled-components';
+// Creating global styles
+import { createGlobalStyle } from "styled-components";
 
+// Defining global application styles
 const GlobalStyles = createGlobalStyle`
+  // Resetting default styles
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
 
+  // Declaring CSS custom properties
   :root {
-    /* Colors */
+    // Defining color scheme
     --primary-color: #2563eb;
     --primary-light: #3b82f6;
     --primary-dark: #1d4ed8;
@@ -23,10 +26,11 @@ const GlobalStyles = createGlobalStyle`
     --text-secondary: #64748b;
     --border-color: #e2e8f0;
     
-    /* Shadows */
+    // Setting shadow effects
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
+  // Styling body element
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     line-height: 1.6;
@@ -36,17 +40,20 @@ const GlobalStyles = createGlobalStyle`
     -moz-osx-font-smoothing: grayscale;
   }
 
+  // Styling heading elements
   h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     line-height: 1.2;
     color: var(--text-primary);
   }
 
+  // Styling paragraph text
   p {
     color: var(--text-secondary);
     margin-bottom: 1rem;
   }
 
+  // Styling anchor links
   a {
     color: var(--primary-color);
     text-decoration: none;

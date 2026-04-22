@@ -1,13 +1,16 @@
+// Importing dependencies
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getStoredUser, authAPI } from "../services/api";
 
+// Page wrapper
 const PageWrapper = styled.div`
   min-height: 100vh;
   background-color: #f1f5f9;
 `;
 
+// Header section with gradient
 const Header = styled.div`
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: white;
@@ -18,6 +21,7 @@ const Header = styled.div`
   }
 `;
 
+// Header content container
 const HeaderContent = styled.div`
   max-width: 1000px;
   margin: 0 auto;
@@ -36,6 +40,7 @@ const HeaderContent = styled.div`
   }
 `;
 
+// Main content container
 const Container = styled.div`
   max-width: 1000px;
   margin: 0 auto;
@@ -46,6 +51,7 @@ const Container = styled.div`
   }
 `;
 
+// Content grid layout
 const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -56,6 +62,7 @@ const ContentGrid = styled.div`
   }
 `;
 
+// Card container
 const Card = styled.div`
   background: white;
   border-radius: 12px;
@@ -72,6 +79,7 @@ const Card = styled.div`
   }
 `;
 
+// Card title heading
 const CardTitle = styled.h2`
   font-size: 18px;
   font-weight: 700;
@@ -81,6 +89,7 @@ const CardTitle = styled.h2`
   border-bottom: 2px solid #e2e8f0;
 `;
 
+// Form group container
 const FormGroup = styled.div`
   margin-bottom: 18px;
 
@@ -89,6 +98,7 @@ const FormGroup = styled.div`
   }
 `;
 
+// Form label styling
 const Label = styled.label`
   display: block;
   font-size: 13px;

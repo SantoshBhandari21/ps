@@ -1,11 +1,14 @@
-// src/config/database.js
+// Importing SQLite3 database driver with verbose mode for debugging
 const sqlite3 = require("sqlite3").verbose();
+// Importing path module for resolving database file location
 const path = require("path");
+// Importing bcryptjs for password hashing (for seed data)
 const bcrypt = require("bcryptjs");
 
+// Resolving database file path relative to project root
 const DB_PATH = path.resolve(__dirname, "../../rental.db");
 
-// ============ DATABASE CONNECTION ============
+// Initializing SQLite database connection with error handling
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
     console.error("Error connecting to database:", err.message);
@@ -14,13 +17,13 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   }
 });
 
-// Enable foreign keys
+// Enabling foreign key constraints for referential integrity
 db.run("PRAGMA foreign_keys = ON");
 
-// Initialize database tables
+// Initializing database tables with serialized execution to ensure sequential creation
 const initDatabase = () => {
   db.serialize(() => {
-    // USERS table
+    // Creating users table for storing user accounts with roles and verification status
     db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +39,7 @@ const initDatabase = () => {
     )
   `);
 
-    // Rooms/Properties table
+    // Creating rooms table for storing property listings with owner references
     db.run(`
     CREATE TABLE IF NOT EXISTS rooms (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +63,7 @@ const initDatabase = () => {
     )
   `);
 
-    // Room images table
+    // Creating room_images table for storing multiple images per property
     db.run(`
     CREATE TABLE IF NOT EXISTS room_images (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,7 +74,7 @@ const initDatabase = () => {
     )
   `);
 
-    // Bookings table
+    // Creating bookings table for managing rental reservations with status tracking
     db.run(`
     CREATE TABLE IF NOT EXISTS bookings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,7 +95,7 @@ const initDatabase = () => {
     )
   `);
 
-    // Reviews/Ratings table
+    // Creating reviews table for storing property ratings and feedback from tenants
     db.run(`
     CREATE TABLE IF NOT EXISTS reviews (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,7 +109,7 @@ const initDatabase = () => {
     )
   `);
 
-    // Favorites table
+    // Creating favorites table for storing tenant's favorite properties
     db.run(`
     CREATE TABLE IF NOT EXISTS favorites (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,11 +122,13 @@ const initDatabase = () => {
     )
   `);
 
+    // Creating messages table for storing contact form submissions
     db.run(`
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
+      phone TEXT,
       subject TEXT NOT NULL,
       message TEXT NOT NULL,
       status TEXT DEFAULT 'unread' CHECK(status IN ('unread', 'read', 'replied')),
@@ -131,12 +136,12 @@ const initDatabase = () => {
     )
   `);
 
-    // Notifications table
+    // Creating notifications table for storing system notifications to users
     db.run(`
     CREATE TABLE IF NOT EXISTS notifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('booking_request', 'booking_approved', 'booking_rejected', 'room_verification', 'payment_success', 'contact_message')),
+      type TEXT NOT NULL CHECK(type IN ('booking_request', 'booking_approved', 'booking_rejected', 'room_verification', 'room_approval', 'payment_success', 'rental_cancelled', 'rental_period_ended', 'contact_message')),
       title TEXT NOT NULL,
       message TEXT NOT NULL,
       booking_id INTEGER,
@@ -147,7 +152,7 @@ const initDatabase = () => {
     )
   `);
 
-    // Khalti Payments table
+    // Creating khalti_payments table for storing payment transaction records
     db.run(`
     CREATE TABLE IF NOT EXISTS khalti_payments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -170,15 +175,10 @@ const initDatabase = () => {
   `);
   });
 
-  console.log("Database tables initialized successfully");
+  console.log("# Database tables initialized successfully");
 };
 
-/**
- * Execute INSERT/UPDATE/DELETE query and return inserted ID
- * @param {string} sql - SQL query string
- * @param {array} params - Query parameters
- * @returns {Promise<{id: number, changes: number}>}
- */
+// Executing INSERT/UPDATE/DELETE queries and returning inserted ID and changes count
 const runQuery = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -188,12 +188,7 @@ const runQuery = (sql, params = []) => {
   });
 };
 
-/**
- * Get a single row from database
- * @param {string} sql - SQL query string
- * @param {array} params - Query parameters
- * @returns {Promise<object|undefined>}
- */
+// Retrieving single row from database with parameterized query execution
 const getOne = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
@@ -203,12 +198,7 @@ const getOne = (sql, params = []) => {
   });
 };
 
-/**
- * Get multiple rows from database
- * @param {string} sql - SQL query string
- * @param {array} params - Query parameters
- * @returns {Promise<array>}
- */
+// Retrieving multiple rows from database with parameterized query execution
 const getAll = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
@@ -218,6 +208,7 @@ const getAll = (sql, params = []) => {
   });
 };
 
+// Exporting database connection and query utility functions for use in controllers
 module.exports = {
   db,
   initDatabase,

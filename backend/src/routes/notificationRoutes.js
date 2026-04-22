@@ -1,7 +1,11 @@
 // src/routes/notificationRoutes.js
+// Importing express framework
 const express = require("express");
+// Initializing router
 const router = express.Router();
+// Importing authentication middleware
 const { authenticate } = require("../middleware/auth");
+// Importing notification controller functions
 const {
   getNotifications,
   markAsRead,
@@ -9,19 +13,20 @@ const {
   deleteNotification,
 } = require("../controllers/notificationController");
 
-// All notification routes require authentication
+// Protecting all notification routes with authentication
 router.use(authenticate);
 
-// Get all notifications for user
+// Retrieving all notifications for authenticated user
 router.get("/", getNotifications);
 
-// Mark all notifications as read (must come before :id routes)
+// Marking all notifications as read
 router.put("/all/read-all", markAllAsRead);
 
-// Mark notification as read
+// Marking individual notification as read
 router.put("/:id/read", markAsRead);
 
-// Delete notification
+// Deleting notification by ID
 router.delete("/:id", deleteNotification);
 
+// Exporting notification routes
 module.exports = router;

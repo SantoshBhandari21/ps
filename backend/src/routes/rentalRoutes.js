@@ -1,24 +1,28 @@
 // src/routes/rentalRoutes.js
+// Importing express framework
 const express = require("express");
+// Initializing router
 const router = express.Router();
+// Importing authentication middleware
 const { authenticate, authorize } = require("../middleware/auth");
+// Importing rental controller functions
 const {
   createRental,
   getMyRentals,
-  getRentalRequests,
   getRentalById,
   stopRent,
 } = require("../controllers/rentalController");
 
-// Tenant routes
+// Defining tenant rental creation endpoint
 router.post("/", authenticate, authorize("tenant"), createRental);
+// Retrieving tenant rental history
 router.get("/my-rentals", authenticate, authorize("tenant"), getMyRentals);
-router.get("/requests", authenticate, authorize("owner"), getRentalRequests);
 
-// Stop/cancel rental (tenant only) - must come before /:id route
+// Handling rental cancellation for tenants
 router.put("/:id/stop", authenticate, authorize("tenant"), stopRent);
 
-// Get rental details
+// Retrieving rental details by ID
 router.get("/:id", authenticate, getRentalById);
 
+// Exporting rental routes
 module.exports = router;

@@ -1,11 +1,15 @@
 // src/routes/authRoutes.js
+// Importing express framework
 const express = require("express");
+// Initializing router
 const router = express.Router();
+// Importing form validation library
 const { body } = require("express-validator");
 
+// Importing authentication middleware
 const { authenticate } = require("../middleware/auth");
+// Importing authentication controller functions
 const {
-  register,
   login,
   updateProfilePhoto,
   forgotPassword,
@@ -13,10 +17,10 @@ const {
   deleteAccount,
 } = require("../controllers/authController");
 
-// Import upload middleware
+// Importing file upload middleware
 const { uploadImage } = require("../middleware/upload");
 
-// Register validation (matches frontend)
+// Validating user registration input
 const registerValidation = [
   body("name").trim().notEmpty().withMessage("Name is required"),
   body("email").isEmail().withMessage("Valid email is required"),
@@ -28,13 +32,13 @@ const registerValidation = [
     .withMessage("Role must be admin, owner, or tenant"),
 ];
 
-// Login validation (matches frontend)
+// Validating user login input
 const loginValidation = [
   body("email").isEmail().withMessage("Valid email is required"),
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
-// Routes
+// Defining authentication routes for register, login, and password management
 router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
 router.post("/profile-photo", authenticate, uploadImage, updateProfilePhoto);
@@ -42,4 +46,5 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.delete("/account", authenticate, deleteAccount);
 
+// Exporting authentication routes
 module.exports = router;

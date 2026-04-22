@@ -1,14 +1,17 @@
+// Importing dependencies
 import React, { useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import styled from "styled-components";
 import NotificationBell from "./NotificationBell";
 
+// Main layout container
 const Container = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   min-height: 100vh;
 `;
 
+// Sidebar navigation menu
 const Sidebar = styled.aside`
   display: none;
   background: #ffffff;
@@ -31,6 +34,7 @@ const Sidebar = styled.aside`
   }
 `;
 
+// Sidebar header button
 const SidebarHeader = styled.button`
   width: 100%;
   display: flex;
@@ -51,6 +55,7 @@ const SidebarHeader = styled.button`
   }
 `;
 
+// Brand name styling
 const Brand = styled.div`
   display: flex;
   align-items: center;
@@ -60,6 +65,7 @@ const Brand = styled.div`
   font-size: 16px;
 `;
 
+// Navigation item button
 const NavItem = styled.button`
   width: 100%;
   text-align: left;
@@ -76,6 +82,7 @@ const NavItem = styled.button`
   }
 `;
 
+// Sidebar footer section
 const SidebarFooter = styled.div`
   margin-top: auto;
   padding-top: 14px;
@@ -84,6 +91,7 @@ const SidebarFooter = styled.div`
   gap: 8px;
 `;
 
+// Notification label text
 const NotificationLabel = styled.span`
   font-size: 12px;
   font-weight: 600;
@@ -93,6 +101,7 @@ const NotificationLabel = styled.span`
   white-space: nowrap;
 `;
 
+// Profile button in sidebar
 const ProfileButton = styled.button`
   width: 100%;
   padding: 10px 12px;
@@ -118,6 +127,7 @@ const ProfileButton = styled.button`
   }
 `;
 
+// Profile icon container
 const ProfileIconBtn = styled.div`
   width: 24px;
   height: 24px;
@@ -138,6 +148,7 @@ const ProfileIconBtn = styled.div`
   }
 `;
 
+// Main content area
 const Content = styled.main`
   padding: 18px;
 
@@ -146,6 +157,7 @@ const Content = styled.main`
   }
 `;
 
+// Mobile overlay for sidebar
 const Overlay = styled.div`
   display: none;
 
@@ -161,11 +173,13 @@ const Overlay = styled.div`
   }
 `;
 
+// Layout component for owner dashboard
 const OwnerLayout = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // Navigating to specified path
   const handleNavigation = (path) => {
     if (path) navigate(path);
   };

@@ -1,9 +1,9 @@
-//IMPORTS
+// Importing dependencies
 import React, { useMemo, useState, useEffect } from "react";
 import styled, { css } from "styled-components";
 import { rentalsAPI } from "../services/api";
 
-/* -------------------- Styles -------------------- */
+// Focus styling for form controls
 const controlFocus = css`
   &:focus {
     outline: none;
@@ -13,27 +13,32 @@ const controlFocus = css`
   }
 `;
 
+// Main page container
 const Page = styled.div`
   min-height: 100vh;
   width: 100%;
   background: #f1f5f9;
 `;
 
+// Sticky header container
 const StickyTop = styled.div`
   position: sticky;
   top: 0;
   z-index: 50;
 `;
+// Search panel with gradient background
 const SearchPanel = styled.div`
   background: linear-gradient(135deg, #dbeafe 0%, #eef2ff 100%);
   border-bottom: 1px solid #e2e8f0;
 `;
+// Search controls wrapper
 const SearchInner = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 18px 16px;
 `;
 
+// Search grid layout
 const SearchGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr auto;
@@ -43,9 +48,11 @@ const SearchGrid = styled.div`
   }
 `;
 
+// Input wrapper with icon
 const InputWrap = styled.div`
   position: relative;
 `;
+// Left side icon positioning
 const IconLeft = styled.div`
   position: absolute;
   left: 12px;
@@ -54,6 +61,7 @@ const IconLeft = styled.div`
   color: #64748b;
 `;
 
+// Search input field
 const Input = styled.input`
   width: 100%;
   padding: 12px 12px 12px 40px;
@@ -65,6 +73,7 @@ const Input = styled.input`
   ${controlFocus}
 `;
 
+// Sort dropdown selector
 const SortSelect = styled.select`
   width: 100%;
   padding: 10px 12px;
@@ -78,12 +87,14 @@ const SortSelect = styled.select`
   ${controlFocus}
 `;
 
+// Content container
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 18px 16px 40px;
 `;
 
+// Results count and view toggle
 const ResultsBar = styled.div`
   display: flex;
   align-items: flex-end;
@@ -93,7 +104,10 @@ const ResultsBar = styled.div`
   margin: 14px 0 18px;
 `;
 
+// Title section
 const TitleBlock = styled.div``;
+
+// Main heading
 const H2 = styled.h2`
   margin: 0;
   font-size: 22px;

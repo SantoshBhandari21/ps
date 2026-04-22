@@ -1,8 +1,9 @@
+// Importing dependencies
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/authService";
-import { useAuth } from "../hooks/useAuth";
 
+// Inline styles for login page
 const styles = {
   container: {
     minHeight: "85vh",
@@ -80,18 +81,15 @@ const styles = {
   },
 };
 
+// Login page component
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
 
-  React.useEffect(() => {
-    if (user) navigate("/");
-  }, [user, navigate]);
-
+  // Handling login form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");

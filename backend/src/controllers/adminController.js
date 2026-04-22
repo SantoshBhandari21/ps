@@ -1,11 +1,13 @@
-// src/controllers/adminController.js
+// Importing database query functions for admin data access
 const { runQuery, getOne, getAll } = require("../config/database");
+// Importing bcryptjs for password hashing
 const bcrypt = require("bcryptjs");
+// Importing notification service for notifying users
 const { createNotification } = require("./notificationController");
+// Importing email service for sending approval notifications
+const { sendRoomApprovedEmail } = require("../services/emailService");
 
-/**
- * GET /api/admin/users?role=&search=&page=&limit=
- */
+// Retrieving all users with role, search, and pagination filters
 const getAllUsers = async (req, res) => {
   try {
     const { role, search, page = 1, limit = 20 } = req.query;
@@ -65,9 +67,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-/**
- * GET /api/admin/users/:id
- */
+// Retrieving single user with associated statistics based on role
 const getUserById = async (req, res) => {
   try {
     const user = await getOne(
@@ -112,9 +112,7 @@ const getUserById = async (req, res) => {
   }
 };
 
-/**
- * POST /api/admin/users
- */
+// Creating new user account with role validation and password hashing
 const createUser = async (req, res) => {
   try {
     const { fullName, email, password, role } = req.body;
@@ -157,9 +155,7 @@ const createUser = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/admin/users/:id
- */
+// Updating user profile with role, verification, and activity status modifications
 const updateUser = async (req, res) => {
   try {
     const { fullName, email, role, isVerified, isActive } = req.body;
@@ -240,9 +236,7 @@ const updateUser = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/admin/users/:id
- */
+// Deleting user account with validation to prevent orphaned bookings
 const deleteUser = async (req, res) => {
   try {
     const user = await getOne("SELECT id, role FROM users WHERE id = ?", [
@@ -284,32 +278,12 @@ const deleteUser = async (req, res) => {
 /**
  * PUT /api/admin/users/:id/toggle-status
  */
-const toggleUserStatus = async (req, res) => {
-  try {
-    const user = await getOne("SELECT id, is_active FROM users WHERE id = ?", [
-      req.params.id,
-    ]);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const newStatus = user.is_active ? 0 : 1;
-
-    await runQuery(
-      "UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [newStatus, user.id],
-    );
-
-    return res.json({
-      message: `User ${newStatus ? "activated" : "deactivated"} successfully`,
-    });
-  } catch (error) {
-    console.error("Toggle status error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
 /**
- * GET /api/admin/stats/dashboard
+ * PUT /api/admin/users/:id/toggle-status
+ * DEPRECATED: Use PUT /api/admin/users/:id instead
  */
+
+// Retrieving platform dashboard statistics including users, rooms, and bookings
 const getAdminStats = async (req, res) => {
   try {
     const rowUsers = await getOne("SELECT COUNT(*) as total_users FROM users");
@@ -416,10 +390,7 @@ const getAdminStats = async (req, res) => {
   }
 };
 
-/**
- * GET /api/admin/revenue?fromDate=&toDate=
- * Fetch total revenue from completed payments with optional date filtering
- */
+// Calculating total revenue from completed payments with optional date range filtering
 const getRevenue = async (req, res) => {
   try {
     const { fromDate, toDate } = req.query;
@@ -457,24 +428,29 @@ const getRevenue = async (req, res) => {
   }
 };
 
-/**
- * GET /api/admin/rooms/all?search=&page=&limit=
- */
+// Retrieving all properties with owner and tenant information with search and pagination
 const getAllRooms = async (req, res) => {
   try {
     const { search, page = 1, limit = 20 } = req.query;
 
-    // ✅ Join rooms with users to include owner information
+    // Get today's date for checking active rentals
+    const today = new Date().toISOString().split("T")[0];
+
+    // ✅ Join rooms with users (owner) and bookings (tenant) to include both owner and tenant information
     let query = `
       SELECT 
         r.*, 
         u.full_name as owner_name,
-        u.email as owner_email
+        u.email as owner_email,
+        (SELECT tu.full_name FROM bookings b 
+         LEFT JOIN users tu ON b.tenant_id = tu.id 
+         WHERE b.room_id = r.id AND b.status = 'approved' AND b.move_out_date > ?
+         LIMIT 1) as tenant_name
       FROM rooms r
       LEFT JOIN users u ON r.owner_id = u.id
       WHERE 1=1
     `;
-    const params = [];
+    const params = [today];
 
     if (search) {
       query +=
@@ -592,6 +568,59 @@ const updateRoomVerification = async (req, res) => {
     ]);
 
     const room = await getOne("SELECT * FROM rooms WHERE id = ?", [id]);
+
+    // Send approval email and notification to owner if room is verified (approved)
+    if (is_verified === 1 && room) {
+      try {
+        const owner = await getOne(
+          "SELECT email, full_name FROM users WHERE id = ?",
+          [room.owner_id],
+        );
+
+        if (owner) {
+          sendRoomApprovedEmail(
+            owner.email,
+            owner.full_name,
+            room.title,
+            room.id,
+          ).catch((err) =>
+            console.error("Failed to send room approval email:", err),
+          );
+
+          // Send in-app notification to owner
+          await createNotification(
+            room.owner_id,
+            "room_approval",
+            "Room Approved",
+            `Your room "${room.title}" has been approved and is now live for tenants`,
+          );
+        }
+      } catch (emailError) {
+        console.error("Error sending room approval email:", emailError);
+        // Don't throw error, just log it - the update was successful
+      }
+    } else if (is_verified === 0 && room) {
+      // Room was rejected/unverified
+      try {
+        const owner = await getOne(
+          "SELECT email, full_name FROM users WHERE id = ?",
+          [room.owner_id],
+        );
+
+        if (owner) {
+          // Send rejection notification to owner
+          await createNotification(
+            room.owner_id,
+            "room_rejected",
+            "Room Verification Rejected",
+            `Your room "${room.title}" has been rejected and is no longer available for tenants`,
+          );
+        }
+      } catch (rejectError) {
+        console.error("Error handling room rejection:", rejectError);
+      }
+    }
+
     return res.json({ message: "Room verification updated", room });
   } catch (error) {
     console.error("Update room verification error:", error);
@@ -668,7 +697,6 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
-  toggleUserStatus,
   getAdminStats,
   getRevenue,
   getAllRooms,

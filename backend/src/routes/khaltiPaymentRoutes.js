@@ -1,11 +1,15 @@
 // src/routes/khaltiPaymentRoutes.js
+// Importing express framework
 const express = require("express");
+// Initializing router
 const router = express.Router();
 
+// Importing Khalti payment controller
 const khaltiPaymentController = require("../controllers/khaltiPaymentController");
+// Importing authentication middleware
 const authMiddleware = require("../middleware/auth");
 
-// Initiate payment - requires authentication
+// Handling Khalti payment initiation for tenants
 router.post(
   "/initiate",
   authMiddleware.authenticate,
@@ -13,10 +17,10 @@ router.post(
   khaltiPaymentController.initiatePayment,
 );
 
-// Verify payment - callback from Khalti (no authentication required)
+// Handling Khalti payment callback verification
 router.get("/verify", khaltiPaymentController.verifyPayment);
 
-// Get all my payments (tenant) - must be before /:bookingId route
+// Retrieving tenant payment history
 router.get(
   "/my-payments",
   authMiddleware.authenticate,
@@ -24,19 +28,19 @@ router.get(
   khaltiPaymentController.getMyPayments,
 );
 
-// Get payment status by pidx
+// Fetching payment status by transaction ID
 router.get(
   "/status/:pidx",
   authMiddleware.authenticate,
   khaltiPaymentController.getPaymentStatus,
 );
 
-// Get payment by booking ID
+// Retrieving payment details by booking reference
 router.get(
   "/booking/:bookingId",
   authMiddleware.authenticate,
   khaltiPaymentController.getPaymentByBooking,
 );
 
+// Exporting payment routes
 module.exports = router;
-

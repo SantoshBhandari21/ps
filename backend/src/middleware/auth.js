@@ -1,8 +1,10 @@
 // src/middleware/auth.js
+// Importing JWT library for token verification
 const jwt = require("jsonwebtoken");
+// Importing database query function
 const { getOne } = require("../config/database");
 
-// ============ ERROR MESSAGES ============
+// Defining authentication error messages
 const AUTH_ERRORS = {
   NO_TOKEN: "No token, authorization denied",
   USER_NOT_FOUND: "User not found",
@@ -14,12 +16,7 @@ const AUTH_ERRORS = {
     `Access denied. Required role: ${roles.join(" or ")}`,
 };
 
-// ============ MIDDLEWARE FUNCTIONS ============
-
-/**
- * JWT authentication middleware
- * Extracts token from Authorization header and verifies it
- */
+// Verifying JWT tokens and validating user authentication
 const authenticate = async (req, res, next) => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -53,11 +50,7 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-/**
- * Role-based authorization middleware
- * Checks if authenticated user has one of the specified roles
- * @param {...string} roles - Allowed roles
- */
+// Checking user role against required permissions
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -74,10 +67,10 @@ const authorize = (...roles) => {
   };
 };
 
+// Exporting authentication and authorization middleware functions
 module.exports = {
   authenticate,
   authorize,
-  // Legacy convenience functions - use authorize() instead
   isAdmin: authorize("admin"),
   isOwner: authorize("owner"),
   isTenant: authorize("tenant"),

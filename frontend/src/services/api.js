@@ -1,12 +1,12 @@
-// src/services/api.js
+// Importing and configuring API endpoint
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-// Helper function to get auth token
+// Getting authentication token from local storage
 const getToken = () => {
   return localStorage.getItem("token");
 };
 
-// Helper function to make API calls
+// Making authenticated API calls with token
 const apiCall = async (endpoint, options = {}) => {
   const token = getToken();
 
@@ -18,23 +18,24 @@ const apiCall = async (endpoint, options = {}) => {
     },
   };
 
-  // Add token if available
+  // Adding authorization token to request
   if (token) {
     config.headers["Authorization"] = `Bearer ${token}`;
   }
 
-  // Add body if present
+  // Handling request body formatting
   if (options.body && !(options.body instanceof FormData)) {
     config.body = JSON.stringify(options.body);
   } else if (options.body instanceof FormData) {
-    // Remove Content-Type for FormData (browser will set it)
+    // Removing Content-Type for FormData
     delete config.headers["Content-Type"];
     config.body = options.body;
   }
 
+  // Fetching data from API
   const response = await fetch(`${API_BASE}${endpoint}`, config);
 
-  // Safely parse JSON (even if server returns empty)
+  // Parsing JSON response safely
   let data = null;
   try {
     data = await response.json();
@@ -42,14 +43,15 @@ const apiCall = async (endpoint, options = {}) => {
     data = null;
   }
 
+  // Handling error responses
   if (!response.ok) {
-    // Handle token expiration
+    // Redirecting on token expiration
     if (response.status === 401) {
       console.warn("Token expired or invalid, redirecting to login");
-      // Clear stored auth data
+      // Clearing stored authentication data
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      // Redirect to login
+      // Redirecting to login page
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
@@ -62,9 +64,12 @@ const apiCall = async (endpoint, options = {}) => {
   return data;
 };
 
+// Authentication API endpoints
 // ==================== AUTH API ====================
 
+// Exporting authentication API functions
 export const authAPI = {
+  // Registering new user account
   register: async (userData) => {
     return apiCall("/auth/register", {
       method: "POST",
@@ -72,6 +77,7 @@ export const authAPI = {
     });
   },
 
+  // Logging in user with credentials
   login: async (credentials) => {
     return apiCall("/auth/login", {
       method: "POST",
@@ -79,10 +85,12 @@ export const authAPI = {
     });
   },
 
+  // Getting current user details
   getMe: async () => {
     return apiCall("/auth/me");
   },
 
+  // Updating user profile information
   updateProfile: async (profileData) => {
     return apiCall("/auth/profile", {
       method: "PUT",
@@ -90,6 +98,7 @@ export const authAPI = {
     });
   },
 
+  // Updating user password
   updatePassword: async (passwordData) => {
     return apiCall("/auth/password", {
       method: "PUT",
@@ -97,6 +106,7 @@ export const authAPI = {
     });
   },
 
+  // Uploading profile photo
   uploadProfilePhoto: async (formData) => {
     const token = getToken();
     const config = {
@@ -236,22 +246,6 @@ export const roomsAPI = {
       method: "DELETE",
     });
   },
-
-  getFavorites: async () => {
-    return apiCall("/rooms/user/favorites");
-  },
-
-  addToFavorites: async (roomId) => {
-    return apiCall(`/rooms/${roomId}/favorite`, {
-      method: "POST",
-    });
-  },
-
-  removeFromFavorites: async (roomId) => {
-    return apiCall(`/rooms/${roomId}/favorite`, {
-      method: "DELETE",
-    });
-  },
 };
 
 // ==================== RENTALS API ====================
@@ -267,11 +261,6 @@ export const rentalsAPI = {
   getMyRentals: async (status = null) => {
     const queryString = status ? `?status=${status}` : "";
     return apiCall(`/rentals/my-rentals${queryString}`);
-  },
-
-  getRentalRequests: async (status = null) => {
-    const queryString = status ? `?status=${status}` : "";
-    return apiCall(`/rentals/requests${queryString}`);
   },
 
   getRentalById: async (id) => {

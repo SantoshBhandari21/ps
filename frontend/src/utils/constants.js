@@ -1,3 +1,4 @@
+// Mapping amenity names to FontAwesome icons
 export const AMENITY_ICONS = {
   wifi: "fa-solid fa-wifi",
   parking: "fa-solid fa-car",

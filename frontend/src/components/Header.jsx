@@ -1,4 +1,4 @@
-// src/components/Header.jsx
+// Importing dependencies
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -6,6 +6,7 @@ import { getStoredUser } from "../services/api";
 import NotificationBell from "./NotificationBell";
 import logo from "../../../logo.png";
 
+// Main header wrapper
 const HeaderWrapper = styled.header`
   width: 100%;
   background-color: white;
@@ -16,6 +17,7 @@ const HeaderWrapper = styled.header`
   z-index: 1000;
 `;
 
+// Header content container
 const HeaderContainer = styled.div`
   width: 100%;
   padding: 0 24px;
@@ -29,6 +31,7 @@ const HeaderContainer = styled.div`
   }
 `;
 
+// Logo link and image
 const LogoImage = styled(Link)`
   display: flex;
   align-items: center;
@@ -49,6 +52,7 @@ const LogoImage = styled(Link)`
   }
 `;
 
+// Desktop navigation menu
 const Nav = styled.nav`
   display: flex;
   align-items: center;
@@ -58,6 +62,7 @@ const Nav = styled.nav`
   }
 `;
 
+// Navigation link styling
 const NavLink = styled(Link)`
   color: #64748b;
   text-decoration: none;
@@ -80,6 +85,7 @@ const NavLink = styled(Link)`
   }
 `;
 
+// Navigation action buttons container
 const NavActions = styled.div`
   display: flex;
   align-items: center;
@@ -89,6 +95,7 @@ const NavActions = styled.div`
   }
 `;
 
+// Action button styling
 const Btn = styled(Link)`
   padding: 10px 20px;
   border-radius: 6px;
@@ -120,6 +127,7 @@ const Btn = styled(Link)`
   `}
 `;
 
+// Mobile menu toggle button
 const MobileMenuBtn = styled.button`
   display: none;
   background: none;
@@ -135,6 +143,7 @@ const MobileMenuBtn = styled.button`
   }
 `;
 
+// Hamburger icon animation
 const Hamburger = styled.div`
   width: 24px;
   height: 20px;
@@ -159,6 +168,7 @@ const Hamburger = styled.div`
   }
 `;
 
+// Mobile menu dropdown
 const MobileMenu = styled.div`
   display: none;
   background-color: white;
@@ -179,6 +189,7 @@ const MobileMenu = styled.div`
   }
 `;
 
+// Mobile navigation container
 const MobileNav = styled.div`
   display: flex;
   flex-direction: column;
@@ -186,6 +197,7 @@ const MobileNav = styled.div`
   padding: 20px 24px 0;
 `;
 
+// Mobile navigation link
 const MobileLink = styled(Link)`
   padding: 12px 16px;
   border-radius: 6px;
@@ -208,6 +220,7 @@ const MobileLink = styled(Link)`
   }
 `;
 
+// Mobile action buttons container
 const MobileActions = styled.div`
   display: flex;
   flex-direction: column;
@@ -216,12 +229,14 @@ const MobileActions = styled.div`
   border-top: 1px solid #e2e8f0;
 `;
 
+// Mobile action button
 const MobileBtn = styled(Btn)`
   padding: 12px 20px;
   width: 100%;
   text-align: center;
 `;
 
+// Logout button
 const LogoutBtn = styled.button`
   padding: 10px 20px;
   border-radius: 6px;
@@ -242,6 +257,7 @@ const LogoutBtn = styled.button`
   }
 `;
 
+// Mobile logout button
 const MobileLogoutBtn = styled(LogoutBtn)`
   padding: 12px 20px;
   width: 100%;
@@ -250,6 +266,7 @@ const MobileLogoutBtn = styled(LogoutBtn)`
   }
 `;
 
+// Profile icon link
 const ProfileIcon = styled(Link)`
   color: #64748b;
   text-decoration: none;
@@ -276,6 +293,7 @@ const ProfileIcon = styled(Link)`
   }
 `;
 
+// Mobile profile icon
 const MobileProfileIcon = styled(ProfileIcon)`
   width: 100%;
   padding: 12px 20px;
@@ -293,6 +311,7 @@ const MobileProfileIcon = styled(ProfileIcon)`
   }
 `;
 
+// Navigation links array
 const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/browse", label: "Browse Rooms" },
@@ -300,25 +319,27 @@ const NAV_LINKS = [
   { to: "/contact", label: "Contact" },
 ];
 
+// Header component with responsive navigation
 const Header = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // Check user on mount and pathname change
+  // Retrieving user on mount and route change
   useEffect(() => {
     const currentUser = getStoredUser();
     setUser(currentUser);
   }, [pathname]);
 
-  // Listen to storage changes
+  // Listening to storage changes
   useEffect(() => {
     const handleStorageChange = () => setUser(getStoredUser());
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  // Clearing user session and navigating to login
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -327,7 +348,9 @@ const Header = () => {
     navigate("/login");
   };
 
+  // Checking if path matches current route
   const isActive = (path) => (pathname === path ? "active" : "");
+  // Closing mobile menu on navigation
   const isMobile = () => setOpen(false);
 
   return (

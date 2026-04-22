@@ -1,27 +1,26 @@
-// src/controllers/authController.js
+// Importing bcryptjs for password hashing and comparison
 const bcrypt = require("bcryptjs");
+// Importing jsonwebtoken for JWT authentication token generation
 const jwt = require("jsonwebtoken");
+// Importing crypto for generating secure tokens
 const crypto = require("crypto");
+// Importing database query functions
 const { runQuery, getOne } = require("../config/database");
+// Importing email service for sending authentication emails
 const {
   sendWelcomeEmail,
-  sendVerificationEmail,
   sendPasswordResetEmail,
   sendPasswordResetSuccessEmail,
 } = require("../services/emailService");
 
-// Generate JWT token
+// Generating JWT token with user ID and role for authentication
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
   });
 };
 
-// ------------------------------
-// REGISTER
-// POST /api/auth/register
-// Body expected: { name, email, password, role }
-// ------------------------------
+// Handling user registration with validation, hashing, and welcome email
 const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -78,21 +77,15 @@ const register = async (req, res) => {
       [result.id],
     );
 
-    // ✅ Send welcome email (non-blocking)
+    // Send welcome email (non-blocking)
     sendWelcomeEmail(email, name, role).catch((err) =>
       console.error("Failed to send welcome email:", err),
-    );
-
-    // ✅ Send verification email (non-blocking)
-    sendVerificationEmail(email, name, verificationToken).catch((err) =>
-      console.error("Failed to send verification email:", err),
     );
 
     const token = generateToken(user.id, user.role);
 
     return res.status(201).json({
-      message:
-        "User registered successfully. Please check your email to verify your account.",
+      message: "User registered successfully.",
       user,
       token,
     });
@@ -104,11 +97,7 @@ const register = async (req, res) => {
   }
 };
 
-// ------------------------------
-// LOGIN
-// POST /api/auth/login
-// Body expected: { email, password }
-// ------------------------------
+// Handling user login with email verification and token generation
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -152,10 +141,7 @@ const login = async (req, res) => {
   }
 };
 
-// UPDATE PROFILE PHOTO
-// POST /api/auth/profile-photo
-// Multipart form data with file: { file }
-// ------------------------------
+// Updating user profile photo with file upload handling
 const updateProfilePhoto = async (req, res) => {
   try {
     if (!req.file) {
@@ -213,11 +199,7 @@ const updateProfilePhoto = async (req, res) => {
   }
 };
 
-// ------------------------------
-// FORGOT PASSWORD
-// POST /api/auth/forgot-password
-// Body expected: { email }
-// ------------------------------
+// Handling password reset request by sending reset link to email
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -256,11 +238,7 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ------------------------------
-// RESET PASSWORD
-// POST /api/auth/reset-password/:token
-// Body expected: { newPassword }
-// ------------------------------
+// Validating reset token and updating password with confirmation email
 const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;

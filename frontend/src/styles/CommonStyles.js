@@ -1,6 +1,7 @@
+// Importing styled-components
 import styled, { css } from "styled-components";
 
-/* ===== COMMON FOCUS STATE ===== */
+// Common focus state styling
 export const controlFocus = css`
   &:focus {
     outline: none;
@@ -10,7 +11,7 @@ export const controlFocus = css`
   }
 `;
 
-/* ===== PAGE LAYOUT ===== */
+// Page layout container
 export const Page = styled.div`
   min-height: 100vh;
   width: 100%;
@@ -18,6 +19,7 @@ export const Page = styled.div`
   padding: ${(p) => p.$pad || "0"};
 `;
 
+// Main content wrapper
 export const Container = styled.div`
   width: 100%;
   max-width: ${(p) => p.$max || "1200px"};
@@ -29,6 +31,7 @@ export const Container = styled.div`
   }
 `;
 
+// Section spacing wrapper
 export const Section = styled.section`
   width: 100%;
   padding: ${(p) => p.$pad || "80px 0"};
@@ -38,7 +41,7 @@ export const Section = styled.section`
   }
 `;
 
-/* ===== CARDS & PANELS ===== */
+// Card container with shadow and border
 export const Card = styled.div`
   background: #ffffff;
   border: 1px solid #e2e8f0;

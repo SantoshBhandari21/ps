@@ -1,7 +1,8 @@
 // src/services/emailService.js
+// Importing nodemailer for email delivery
 const nodemailer = require("nodemailer");
 
-// ============ EMAIL CONFIGURATION ============
+// Configuring Gmail SMTP transporter for sending emails
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -10,8 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ============ EMAIL TEMPLATES ============
-
+// Defining welcome email template function
 /**
  * Welcome email after successful registration
  */
@@ -82,55 +82,7 @@ const getWelcomeEmailTemplate = (userName, userRole) => {
   `;
 };
 
-/**
- * Email verification template
- */
-const getVerificationEmailTemplate = (userName, verificationLink) => {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>Verify Your Email</h1>
-        </div>
-        <div class="content">
-          <h2>Hi ${userName},</h2>
-          <p>Thank you for registering with myRentals! Please verify your email address to complete your registration.</p>
-          
-          <p style="text-align: center;">
-            <a href="${verificationLink}" class="button">Verify Email Address</a>
-          </p>
-          
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #2563eb;">${verificationLink}</p>
-          
-          <div class="warning">
-            <strong>Security Notice:</strong> This link will expire in 24 hours. If you didn't create this account, please ignore this email.
-          </div>
-          
-          <p>Best regards,<br>The myRentals Team</p>
-        </div>
-        <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} myRentals. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-};
-
+// Defining password reset email template function
 /**
  * Password reset email template
  */
@@ -180,65 +132,7 @@ const getPasswordResetEmailTemplate = (userName, resetLink) => {
   `;
 };
 
-/**
- * Room listing confirmation email (for owners)
- */
-const getRoomListedEmailTemplate = (userName, roomTitle, roomId) => {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-        .info-box { background: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; margin: 20px 0; }
-        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>🎉 Room Listed Successfully!</h1>
-        </div>
-        <div class="content">
-          <h2>Hi ${userName},</h2>
-          <p>Great news! Your room has been successfully listed on myRentals.</p>
-          
-          <div class="info-box">
-            <strong>Room Details:</strong><br>
-            <strong>Title:</strong> ${roomTitle}<br>
-            <strong>Listing ID:</strong> #${roomId}<br>
-            <strong>Status:</strong> Pending Admin Verification
-          </div>
-          
-          <p>Your listing is now under review by our admin team. Once verified, it will be visible to potential tenants.</p>
-          
-          <p><strong>What happens next?</strong></p>
-          <ul>
-            <li>Admin team will review your listing within 24-48 hours</li>
-            <li>Once approved, your room will appear in search results</li>
-            <li>You'll receive notifications for any rental requests</li>
-            <li>You can manage your listing from your dashboard</li>
-          </ul>
-          
-          <p style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/owner/dashboard" class="button">View Your Listings</a>
-          </p>
-          
-          <p>Best regards,<br>The myRentals Team</p>
-        </div>
-        <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} myRentals. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-};
-
+// Defining booking confirmation email template function
 /**
  * Booking confirmation email (for tenants)
  */
@@ -272,7 +166,7 @@ const getBookingConfirmationEmailTemplate = (
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎉 Booking Confirmed!</h1>
+          <h1>Booking Confirmed</h1>
         </div>
         <div class="content">
           <h2>Hi ${userName},</h2>
@@ -337,6 +231,7 @@ const getBookingConfirmationEmailTemplate = (
   `;
 };
 
+// Defining new booking notification template for property owners
 /**
  * New booking request notification (for owners)
  */
@@ -365,7 +260,7 @@ const getNewBookingRequestEmailTemplate = (
     <body>
       <div class="container">
         <div class="header">
-          <h1>🔔 New Booking Request!</h1>
+          <h1>New Booking Request</h1>
         </div>
         <div class="content">
           <h2>Hi ${ownerName},</h2>
@@ -397,6 +292,7 @@ const getNewBookingRequestEmailTemplate = (
   `;
 };
 
+// Defining password reset success confirmation template
 /**
  * Password reset success confirmation email
  */
@@ -418,7 +314,7 @@ const getPasswordResetSuccessEmailTemplate = (userName) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>✅ Password Reset Successful!</h1>
+          <h1>Password Reset Successful</h1>
         </div>
         <div class="content">
           <h2>Hi ${userName},</h2>
@@ -454,8 +350,7 @@ const getPasswordResetSuccessEmailTemplate = (userName) => {
   `;
 };
 
-// ============ SEND EMAIL FUNCTIONS ============
-
+// Sending welcome email after registration
 /**
  * Send welcome email after registration
  */
@@ -464,46 +359,20 @@ const sendWelcomeEmail = async (userEmail, userName, userRole) => {
     const mailOptions = {
       from: `"myRentals" <${process.env.EMAIL_USER}>`,
       to: userEmail,
-      subject: "Welcome to myRentals! 🎉",
+      subject: "Welcome to myRentals",
       html: getWelcomeEmailTemplate(userName, userRole),
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Welcome email sent to ${userEmail}`);
+    console.log(`Welcome email sent to ${userEmail}`);
     return { success: true };
   } catch (error) {
-    console.error("❌ Error sending welcome email:", error);
+    console.error("Error sending welcome email:", error);
     return { success: false, error: error.message };
   }
 };
 
-/**
- * Send email verification
- */
-const sendVerificationEmail = async (
-  userEmail,
-  userName,
-  verificationToken,
-) => {
-  try {
-    const verificationLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/verify-email/${verificationToken}`;
-
-    const mailOptions = {
-      from: `"myRentals" <${process.env.EMAIL_USER}>`,
-      to: userEmail,
-      subject: "Verify Your Email Address",
-      html: getVerificationEmailTemplate(userName, verificationLink),
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Verification email sent to ${userEmail}`);
-    return { success: true };
-  } catch (error) {
-    console.error("❌ Error sending verification email:", error);
-    return { success: false, error: error.message };
-  }
-};
-
+// Sending password reset email with token link
 /**
  * Send password reset email
  */
@@ -519,40 +388,15 @@ const sendPasswordResetEmail = async (userEmail, userName, resetToken) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to ${userEmail}`);
+    console.log(`Password reset email sent to ${userEmail}`);
     return { success: true };
   } catch (error) {
-    console.error("❌ Error sending password reset email:", error);
+    console.error("Error sending password reset email:", error);
     return { success: false, error: error.message };
   }
 };
 
-/**
- * Send room listing confirmation email
- */
-const sendRoomListedEmail = async (
-  ownerEmail,
-  ownerName,
-  roomTitle,
-  roomId,
-) => {
-  try {
-    const mailOptions = {
-      from: `"myRentals" <${process.env.EMAIL_USER}>`,
-      to: ownerEmail,
-      subject: "Room Listed Successfully! 🏠",
-      html: getRoomListedEmailTemplate(ownerName, roomTitle, roomId),
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Room listing confirmation sent to ${ownerEmail}`);
-    return { success: true };
-  } catch (error) {
-    console.error("❌ Error sending room listing email:", error);
-    return { success: false, error: error.message };
-  }
-};
-
+// Sending booking confirmation email to tenant
 /**
  * Send booking confirmation email to tenant
  */
@@ -570,7 +414,7 @@ const sendBookingConfirmationEmail = async (
     const mailOptions = {
       from: `"myRentals" <${process.env.EMAIL_USER}>`,
       to: tenantEmail,
-      subject: "Booking Confirmed! 🎉",
+      subject: "Booking Confirmed",
       html: getBookingConfirmationEmailTemplate(
         tenantName,
         roomTitle,
@@ -583,14 +427,15 @@ const sendBookingConfirmationEmail = async (
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Booking confirmation sent to ${tenantEmail}`);
+    console.log(`Booking confirmation sent to ${tenantEmail}`);
     return { success: true };
   } catch (error) {
-    console.error("❌ Error sending booking confirmation:", error);
+    console.error("Error sending booking confirmation:", error);
     return { success: false, error: error.message };
   }
 };
 
+// Sending booking notification to property owner
 /**
  * Send new booking notification to owner
  */
@@ -607,7 +452,7 @@ const sendNewBookingNotificationEmail = async (
     const mailOptions = {
       from: `"myRentals" <${process.env.EMAIL_USER}>`,
       to: ownerEmail,
-      subject: "New Booking Request! 🔔",
+      subject: "New Booking Request",
       html: getNewBookingRequestEmailTemplate(
         ownerName,
         tenantName,
@@ -619,14 +464,15 @@ const sendNewBookingNotificationEmail = async (
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ New booking notification sent to ${ownerEmail}`);
+    console.log(`New booking notification sent to ${ownerEmail}`);
     return { success: true };
   } catch (error) {
-    console.error("❌ Error sending booking notification:", error);
+    console.error("Error sending booking notification:", error);
     return { success: false, error: error.message };
   }
 };
 
+// Sending password reset success confirmation email
 /**
  * Send password reset success email
  */
@@ -635,25 +481,112 @@ const sendPasswordResetSuccessEmail = async (userEmail, userName) => {
     const mailOptions = {
       from: `"myRentals" <${process.env.EMAIL_USER}>`,
       to: userEmail,
-      subject: "Password Reset Successful ✅",
+      subject: "Password Reset Successful",
       html: getPasswordResetSuccessEmailTemplate(userName),
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset success email sent to ${userEmail}`);
+    console.log(`Password reset success email sent to ${userEmail}`);
     return { success: true };
   } catch (error) {
-    console.error("❌ Error sending password reset success email:", error);
+    console.error("Error sending password reset success email:", error);
     return { success: false, error: error.message };
   }
 };
 
+// Defining room approval notification template
+/**
+ * Room approval email template
+ */
+const getRoomApprovedEmailTemplate = (ownerName, roomTitle, roomId) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .success-box { background: #dcfce7; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Room Approved!</h1>
+        </div>
+        <div class="content">
+          <h2>Hi ${ownerName},</h2>
+          <p>Great news! Your room has been approved and is now live on myRentals.</p>
+          
+          <div class="success-box">
+            <strong>Room Details:</strong><br>
+            <strong>Title:</strong> ${roomTitle}<br>
+            <strong>Room ID:</strong> ${roomId}
+          </div>
+          
+          <p><strong>Next Steps:</strong></p>
+          <ul>
+            <li>Your room is now visible to tenants</li>
+            <li>You can manage booking requests from your dashboard</li>
+            <li>Monitor tenant inquiries regularly</li>
+            <li>Respond promptly to booking requests</li>
+          </ul>
+          
+          <p style="text-align: center;">
+            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/owner/dashboard" class="button">Go to Dashboard</a>
+          </p>
+          
+          <p>Thank you for listing with myRentals!</p>
+          
+          <p>Best regards,<br>The myRentals Team</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} myRentals. All rights reserved.</p>
+          <p>Need help? Contact us at ${process.env.EMAIL_USER}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// Sending room approval notification to owner
+/**
+ * Send room approval email to owner
+ */
+const sendRoomApprovedEmail = async (
+  ownerEmail,
+  ownerName,
+  roomTitle,
+  roomId,
+) => {
+  try {
+    const mailOptions = {
+      from: `"myRentals" <${process.env.EMAIL_USER}>`,
+      to: ownerEmail,
+      subject: "Your Room Has Been Approved!",
+      html: getRoomApprovedEmailTemplate(ownerName, roomTitle, roomId),
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Room approval email sent to ${ownerEmail}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending room approval email:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Exporting email service functions and transporter
 module.exports = {
   sendWelcomeEmail,
-  sendVerificationEmail,
   sendPasswordResetEmail,
   sendPasswordResetSuccessEmail,
-  sendRoomListedEmail,
+  sendRoomApprovedEmail,
   sendBookingConfirmationEmail,
   sendNewBookingNotificationEmail,
   transporter,

@@ -1,9 +1,12 @@
+// Importing dependencies
 import React, { useState } from "react";
 import RentalHistory from "../components/RentalHistory";
 import Receipts from "../components/Receipts";
 import "../styles/TenantDashboard.css";
 
+// Tenant dashboard component
 const TenantDashboard = () => {
+  // Active tab state
   const [activeTab, setActiveTab] = useState("rentals");
 
   return (

@@ -1,7 +1,8 @@
-// src/pages/ContactPage.jsx
+// Importing dependencies
 import React, { useState } from "react";
 import styled from "styled-components";
 
+// Main page container
 const Page = styled.div`
   min-height: 100vh;
   width: 100%;
@@ -9,11 +10,13 @@ const Page = styled.div`
   padding: 32px 16px;
 `;
 
+// Content wrapper
 const Container = styled.div`
   max-width: 900px;
   margin: 0 auto;
 `;
 
+// Card container
 const Card = styled.div`
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -23,6 +26,7 @@ const Card = styled.div`
   margin-bottom: 24px;
 `;
 
+// Page title
 const Title = styled.h1`
   margin: 0 0 12px;
   color: #0f172a;
@@ -30,6 +34,7 @@ const Title = styled.h1`
   font-weight: 900;
 `;
 
+// Subtitle text
 const Sub = styled.p`
   margin: 0 0 24px;
   color: #475569;
@@ -37,6 +42,7 @@ const Sub = styled.p`
   font-size: 15px;
 `;
 
+// Section heading
 const SectionTitle = styled.h2`
   margin: 28px 0 16px;
   color: #0f172a;
@@ -44,6 +50,7 @@ const SectionTitle = styled.h2`
   font-weight: 900;
 `;
 
+// Contact info grid
 const ContactGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -55,6 +62,7 @@ const ContactGrid = styled.div`
   }
 `;
 
+// Individual contact box
 const ContactBox = styled.div`
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -63,12 +71,14 @@ const ContactBox = styled.div`
   text-align: center;
 `;
 
+// Contact icon styling
 const ContactIcon = styled.div`
   font-size: 32px;
   margin-bottom: 12px;
   color: #2563eb;
 `;
 
+// Contact label text
 const ContactLabel = styled.p`
   margin: 0 0 8px;
   color: #0f172a;
@@ -76,6 +86,7 @@ const ContactLabel = styled.p`
   font-weight: 900;
 `;
 
+// Contact value text
 const ContactValue = styled.p`
   margin: 0;
   color: #475569;
@@ -83,12 +94,14 @@ const ContactValue = styled.p`
   word-break: break-all;
 `;
 
+// Form styling
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
 `;
 
+// Form row layout
 const Row = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -206,6 +219,31 @@ const Msg = styled.div`
   color: ${(p) => (p.type === "error" ? "#991b1b" : "#166534")};
 `;
 
+const MapTitle = styled.h3`
+  margin: 28px 0 16px;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 900;
+`;
+
+const MapContainer = styled.div`
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.1);
+
+  iframe {
+    width: 100%;
+    height: 450px;
+    border: none;
+    display: block;
+
+    @media (max-width: 720px) {
+      height: 350px;
+    }
+  }
+`;
+
 const FAQSection = styled.div`
   background: #f0f9ff;
   border: 1px solid #bfdbfe;
@@ -274,12 +312,34 @@ const ContactPage = () => {
     setLoading(true);
 
     try {
-      // Prototype only: log it. Later you can POST to backend.
-      console.log("Contact form submitted:", form);
+      const response = await fetch(
+        "http://localhost:5000/api/contact/message",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            email: form.email.trim(),
+            phone: form.phone.trim() || null,
+            subject: form.subject,
+            message: form.message.trim(),
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send message");
+      }
 
       setStatus({
         type: "success",
-        text: "Message sent successfully! We'll get back to you soon.",
+        text:
+          data.message ||
+          "Message sent successfully! We'll get back to you soon.",
       });
       setForm({
         name: "",
@@ -288,10 +348,10 @@ const ContactPage = () => {
         subject: "general",
         message: "",
       });
-    } catch {
+    } catch (error) {
       setStatus({
         type: "error",
-        text: "Something went wrong. Please try again later.",
+        text: error.message || "Something went wrong. Please try again later.",
       });
     } finally {
       setLoading(false);
@@ -411,6 +471,17 @@ const ContactPage = () => {
               {loading ? "Sending..." : "Send Message"}
             </Button>
           </Form>
+
+          <MapTitle>myRentals Office Location</MapTitle>
+          <MapContainer>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d878.7216987294528!2d83.98219506649255!3d28.241115499999992!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399595002698a59b%3A0x42b1331bd7237c71!2srent%20house!5e0!3m2!1sen!2snp!4v1776691011550!5m2!1sen!2snp"
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="myRentals Office Location"
+            ></iframe>
+          </MapContainer>
 
           <FAQSection>
             <FAQTitle>Frequently Asked Questions</FAQTitle>

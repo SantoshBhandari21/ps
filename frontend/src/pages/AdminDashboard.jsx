@@ -1,6 +1,7 @@
-// src/pages/AdminDashboard.jsx
+// Importing dependencies
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import html2pdf from "html2pdf.js";
 import "../styles/AdminDashboard.css";
 import {
   PieChart,
@@ -17,36 +18,51 @@ import {
 } from "recharts";
 import { usersAPI } from "../services/api";
 
+// Admin dashboard page component
 export default function AdminDashboard() {
   const tabs = ["Overview", "Users", "Rooms", "Payments"];
   const [active, setActive] = useState("Overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Loading and error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [actionLoading, setActionLoading] = useState(null); // Track which user is being updated
+  const [actionLoading, setActionLoading] = useState(null);
 
+  // User management states
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [userFilter, setUserFilter] = useState("all"); // all, admin, owner, tenant
+  const [userFilter, setUserFilter] = useState("all");
 
+  // Room management states
   const [rooms, setRooms] = useState([]);
   const [roomsPagination, setRoomsPagination] = useState(null);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [roomActionLoading, setRoomActionLoading] = useState(null);
 
+  // Payment tracking states
   const [payments, setPayments] = useState([]);
   const [paymentsPagination, setPaymentsPagination] = useState(null);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
 
+  // Dashboard statistics states
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  // Revenue state
+  // Revenue analysis states
   const [revenue, setRevenue] = useState(null);
   const [revenueLoading, setRevenueLoading] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // Download filters for Users, Rooms, Payments
+  const [userDownloadFromDate, setUserDownloadFromDate] = useState("");
+  const [userDownloadToDate, setUserDownloadToDate] = useState("");
+  const [roomDownloadFromDate, setRoomDownloadFromDate] = useState("");
+  const [roomDownloadToDate, setRoomDownloadToDate] = useState("");
+  const [paymentDownloadFromDate, setPaymentDownloadFromDate] = useState("");
+  const [paymentDownloadToDate, setPaymentDownloadToDate] = useState("");
+  const [downloadLoading, setDownloadLoading] = useState(null); // Track which section is downloading
 
   // Confirmation modal state for user status
   const [confirmModal, setConfirmModal] = useState({
@@ -61,6 +77,20 @@ export default function AdminDashboard() {
     String(role || "")
       .trim()
       .toLowerCase();
+
+  // Filter data by date range
+  const filterByDateRange = (data, dateField, fromDate, toDate) => {
+    if (!fromDate && !toDate) return data;
+    return data.filter((item) => {
+      const itemDate = new Date(item[dateField]);
+      const from = fromDate ? new Date(fromDate) : null;
+      const to = toDate ? new Date(toDate) : null;
+
+      if (from && itemDate < from) return false;
+      if (to && itemDate > new Date(to.getTime() + 86400000)) return false; // Include entire day
+      return true;
+    });
+  };
 
   const loadUsers = async () => {
     setError("");
@@ -178,9 +208,41 @@ export default function AdminDashboard() {
   }, [users]);
 
   const filteredUsers = useMemo(() => {
-    if (userFilter === "all") return users;
-    return users.filter((u) => normalizeRole(u.role) === userFilter);
-  }, [users, userFilter]);
+    let result = users;
+
+    // Apply role filter
+    if (userFilter !== "all") {
+      result = result.filter((u) => normalizeRole(u.role) === userFilter);
+    }
+
+    // Apply date filter
+    result = filterByDateRange(
+      result,
+      "created_at",
+      userDownloadFromDate,
+      userDownloadToDate,
+    );
+
+    return result;
+  }, [users, userFilter, userDownloadFromDate, userDownloadToDate]);
+
+  const filteredRooms = useMemo(() => {
+    return filterByDateRange(
+      rooms,
+      "created_at",
+      roomDownloadFromDate,
+      roomDownloadToDate,
+    );
+  }, [rooms, roomDownloadFromDate, roomDownloadToDate]);
+
+  const filteredPayments = useMemo(() => {
+    return filterByDateRange(
+      payments,
+      "created_at",
+      paymentDownloadFromDate,
+      paymentDownloadToDate,
+    );
+  }, [payments, paymentDownloadFromDate, paymentDownloadToDate]);
 
   // Handle activate/deactivate user
   const handleToggleUserStatus = async (
@@ -243,6 +305,161 @@ export default function AdminDashboard() {
     } finally {
       setRoomActionLoading(null);
     }
+  };
+
+  // Download data as PDF
+  const handleDownloadPDF = (dataType) => {
+    setDownloadLoading(dataType);
+    setTimeout(() => {
+      try {
+        let htmlContent = "";
+        let fileName = "";
+        let filteredData = [];
+
+        if (dataType === "users") {
+          filteredData = filterByDateRange(
+            filteredUsers,
+            "created_at",
+            userDownloadFromDate,
+            userDownloadToDate,
+          );
+          fileName = "users_report.pdf";
+          htmlContent = `
+            <h2>Users Report</h2>
+            <p>Date Range: ${userDownloadFromDate || "All"} to ${userDownloadToDate || "All"}</p>
+            <p>Total Records: ${filteredData.length}</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr style="background: #f0f0f0;">
+                  <th style="border: 1px solid #ddd; padding: 8px;">Name</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Email</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Role</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredData
+                  .map(
+                    (u) => `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${u.full_name || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${u.email || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${normalizeRole(u.role)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${u.is_active === 1 ? "Active" : "Inactive"}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+        } else if (dataType === "rooms") {
+          filteredData = filterByDateRange(
+            rooms,
+            "created_at",
+            roomDownloadFromDate,
+            roomDownloadToDate,
+          );
+          fileName = "rooms_report.pdf";
+          htmlContent = `
+            <h2>Rooms Report</h2>
+            <p>Date Range: ${roomDownloadFromDate || "All"} to ${roomDownloadToDate || "All"}</p>
+            <p>Total Records: ${filteredData.length}</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr style="background: #f0f0f0;">
+                  <th style="border: 1px solid #ddd; padding: 8px;">Title</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Owner</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Location</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Price</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Available</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredData
+                  .map(
+                    (r) => `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${r.title || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${r.owner_name || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${r.location || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Rs. ${r.price || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${r.is_available === 1 ? "Yes" : "No"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${r.is_verified === 1 ? "Verified" : "Unverified"}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+        } else if (dataType === "payments") {
+          filteredData = filterByDateRange(
+            payments,
+            "created_at",
+            paymentDownloadFromDate,
+            paymentDownloadToDate,
+          );
+          fileName = "payments_report.pdf";
+          htmlContent = `
+            <h2>Payments Report</h2>
+            <p>Date Range: ${paymentDownloadFromDate || "All"} to ${paymentDownloadToDate || "All"}</p>
+            <p>Total Records: ${filteredData.length}</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr style="background: #f0f0f0;">
+                  <th style="border: 1px solid #ddd; padding: 8px;">Tenant</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Email</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Room</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Amount</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Status</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredData
+                  .map(
+                    (p) => `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${p.tenant_name || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${p.tenant_email || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${p.room_title || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Rs. ${p.amount || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${p.status?.charAt(0).toUpperCase() + p.status?.slice(1) || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${new Date(p.created_at).toLocaleDateString()}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+        }
+
+        if (filteredData.length === 0) {
+          alert("No data to download for the selected date range.");
+          setDownloadLoading(null);
+          return;
+        }
+
+        const element = document.createElement("div");
+        element.innerHTML = htmlContent;
+        const opt = {
+          margin: 10,
+          filename: fileName,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: "landscape", unit: "mm", format: "a4" },
+        };
+        html2pdf().set(opt).from(element).save();
+      } catch (error) {
+        console.error("Error generating PDF:", error);
+        alert("Failed to generate PDF. Please try again.");
+      } finally {
+        setDownloadLoading(null);
+      }
+    }, 100);
   };
 
   const statsCards = useMemo(
@@ -680,9 +897,46 @@ export default function AdminDashboard() {
                   </Tab>
                 </TabRow>
 
+                <FilterRow>
+                  <FilterGroup>
+                    <FilterLabel>From Date</FilterLabel>
+                    <FilterInput
+                      type="date"
+                      value={userDownloadFromDate}
+                      onChange={(e) => setUserDownloadFromDate(e.target.value)}
+                    />
+                  </FilterGroup>
+                  <FilterGroup>
+                    <FilterLabel>To Date</FilterLabel>
+                    <FilterInput
+                      type="date"
+                      value={userDownloadToDate}
+                      onChange={(e) => setUserDownloadToDate(e.target.value)}
+                    />
+                  </FilterGroup>
+                  <ClearBtn
+                    onClick={() => {
+                      setUserDownloadFromDate("");
+                      setUserDownloadToDate("");
+                    }}
+                  >
+                    Clear Filters
+                  </ClearBtn>
+                  <DownloadBtn
+                    onClick={() => handleDownloadPDF("users")}
+                    disabled={downloadLoading === "users"}
+                  >
+                    {downloadLoading === "users"
+                      ? "Downloading..."
+                      : "Download Data"}
+                  </DownloadBtn>
+                </FilterRow>
+
                 {filteredUsers.length === 0 ? (
                   <p style={{ margin: "12px 0 0", color: "#546173" }}>
-                    No users found in this category.
+                    {userDownloadFromDate || userDownloadToDate
+                      ? "No users found for the selected date range."
+                      : "No users found in this category."}
                   </p>
                 ) : (
                   <TableWrap>
@@ -757,17 +1011,62 @@ export default function AdminDashboard() {
                   <span
                     style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}
                   >
-                    ({roomsPagination?.totalRooms ?? rooms.length})
+                    (
+                    {roomDownloadFromDate || roomDownloadToDate
+                      ? filteredRooms.length
+                      : (roomsPagination?.totalRooms ?? rooms.length)}
+                    )
                   </span>
                 </PanelTitle>
+
+                {!roomsLoading && rooms.length > 0 && (
+                  <FilterRow>
+                    <FilterGroup>
+                      <FilterLabel>From Date</FilterLabel>
+                      <FilterInput
+                        type="date"
+                        value={roomDownloadFromDate}
+                        onChange={(e) =>
+                          setRoomDownloadFromDate(e.target.value)
+                        }
+                      />
+                    </FilterGroup>
+                    <FilterGroup>
+                      <FilterLabel>To Date</FilterLabel>
+                      <FilterInput
+                        type="date"
+                        value={roomDownloadToDate}
+                        onChange={(e) => setRoomDownloadToDate(e.target.value)}
+                      />
+                    </FilterGroup>
+                    <ClearBtn
+                      onClick={() => {
+                        setRoomDownloadFromDate("");
+                        setRoomDownloadToDate("");
+                      }}
+                    >
+                      Clear Filters
+                    </ClearBtn>
+                    <DownloadBtn
+                      onClick={() => handleDownloadPDF("rooms")}
+                      disabled={downloadLoading === "rooms"}
+                    >
+                      {downloadLoading === "rooms"
+                        ? "Downloading..."
+                        : "Download Data"}
+                    </DownloadBtn>
+                  </FilterRow>
+                )}
 
                 {roomsLoading ? (
                   <p style={{ margin: "12px 0 0", color: "#546173" }}>
                     Loading rooms...
                   </p>
-                ) : rooms.length === 0 ? (
+                ) : filteredRooms.length === 0 ? (
                   <p style={{ margin: "12px 0 0", color: "#546173" }}>
-                    No rooms found.
+                    {rooms.length === 0
+                      ? "No rooms found."
+                      : "No rooms found for the selected date range."}
                   </p>
                 ) : (
                   <TableWrap>
@@ -779,19 +1078,21 @@ export default function AdminDashboard() {
                           <th>Owner Email</th>
                           <th>Location</th>
                           <th>Price</th>
+                          <th>Tenant</th>
                           <th>Available</th>
                           <th>Status</th>
                           <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {rooms.map((room) => (
+                        {filteredRooms.map((room) => (
                           <tr key={room.id}>
                             <td>{room.title || "-"}</td>
                             <td>{room.owner_name || "-"}</td>
                             <td>{room.owner_email || "-"}</td>
                             <td>{room.location || "-"}</td>
                             <td>Rs. {room.price || "-"}</td>
+                            <td>{room.tenant_name || "-"}</td>
                             <td>
                               <StatusBadge $active={room.is_available === 1}>
                                 {room.is_available === 1 ? "Yes" : "No"}
@@ -838,17 +1139,64 @@ export default function AdminDashboard() {
                   <span
                     style={{ color: "#64748b", fontWeight: 600, fontSize: 13 }}
                   >
-                    ({paymentsPagination?.totalPayments ?? payments.length})
+                    (
+                    {paymentDownloadFromDate || paymentDownloadToDate
+                      ? filteredPayments.length
+                      : (paymentsPagination?.totalPayments ?? payments.length)}
+                    )
                   </span>
                 </PanelTitle>
+
+                {!paymentsLoading && payments.length > 0 && (
+                  <FilterRow>
+                    <FilterGroup>
+                      <FilterLabel>From Date</FilterLabel>
+                      <FilterInput
+                        type="date"
+                        value={paymentDownloadFromDate}
+                        onChange={(e) =>
+                          setPaymentDownloadFromDate(e.target.value)
+                        }
+                      />
+                    </FilterGroup>
+                    <FilterGroup>
+                      <FilterLabel>To Date</FilterLabel>
+                      <FilterInput
+                        type="date"
+                        value={paymentDownloadToDate}
+                        onChange={(e) =>
+                          setPaymentDownloadToDate(e.target.value)
+                        }
+                      />
+                    </FilterGroup>
+                    <ClearBtn
+                      onClick={() => {
+                        setPaymentDownloadFromDate("");
+                        setPaymentDownloadToDate("");
+                      }}
+                    >
+                      Clear Filters
+                    </ClearBtn>
+                    <DownloadBtn
+                      onClick={() => handleDownloadPDF("payments")}
+                      disabled={downloadLoading === "payments"}
+                    >
+                      {downloadLoading === "payments"
+                        ? "Downloading..."
+                        : "Download Data"}
+                    </DownloadBtn>
+                  </FilterRow>
+                )}
 
                 {paymentsLoading ? (
                   <p style={{ margin: "12px 0 0", color: "#546173" }}>
                     Loading payments...
                   </p>
-                ) : payments.length === 0 ? (
+                ) : filteredPayments.length === 0 ? (
                   <p style={{ margin: "12px 0 0", color: "#546173" }}>
-                    No payments found.
+                    {payments.length === 0
+                      ? "No payments found."
+                      : "No payments found for the selected date range."}
                   </p>
                 ) : (
                   <TableWrap>
@@ -864,7 +1212,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {payments.map((p) => (
+                        {filteredPayments.map((p) => (
                           <tr key={p.id}>
                             <td>{p.tenant_name || "-"}</td>
                             <td>{p.tenant_email || "-"}</td>
@@ -1400,6 +1748,27 @@ const ClearBtn = styled.button`
   &:hover {
     background: #f1f5f9;
     border-color: #94a3b8;
+  }
+`;
+
+const DownloadBtn = styled.button`
+  padding: 10px 16px;
+  border: 1px solid #cfe2ff;
+  border-radius: 8px;
+  background: #eef6ff;
+  color: #1f4fd6;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #e3f0ff;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
 

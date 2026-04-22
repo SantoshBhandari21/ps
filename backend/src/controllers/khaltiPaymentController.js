@@ -1,13 +1,16 @@
-// src/controllers/khaltiPaymentController.js
+// Importing database query functions for payment storage
 const { runQuery, getOne, getAll } = require("../config/database");
+// Importing axios for Khalti API requests
 const axios = require("axios");
+// Importing email service for payment notifications
 const {
   sendBookingConfirmationEmail,
   sendNewBookingNotificationEmail,
 } = require("../services/emailService");
+// Importing notification service for notifying users
 const { createNotification } = require("./notificationController");
 
-// ============ KHALTI CONFIGURATION ============
+// Configuring Khalti payment gateway with API credentials and endpoints
 const KHALTI_CONFIG = {
   secretKey:
     process.env.KHALTI_SECRET_KEY || "05bf95cc57244045b8df5fad06748dab",
@@ -18,12 +21,10 @@ const KHALTI_CONFIG = {
     "http://localhost:3000/rental/payment-success",
 };
 
-// ============ HELPER FUNCTIONS ============
-
-// Generate unique purchase order ID
+// Generating unique purchase order ID with timestamp
 const generatePurchaseOrderId = () => `Order${Date.now()}`;
 
-// Validate minimum amount
+// Validating payment amount with minimum requirement
 const validateAmount = (amount) => {
   if (!amount || amount <= 0) {
     return { valid: false, error: "Invalid amount" };
@@ -34,14 +35,14 @@ const validateAmount = (amount) => {
   return { valid: true };
 };
 
-// Format phone number for Khalti
+// Formatting phone number to 10 digits for Khalti API requirement
 const formatPhoneNumber = (phone) => {
   const defaultPhone = "9800000000";
   if (!phone) return defaultPhone;
   return phone.length > 10 ? phone.slice(-10) : phone;
 };
 
-// Calculate months from dates
+// Calculating rental duration in months from move-in and move-out dates
 const calculateMonthsFromDates = (moveInDate, moveOutDate) => {
   const start = new Date(moveInDate);
   const end = new Date(moveOutDate);
@@ -49,9 +50,7 @@ const calculateMonthsFromDates = (moveInDate, moveOutDate) => {
   return Math.ceil(daysRented / 30);
 };
 
-// ============ CONTROLLER FUNCTIONS ============
-
-// Initiate Khalti Payment
+// Initiating Khalti payment with booking validation and API integration
 exports.initiatePayment = async (req, res) => {
   try {
     const { bookingId, amount } = req.body;
@@ -114,7 +113,7 @@ exports.initiatePayment = async (req, res) => {
         },
       );
 
-      console.log("✅ Khalti Response Success:", khaltiResponse.data);
+      console.log("Khalti Response Success:", khaltiResponse.data);
 
       // Update payment record with Khalti response
       await runQuery(
@@ -136,7 +135,7 @@ exports.initiatePayment = async (req, res) => {
       });
     } catch (khaltiErr) {
       console.error(
-        "❌ KHALTI API ERROR:",
+        "KHALTI API ERROR:",
         khaltiErr.response?.data || khaltiErr.message,
       );
       return res.status(500).json({

@@ -16,7 +16,7 @@
   color-scheme: light;
 }
 
-/* ✅ IMPORTANT: Make app take full width/height */
+/* IMPORTANT: Make app take full width/height */
 * {
   box-sizing: border-box;
 }
@@ -30,7 +30,7 @@ body,
   padding: 0;
 }
 
-/* ✅ FIX: remove centering flex that breaks full-screen layouts */
+/*FIX: remove centering flex that breaks full-screen layouts */
 body {
   min-width: 320px;
   min-height: 100vh;
@@ -64,7 +64,9 @@ button {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.25s, transform 0.15s;
+  transition:
+    border-color 0.25s,
+    transform 0.15s;
 }
 
 button:hover {

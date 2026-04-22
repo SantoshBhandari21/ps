@@ -1,8 +1,10 @@
+// Importing dependencies
 import React, { useState, useRef } from "react";
 import styled from "styled-components";
 import { paymentsAPI, rentalsAPI } from "../services/api";
 import { AMENITY_ICONS } from "../utils/constants";
 
+// Modal backdrop overlay
 const Backdrop = styled.div`
   position: fixed;
   inset: 0;
@@ -13,6 +15,7 @@ const Backdrop = styled.div`
   z-index: 100;
 `;
 
+// Modal content box
 const Modal = styled.div`
   width: 90%;
   max-width: 600px;
@@ -24,6 +27,7 @@ const Modal = styled.div`
   overflow-y: auto;
 `;
 
+// Image display section
 const ImageSection = styled.div`
   width: 100%;
   height: 300px;
@@ -41,6 +45,7 @@ const ImageSection = styled.div`
   }
 `;
 
+// Image navigation buttons
 const ImageNav = styled.button`
   position: absolute;
   top: 50%;
@@ -77,6 +82,7 @@ const ImageNav = styled.button`
   }
 `;
 
+// Image count indicator
 const ImageCounter = styled.div`
   position: absolute;
   bottom: 12px;
@@ -90,6 +96,7 @@ const ImageCounter = styled.div`
   z-index: 10;
 `;
 
+// Thumbnail gallery
 const ImageThumbnails = styled.div`
   display: flex;
   gap: 8px;
@@ -112,6 +119,7 @@ const ImageThumbnails = styled.div`
   }
 `;
 
+// Individual thumbnail button
 const Thumbnail = styled.button`
   flex-shrink: 0;
   width: 60px;
@@ -135,10 +143,12 @@ const Thumbnail = styled.button`
   }
 `;
 
+// Main content area
 const Content = styled.div`
   padding: 24px;
 `;
 
+// Header with title and close button
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
@@ -159,6 +169,7 @@ const Header = styled.div`
   }
 `;
 
+// Room title heading
 const Title = styled.h2`
   margin: 0 0 4px;
   font-size: 22px;
@@ -166,12 +177,14 @@ const Title = styled.h2`
   color: #0f172a;
 `;
 
+// Location text
 const Location = styled.p`
   margin: 0 0 12px;
   color: #64748b;
   font-size: 14px;
 `;
 
+// Owner information display
 const OwnerInfo = styled.div`
   background: #f0f9ff;
   border: 1px solid #bfdbfe;

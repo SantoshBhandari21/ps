@@ -1,8 +1,13 @@
 // src/routes/roomRoutes.js
+// Importing express framework
 const express = require("express");
+// Initializing router
 const router = express.Router();
+// Importing authentication middleware
 const { authenticate, authorize } = require("../middleware/auth");
+// Importing image upload middleware
 const { uploadImages } = require("../middleware/upload");
+// Importing room controller functions
 const {
   createRoom,
   getRooms,
@@ -10,31 +15,21 @@ const {
   getMyRooms,
   updateRoom,
   deleteRoom,
-  addToFavorites,
-  removeFromFavorites,
-  getFavorites,
 } = require("../controllers/roomController");
 
-// Owner routes - MUST come before :id routes
+// Defining owner room listing retrieval endpoint
 router.get("/owner/my-rooms", authenticate, authorize("owner"), getMyRooms);
+// Handling new room creation with image uploads
 router.post("/", authenticate, authorize("owner"), uploadImages, createRoom);
 
-// Tenant routes - Favorites - MUST come before :id routes
-router.get("/user/favorites", authenticate, authorize("tenant"), getFavorites);
-
-// Public routes
+// Retrieving all available rooms for browsing
 router.get("/", getRooms);
 
-// ID-based routes - MUST come after specific routes
+// Retrieving room details by ID
 router.get("/:id", getRoomById);
+// Updating room information and images
 router.put("/:id", authenticate, authorize("owner"), uploadImages, updateRoom);
 router.delete("/:id", authenticate, authorize("owner"), deleteRoom);
-router.post("/:id/favorite", authenticate, authorize("tenant"), addToFavorites);
-router.delete(
-  "/:id/favorite",
-  authenticate,
-  authorize("tenant"),
-  removeFromFavorites,
-);
 
+// Exporting room routes
 module.exports = router;

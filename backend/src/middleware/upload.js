@@ -1,15 +1,18 @@
 // src/middleware/upload.js
+// Importing multer for handling file uploads
 const multer = require("multer");
+// Importing path utilities for file handling
 const path = require("path");
+// Importing file system module
 const fs = require("fs");
 
-// Ensure uploads directory exists
+// Creating uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, "../../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure storage
+// Configuring disk storage for uploaded files
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
@@ -20,7 +23,7 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter
+// Validating file types before upload
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(
@@ -35,7 +38,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configure multer
+// Initializing multer with storage and file validation
 const upload = multer({
   storage: storage,
   limits: {
@@ -44,8 +47,9 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
-// Export middleware for single file upload and multiple files upload
+// Exporting upload middleware for single and multiple image uploads
 const uploadImage = upload.single("mainImage");
-const uploadImages = upload.array("images", 10); // Max 10 images per room
+const uploadImages = upload.array("images", 10);
 
+// Exporting configured upload handlers
 module.exports = { upload, uploadImage, uploadImages };

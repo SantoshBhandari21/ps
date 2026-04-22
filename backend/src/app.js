@@ -19,6 +19,7 @@ const ROUTES = {
   RENTALS: require("./routes/rentalRoutes"),
   NOTIFICATIONS: require("./routes/notificationRoutes"),
   PAYMENTS: require("./routes/khaltiPaymentRoutes"),
+  CONTACT: require("./routes/contactRoutes"),
 };
 
 const API_ROUTES = {
@@ -29,6 +30,7 @@ const API_ROUTES = {
   RENTALS: "/api/rentals",
   NOTIFICATIONS: "/api/notifications",
   PAYMENTS: "/api/payments",
+  CONTACT: "/api/contact",
 };
 
 const ERROR_MESSAGES = {
@@ -58,6 +60,7 @@ app.use(API_ROUTES.ROOMS, ROUTES.ROOMS);
 app.use(API_ROUTES.RENTALS, ROUTES.RENTALS);
 app.use(API_ROUTES.NOTIFICATIONS, ROUTES.NOTIFICATIONS);
 app.use(API_ROUTES.PAYMENTS, ROUTES.PAYMENTS);
+app.use(API_ROUTES.CONTACT, ROUTES.CONTACT);
 
 // ============ SYSTEM ROUTES ============
 /**

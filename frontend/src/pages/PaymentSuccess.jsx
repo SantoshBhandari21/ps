@@ -1,7 +1,9 @@
+// Importing dependencies
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Receipts from "../components/Receipts";
 
+// Inline styles for payment page
 const styles = {
   container: {
     padding: "40px 16px",
@@ -43,12 +45,14 @@ const styles = {
   },
 };
 
+// Payment success page component
 export default function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState("verifying");
   const [error, setError] = useState(null);
 
+  // Verifying payment status
   useEffect(() => {
     const verifyPayment = async () => {
       try {

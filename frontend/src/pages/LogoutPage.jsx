@@ -1,16 +1,20 @@
+// Importing dependencies
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Page, Card } from "../styles/CommonStyles";
 
+// Message text styling
 const Message = styled.div`
   color: #0f172a;
   font-weight: 800;
 `;
 
+// Logout page component
 const LogoutPage = () => {
   const navigate = useNavigate();
 
+  // Clearing user session and redirecting
   useEffect(() => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");

@@ -1,11 +1,9 @@
-// src/controllers/roomController.js
+// Importing database query functions for room data access
 const { runQuery, getOne, getAll } = require("../config/database");
-const { sendRoomListedEmail } = require("../services/emailService");
+// Importing notification service for notifying admins
 const { createNotification } = require("./notificationController");
 
-// ============ HELPER FUNCTIONS ============
-
-// Parse amenities from JSON string or array
+// Parsing amenities from JSON string or array format
 const parseAmenities = (amenities) => {
   if (!amenities) return [];
   try {
@@ -15,7 +13,7 @@ const parseAmenities = (amenities) => {
   }
 };
 
-// Stringify amenities for database storage
+// Converting amenities array to JSON string for database storage
 const stringifyAmenities = (amenities) => {
   if (!amenities) return null;
   try {
@@ -27,7 +25,7 @@ const stringifyAmenities = (amenities) => {
   }
 };
 
-// Fetch all images for a room
+// Fetching all images associated with a room from database
 const fetchRoomImages = async (roomId) => {
   try {
     return await getAll(
@@ -40,7 +38,7 @@ const fetchRoomImages = async (roomId) => {
   }
 };
 
-// Attach amenities and images to room object
+// Attaching parsed amenities and images data to room object
 const attachRoomDetails = async (room) => {
   if (!room) return null;
   return {
@@ -50,16 +48,12 @@ const attachRoomDetails = async (room) => {
   };
 };
 
-// Attach details to multiple rooms
+// Attaching amenities and images to multiple room objects in parallel
 const attachRoomDetailsToMany = async (rooms) => {
   return Promise.all(rooms.map((room) => attachRoomDetails(room)));
 };
 
-// ============ CONTROLLER FUNCTIONS ============
-
-// @desc    Create new room/property
-// @route   POST /api/rooms
-// @access  Private (Owner only)
+// Creating new property listing with image upload and admin notification
 const createRoom = async (req, res) => {
   try {
     const {
@@ -136,14 +130,6 @@ const createRoom = async (req, res) => {
     const room = await getOne("SELECT * FROM rooms WHERE id = ?", [result.id]);
     const roomWithDetails = await attachRoomDetails(room);
 
-    // Send room listing confirmation email (non-blocking)
-    sendRoomListedEmail(
-      req.user.email,
-      req.user.full_name,
-      title,
-      result.id,
-    ).catch((err) => console.error("Failed to send room listing email:", err));
-
     // Notify all admins about new room listing that needs verification
     try {
       const admins = await getAll(
@@ -171,9 +157,7 @@ const createRoom = async (req, res) => {
   }
 };
 
-// @desc    Get all rooms with filters
-// @route   GET /api/rooms
-// @access  Public
+// Retrieving rooms with dynamic filtering, pagination, and availability status
 const getRooms = async (req, res) => {
   try {
     const {
@@ -189,6 +173,18 @@ const getRooms = async (req, res) => {
       limit = 12,
     } = req.query;
 
+    // First, mark rooms as available if their move-out date has passed
+    const today = new Date().toISOString().split("T")[0];
+    await runQuery(
+      `UPDATE rooms SET is_available = 1 
+       WHERE id IN (
+         SELECT DISTINCT r.id FROM rooms r
+         LEFT JOIN bookings b ON r.id = b.room_id AND b.status = 'approved' AND b.move_out_date > ?
+         WHERE r.is_available = 0 AND b.id IS NULL
+       )`,
+      [today],
+    );
+
     // Build dynamic query
     let query = `
       SELECT r.*, u.full_name as owner_name,
@@ -196,10 +192,14 @@ const getRooms = async (req, res) => {
              (SELECT COUNT(*) FROM reviews WHERE room_id = r.id) as review_count
       FROM rooms r
       LEFT JOIN users u ON r.owner_id = u.id
-      WHERE r.is_available = 1 AND r.is_verified = 1 AND u.is_active = 1
+      WHERE r.is_verified = 1 AND u.is_active = 1
+      AND (r.is_available = 1 OR r.id NOT IN (
+        SELECT DISTINCT room_id FROM bookings WHERE status = 'approved' AND move_out_date > ?
+      ))
     `;
 
-    const params = [];
+    const params = [today];
+
     const filterConditions = [
       {
         condition: location,
@@ -253,9 +253,12 @@ const getRooms = async (req, res) => {
     const rooms = await getAll(query, params);
 
     // Get total count with same filters
-    let countQuery =
-      "SELECT COUNT(*) as total FROM rooms r LEFT JOIN users u ON r.owner_id = u.id WHERE r.is_available = 1 AND r.is_verified = 1 AND u.is_active = 1";
-    const countParams = [];
+    let countQuery = `SELECT COUNT(*) as total FROM rooms r LEFT JOIN users u ON r.owner_id = u.id 
+       WHERE r.is_verified = 1 AND u.is_active = 1
+       AND (r.is_available = 1 OR r.id NOT IN (
+         SELECT DISTINCT room_id FROM bookings WHERE status = 'approved' AND move_out_date > ?
+       ))`;
+    const countParams = [today];
 
     filterConditions.forEach(({ condition, text, value }) => {
       if (condition) {
@@ -288,9 +291,7 @@ const getRooms = async (req, res) => {
   }
 };
 
-// @desc    Get single room by ID
-// @route   GET /api/rooms/:id
-// @access  Public
+// Retrieving single room with details, reviews, and ratings information
 const getRoomById = async (req, res) => {
   try {
     const room = await getOne(
@@ -324,9 +325,7 @@ const getRoomById = async (req, res) => {
   }
 };
 
-// @desc    Get rooms by owner
-// @route   GET /api/rooms/owner/my-rooms
-// @access  Private (Owner only)
+// Retrieving all properties owned by current logged-in owner
 const getMyRooms = async (req, res) => {
   try {
     const rooms = await getAll(
@@ -348,9 +347,7 @@ const getMyRooms = async (req, res) => {
   }
 };
 
-// @desc    Update room
-// @route   PUT /api/rooms/:id
-// @access  Private (Owner only - own rooms)
+// Updating room details with image management and validation
 const updateRoom = async (req, res) => {
   try {
     const room = await getOne(
@@ -490,9 +487,7 @@ const updateRoom = async (req, res) => {
   }
 };
 
-// @desc    Delete room
-// @route   DELETE /api/rooms/:id
-// @access  Private (Owner only - own rooms)
+// Deleting room with validation to prevent deletion of rooms with active bookings
 const deleteRoom = async (req, res) => {
   try {
     const room = await getOne(
@@ -526,77 +521,6 @@ const deleteRoom = async (req, res) => {
   }
 };
 
-// @desc    Add room to favorites
-// @route   POST /api/rooms/:id/favorite
-// @access  Private (Client only)
-const addToFavorites = async (req, res) => {
-  try {
-    const room = await getOne("SELECT id FROM rooms WHERE id = ?", [
-      req.params.id,
-    ]);
-    if (!room) return res.status(404).json({ message: "Room not found" });
-
-    const existing = await getOne(
-      "SELECT id FROM favorites WHERE tenant_id = ? AND room_id = ?",
-      [req.user.id, req.params.id],
-    );
-
-    if (existing)
-      return res.status(400).json({ message: "Room already in favorites" });
-
-    await runQuery("INSERT INTO favorites (tenant_id, room_id) VALUES (?, ?)", [
-      req.user.id,
-      req.params.id,
-    ]);
-
-    return res.json({ message: "Room added to favorites" });
-  } catch (error) {
-    console.error("Add to favorites error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
-// @desc    Remove room from favorites
-// @route   DELETE /api/rooms/:id/favorite
-// @access  Private (Client only)
-const removeFromFavorites = async (req, res) => {
-  try {
-    await runQuery(
-      "DELETE FROM favorites WHERE tenant_id = ? AND room_id = ?",
-      [req.user.id, req.params.id],
-    );
-    return res.json({ message: "Room removed from favorites" });
-  } catch (error) {
-    console.error("Remove from favorites error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
-// @desc    Get client's favorite rooms
-// @route   GET /api/rooms/user/favorites
-// @access  Private (Client only)
-const getFavorites = async (req, res) => {
-  try {
-    const favorites = await getAll(
-      `SELECT r.*, u.full_name as owner_name,
-              (SELECT AVG(rating) FROM reviews WHERE room_id = r.id) as avg_rating,
-              (SELECT COUNT(*) FROM reviews WHERE room_id = r.id) as review_count
-       FROM favorites f
-       JOIN rooms r ON f.room_id = r.id
-       JOIN users u ON r.owner_id = u.id
-       WHERE f.tenant_id = ?
-       ORDER BY f.created_at DESC`,
-      [req.user.id],
-    );
-
-    const favoritesWithDetails = await attachRoomDetailsToMany(favorites);
-    return res.json({ favorites: favoritesWithDetails });
-  } catch (error) {
-    console.error("Get favorites error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
 module.exports = {
   createRoom,
   getRooms,
@@ -604,7 +528,4 @@ module.exports = {
   getMyRooms,
   updateRoom,
   deleteRoom,
-  addToFavorites,
-  removeFromFavorites,
-  getFavorites,
 };

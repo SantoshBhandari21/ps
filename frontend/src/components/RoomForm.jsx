@@ -1,7 +1,8 @@
+// Importing dependencies
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 
-/* Styled Components */
+// Modal overlay backdrop
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -13,6 +14,7 @@ const ModalOverlay = styled.div`
   overflow-y: auto;
 `;
 
+// Modal content wrapper
 const ModalContent = styled.div`
   max-width: 700px;
   max-height: 90vh;
@@ -34,6 +36,7 @@ const ModalContent = styled.div`
   }
 `;
 
+// Modal header with title
 const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -53,6 +56,7 @@ const ModalHeader = styled.div`
   }
 `;
 
+// Close button styling
 const CloseBtn = styled.button`
   background: none;
   border: none;
@@ -74,6 +78,7 @@ const CloseBtn = styled.button`
   }
 `;
 
+// Form styling
 const RoomFormStyled = styled.form`
   padding: 2rem;
   display: flex;
@@ -81,6 +86,7 @@ const RoomFormStyled = styled.form`
   gap: 2rem;
 `;
 
+// Form section container
 const FormSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -96,6 +102,7 @@ const FormSection = styled.div`
   }
 `;
 
+// Error message styling
 const FormError = styled.div`
   background-color: #fee;
   border-left: 4px solid #f44;
@@ -106,18 +113,21 @@ const FormError = styled.div`
   margin-bottom: 1rem;
 `;
 
+// Image upload section
 const ImageUpload = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
 `;
 
+// Images grid layout
 const ImagesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
 `;
 
+// Image preview container
 const ImagePreview = styled.div`
   position: relative;
   width: 100%;
@@ -138,6 +148,7 @@ const ImagePreview = styled.div`
   }
 `;
 
+// Remove image button
 const RemoveImageBtn = styled.button`
   position: absolute;
   top: -8px;
@@ -164,6 +175,7 @@ const RemoveImageBtn = styled.button`
   }
 `;
 
+// Image placeholder text
 const ImagePlaceholder = styled.div`
   color: #999;
   font-size: 0.85rem;
@@ -171,6 +183,7 @@ const ImagePlaceholder = styled.div`
   padding: 1rem;
 `;
 
+// Drag and drop upload zone
 const UploadZone = styled.label`
   border: 2px dashed #ddd;
   border-radius: 8px;
@@ -187,10 +200,12 @@ const UploadZone = styled.label`
   }
 `;
 
+// Hidden file input
 const InputFile = styled.input`
   display: none;
 `;
 
+// Upload zone placeholder text
 const Placeholder = styled.div`
   color: #999;
   font-size: 0.9rem;

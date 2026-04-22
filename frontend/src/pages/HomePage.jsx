@@ -1,8 +1,9 @@
-// src/pages/HomePage.jsx
+// Importing dependencies
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
+// Page wrapper container
 const Container = styled.div`
   width: 100%;
   max-width: 1200px;
@@ -14,11 +15,13 @@ const Container = styled.div`
   }
 `;
 
+// Main page container
 const Page = styled.div`
   width: 100%;
   min-height: 100vh;
 `;
 
+// Reusable section styling
 const Section = styled.section`
   width: 100%;
   padding: ${(p) => p.$pad || "50px 0"};
@@ -28,7 +31,7 @@ const Section = styled.section`
   }
 `;
 
-/* HERO */
+// Hero section with background image
 const Hero = styled(Section)`
   background:
     linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.4) 100%),
@@ -47,6 +50,7 @@ const Hero = styled(Section)`
   }
 `;
 
+// Hero content wrapper
 const HeroContent = styled.div`
   position: relative;
   z-index: 1;
@@ -55,6 +59,7 @@ const HeroContent = styled.div`
   margin: 0 auto;
 `;
 
+// Main hero heading
 const H1 = styled.h1`
   font-size: 48px;
   font-weight: 700;
@@ -68,6 +73,7 @@ const H1 = styled.h1`
   }
 `;
 
+// Hero description text
 const HeroText = styled.p`
   font-size: 20px;
   margin: 0 0 40px;
@@ -81,6 +87,7 @@ const HeroText = styled.p`
   }
 `;
 
+// Search form styling
 const Form = styled.form`
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
@@ -94,6 +101,7 @@ const Form = styled.form`
   }
 `;
 
+// Input grid layout
 const InputGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr auto;

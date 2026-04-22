@@ -1,16 +1,14 @@
-// src/controllers/userController.js
+// Importing database query functions for user data access
 const { runQuery, getOne } = require("../config/database");
+// Importing bcryptjs for password hashing and validation
 const bcrypt = require("bcryptjs");
 
-/**
- * GET /api/users/me
- * Get logged-in user's profile
- */
+// Retrieving current logged-in user's profile information
 const getMyProfile = async (req, res) => {
   try {
     const user = await getOne(
       "SELECT id, full_name, email, role, is_verified, is_active, created_at FROM users WHERE id = ?",
-      [req.user.id]
+      [req.user.id],
     );
 
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -22,10 +20,7 @@ const getMyProfile = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/users/me
- * Update logged-in user's full name (and optionally email)
- */
+// Updating current user's profile with name and email modifications
 const updateMyProfile = async (req, res) => {
   try {
     const { fullName, email } = req.body;
@@ -50,11 +45,14 @@ const updateMyProfile = async (req, res) => {
     updates.push("updated_at = CURRENT_TIMESTAMP");
     values.push(req.user.id);
 
-    await runQuery(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, values);
+    await runQuery(
+      `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
+      values,
+    );
 
     const user = await getOne(
       "SELECT id, full_name, email, role, is_verified, is_active, created_at FROM users WHERE id = ?",
-      [req.user.id]
+      [req.user.id],
     );
 
     return res.json({ message: "Profile updated", user });
@@ -64,29 +62,31 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/users/me/password
- * Change logged-in user's password
- */
+// Validating current password and updating to new password with hashing
 const changeMyPassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: "currentPassword and newPassword are required" });
+      return res
+        .status(400)
+        .json({ message: "currentPassword and newPassword are required" });
     }
 
-    const user = await getOne("SELECT id, password FROM users WHERE id = ?", [req.user.id]);
+    const user = await getOne("SELECT id, password FROM users WHERE id = ?", [
+      req.user.id,
+    ]);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Current password is incorrect" });
+    if (!isMatch)
+      return res.status(401).json({ message: "Current password is incorrect" });
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
     await runQuery(
       "UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [hashed, req.user.id]
+      [hashed, req.user.id],
     );
 
     return res.json({ message: "Password updated successfully" });

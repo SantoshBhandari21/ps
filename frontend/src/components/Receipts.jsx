@@ -1,14 +1,16 @@
+// Importing dependencies
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { paymentsAPI } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 
-// List Styles
+// Main container
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 16px;
 `;
+// Empty state message styling
 const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
@@ -18,12 +20,14 @@ const EmptyState = styled.div`
     margin: 0;
   }
 `;
+// List container for receipts
 const ReceiptsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 20px;
 `;
+// Individual receipt card styling
 const ReceiptCard = styled.div`
   background: white;
   border: 1px solid #e2e8f0;
@@ -48,6 +52,7 @@ const ReceiptCard = styled.div`
     gap: 8px;
   }
 `;
+// Room title heading
 const RoomTitle = styled.h3`
   margin: 0;
   font-size: 15px;
@@ -57,6 +62,7 @@ const RoomTitle = styled.h3`
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
+// Card info text
 const CardInfo = styled.div`
   font-size: 12px;
   color: #64748b;
@@ -64,6 +70,7 @@ const CardInfo = styled.div`
     display: none;
   }
 `;
+// Payment amount styling
 const Amount = styled.div`
   font-size: 16px;
   font-weight: 700;
@@ -74,6 +81,7 @@ const Amount = styled.div`
     text-align: left;
   }
 `;
+// Loading message text
 const LoadingText = styled.p`
   text-align: center;
   color: #64748b;
@@ -81,12 +89,13 @@ const LoadingText = styled.p`
   font-size: 15px;
 `;
 
-// Detail Styles
+// Page container
 const Page = styled.div`
   padding: 30px 16px;
   background: #f1f5f9;
   min-height: 100vh;
 `;
+// Button controls container
 const Controls = styled.div`
   max-width: 480px;
   margin: 0 auto 20px;
@@ -97,6 +106,7 @@ const Controls = styled.div`
     display: none;
   }
 `;
+// Base button styling
 const Btn = styled.button`
   padding: 10px 16px;
   border-radius: 8px;
@@ -109,15 +119,18 @@ const Btn = styled.button`
     transform: translateY(-2px);
   }
 `;
+// Primary action button
 const PrimaryBtn = styled(Btn)`
   background: rgba(53, 121, 197, 1);
   color: white;
 `;
+// Secondary action button
 const SecondaryBtn = styled(Btn)`
   background: white;
   color: #1e293b;
   border: 1px solid #e2e8f0;
 `;
+// Receipt display container
 const ReceiptBox = styled.div`
   max-width: 480px;
   margin: 0 auto;
@@ -130,32 +143,38 @@ const ReceiptBox = styled.div`
     padding: 16px;
   }
 `;
+// Logo image in receipt
 const Logo = styled.img`
   width: 60px;
   height: 60px;
   object-fit: contain;
   margin-bottom: 16px;
 `;
+// Receipt header section
 const Header = styled.div`
   text-align: center;
   margin-bottom: 16px;
 `;
+// Receipt title heading
 const Title = styled.h1`
   margin: 0 0 8px;
   font-size: 22px;
   font-weight: 900;
   color: #0f172a;
 `;
+// Dashed divider line
 const Divider = styled.div`
   border-top: 1px dashed #cbd5e1;
   margin: 12px 0;
 `;
+// Receipt section
 const Section = styled.div`
   margin-bottom: 12px;
   &:last-child {
     margin-bottom: 0;
   }
 `;
+// Section header label
 const SectionTitle = styled.p`
   margin: 0 0 8px;
   font-size: 12px;
@@ -164,6 +183,7 @@ const SectionTitle = styled.p`
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
+// Information row layout
 const InfoRow = styled.div`
   display: flex;
   justify-content: space-between;
@@ -177,6 +197,7 @@ const InfoRow = styled.div`
     font-weight: 500;
   }
 `;
+// Amount display box
 const AmountBox = styled.div`
   padding: 12px 0;
   border-top: 1px dashed #cbd5e1;
@@ -189,6 +210,7 @@ const AmountBox = styled.div`
     color: #2563eb;
   }
 `;
+// Receipt footer
 const Footer = styled.div`
   text-align: center;
   margin-top: 12px;
@@ -196,6 +218,7 @@ const Footer = styled.div`
   font-size: 12px;
 `;
 
+// Receipts component for viewing payments
 function Receipts() {
   const { user } = useAuth();
   const [receipts, setReceipts] = useState([]);
@@ -203,10 +226,12 @@ function Receipts() {
   const [selected, setSelected] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Fetching receipts on mount
   useEffect(() => {
     fetchReceipts();
   }, []);
 
+  // Getting completed payments from API
   const fetchReceipts = async () => {
     try {
       setLoading(true);
@@ -222,6 +247,7 @@ function Receipts() {
     }
   };
 
+  // Formatting date to readable format
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString("en-NP", {
       year: "numeric",
@@ -229,6 +255,7 @@ function Receipts() {
       day: "numeric",
     });
 
+  // Formatting date with time
   const formatDateTime = (dateStr) => {
     const date = new Date(dateStr);
     return `${date.toLocaleDateString("en-NP")} at ${date.toLocaleTimeString(
@@ -237,6 +264,7 @@ function Receipts() {
     )}`;
   };
 
+  // Downloading receipt as PDF
   const handleDownloadPDF = async () => {
     try {
       setIsDownloading(true);

@@ -1,6 +1,4 @@
-// src/data/mockData.js
-
-// Mock users data
+// Mock user accounts
 export const mockUsers = [
   {
     id: 1,
@@ -20,7 +18,7 @@ export const mockUsers = [
   },
 ];
 
-// Mock rooms data
+// Mock rental rooms
 export const mockRooms = [
   {
     id: 1,

@@ -1,7 +1,9 @@
+// Importing dependencies
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { forgotPassword } from "../services/authService";
 
+// Inline styles for forgot password page
 const styles = {
   container: {
     minHeight: "85vh",
@@ -131,7 +133,7 @@ export default function ForgotPasswordPage() {
         {error && <div style={styles.error}>{error}</div>}
         {success && (
           <div style={styles.success}>
-            ✅ Password reset link sent to your email! Redirecting to login...
+            Password reset link sent to your email! Redirecting to login...
           </div>
         )}
 

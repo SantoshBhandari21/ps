@@ -1,17 +1,19 @@
-// src/controllers/rentalController.js
+// Importing database query functions for rental data access
 const { runQuery, getOne, getAll } = require("../config/database");
+// Importing notification service for notifying users and admins
+const { createNotification } = require("./notificationController");
 
-// Helper function to calculate move-out date
+// Calculating move-out date based on rental period in months
 const calculateMoveOutDate = (months) => {
   const moveOut = new Date();
   moveOut.setMonth(moveOut.getMonth() + months);
   return moveOut.toISOString().split("T")[0];
 };
 
-// Get today's date in YYYY-MM-DD format
+// Retrieving current date in YYYY-MM-DD format
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
-// Create a new rental request
+// Creating new rental booking with validation and payment initialization
 exports.createRental = async (req, res) => {
   try {
     const { roomId, months, totalPrice } = req.body;
@@ -39,6 +41,11 @@ exports.createRental = async (req, res) => {
         .status(400)
         .json({ message: "Room is not available for rent" });
     }
+
+    // Get tenant name
+    const tenant = await getOne("SELECT full_name FROM users WHERE id = ?", [
+      clientId,
+    ]);
 
     const moveInDate = getTodayDate();
     const moveOutDate = calculateMoveOutDate(months);
@@ -80,7 +87,7 @@ exports.createRental = async (req, res) => {
   }
 };
 
-// Get my rentals (as tenant)
+// Retrieving all rental bookings for logged-in tenant with optional status filter
 exports.getMyRentals = async (req, res) => {
   try {
     const clientId = req.user.id;
@@ -110,37 +117,7 @@ exports.getMyRentals = async (req, res) => {
   }
 };
 
-// Get rental requests (as room owner)
-exports.getRentalRequests = async (req, res) => {
-  try {
-    const ownerId = req.user.id;
-    const { status } = req.query;
-
-    let sql = `
-      SELECT b.*, r.title, r.price, r.main_image, r.location, u.full_name as client_name, u.email as client_email
-      FROM bookings b
-      JOIN rooms r ON b.room_id = r.id
-      JOIN users u ON b.tenant_id = u.id
-      WHERE b.owner_id = ?
-    `;
-
-    const params = [ownerId];
-    if (status) {
-      sql += " AND b.status = ?";
-      params.push(status);
-    }
-
-    sql += " ORDER BY b.created_at DESC";
-
-    const requests = await getAll(sql, params);
-    res.json({ requests: requests || [] });
-  } catch (err) {
-    console.error("Error fetching rental requests:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-// Get rental details
+// Retrieving single rental booking details with room and owner information
 exports.getRentalById = async (req, res) => {
   try {
     const rentalId = req.params.id;
@@ -166,7 +143,7 @@ exports.getRentalById = async (req, res) => {
   }
 };
 
-// Stop/cancel a rental
+// Cancelling rental booking and marking room as available with admin notification
 exports.stopRent = async (req, res) => {
   try {
     const rentalId = req.params.id;
@@ -191,14 +168,108 @@ exports.stopRent = async (req, res) => {
       return res.status(400).json({ message: "Rental is already cancelled" });
     }
 
+    // Get tenant and room details for notification
+    const tenantInfo = await getOne(
+      "SELECT full_name FROM users WHERE id = ?",
+      [userId],
+    );
+    const roomInfo = await getOne("SELECT title FROM rooms WHERE id = ?", [
+      rental.room_id,
+    ]);
+
+    // Update booking status to cancelled
     await runQuery(
       "UPDATE bookings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       ["cancelled", rentalId],
     );
 
-    res.json({ message: "Rental cancelled successfully" });
+    // Mark room as available again
+    await runQuery(
+      "UPDATE rooms SET is_available = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [rental.room_id],
+    );
+
+    // Notify all admins about the rental cancellation
+    try {
+      const admins = await getAll(
+        "SELECT id FROM users WHERE role = 'admin' AND is_active = 1",
+        [],
+      );
+      for (const admin of admins) {
+        await createNotification(
+          admin.id,
+          "rental_cancelled",
+          "Rental Cancelled",
+          `Tenant ${tenantInfo?.full_name || "Unknown"} has cancelled rental for room "${roomInfo?.title || "Unknown"}"`,
+          rentalId,
+        );
+      }
+    } catch (adminNotifErr) {
+      console.error(
+        "Failed to notify admins about rental cancellation:",
+        adminNotifErr,
+      );
+    }
+
+    res.json({
+      message: "Rental cancelled successfully. Room is now available for rent.",
+    });
   } catch (err) {
     console.error("Error stopping rental:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// Checking for expired rentals and notifying admins about completed rental periods
+const checkAndNotifyRentalPeriodEnded = async () => {
+  try {
+    const today = getTodayDate();
+
+    // Find rentals that have reached their move-out date
+    const expiredRentals = await getAll(
+      `SELECT b.id, b.tenant_id, b.room_id, b.move_out_date, 
+              u.full_name as tenant_name, r.title as room_title
+       FROM bookings b
+       JOIN users u ON b.tenant_id = u.id
+       JOIN rooms r ON b.room_id = r.id
+       WHERE b.status = 'approved' 
+       AND b.move_out_date <= ?
+       AND b.notified_period_ended = 0`,
+      [today],
+    );
+
+    // Create notification for each expired rental
+    for (const rental of expiredRentals) {
+      try {
+        // Get all admins
+        const admins = await getAll(
+          "SELECT id FROM users WHERE role = 'admin' AND is_active = 1",
+          [],
+        );
+
+        // Notify each admin
+        for (const admin of admins) {
+          await createNotification(
+            admin.id,
+            "rental_period_ended",
+            "Rental Period Ended",
+            `Tenant ${rental.tenant_name} rental period for room "${rental.room_title}" has ended (Move-out date: ${rental.move_out_date})`,
+          );
+        }
+
+        // Mark as notified to avoid duplicate notifications
+        await runQuery(
+          "UPDATE bookings SET notified_period_ended = 1 WHERE id = ?",
+          [rental.id],
+        );
+      } catch (notifErr) {
+        console.error(`Failed to notify about rental ${rental.id}:`, notifErr);
+      }
+    }
+  } catch (err) {
+    console.error("Error checking rental periods:", err);
+  }
+};
+
+// Exporting helper function for periodic rental period checks
+exports.checkAndNotifyRentalPeriodEnded = checkAndNotifyRentalPeriodEnded;
