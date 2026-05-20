@@ -186,9 +186,12 @@ const AboutPage = () => (
         <Title>About myRentals</Title>
         <P>
           myRentals is a modern room rental platform connecting tenants and
-          property owners. Browse rooms, filter by location/price, and book
-          instantly. Owners list and manage properties. Admins monitor all
-          listings with secure eSewa payments and auto-generated invoices.
+          property owners. Established in 2026, we simplify the rental process
+          by connecting tenants seeking accommodation with property owners
+          offering rooms. Browse rooms, filter by location and price, and book
+          with flexible move-in dates. Owners list, manage, and track their
+          properties in real-time. Admins ensure platform integrity through
+          listing verification and secure Khalti payment processing.
         </P>
 
         <SectionTitle>Why Choose Us?</SectionTitle>
@@ -222,27 +225,27 @@ const AboutPage = () => (
           <Box>
             <h3>
               <i
-                className="fa-solid fa-credit-card"
+                className="fa-solid fa-wallet"
                 style={{ marginRight: "8px", color: "#2563eb" }}
               />{" "}
-              Secure Pay
+              Verified Payments
             </h3>
             <p>
-              eSewa integration with auto-generated invoices for every
-              transaction.
+              Khalti payment integration with verified transactions. Secure
+              advance payment processing for confirmed bookings.
             </p>
           </Box>
           <Box>
             <h3>
               <i
-                className="fa-solid fa-star"
+                className="fa-solid fa-calendar"
                 style={{ marginRight: "8px", color: "#2563eb" }}
               />{" "}
-              Reviews
+              Flexible Move-in
             </h3>
             <p>
-              Only verified tenants can review, ensuring genuine feedback
-              quality.
+              Select your move-in date within the next 10 days. Easy rental
+              period selection in months with clear move-out date calculation.
             </p>
           </Box>
           <Box>
@@ -275,10 +278,12 @@ const AboutPage = () => (
             <h3>Tenants</h3>
             <ul>
               <li>Search by location & price</li>
-              <li>View verified photos</li>
-              <li>Book with eSewa (1+ months)</li>
-              <li>Get invoices</li>
-              <li>Leave reviews</li>
+              <li>View verified listings</li>
+              <li>Select move-in date (within 10 days)</li>
+              <li>Choose rental duration (minimum 1 month)</li>
+              <li>Secure Khalti payment</li>
+              <li>Track current rentals</li>
+              <li>View rental history & payment receipts</li>
             </ul>
           </Box>
           <Box>
@@ -288,7 +293,8 @@ const AboutPage = () => (
               <li>Upload room details</li>
               <li>Set pricing & availability</li>
               <li>Manage bookings</li>
-              <li>Track history</li>
+              <li>Receive payment notifications</li>
+              <li>Track rental history</li>
             </ul>
           </Box>
           <Box>
@@ -306,10 +312,12 @@ const AboutPage = () => (
         <SectionTitle>Our Commitment</SectionTitle>
         <P>
           We are committed to providing a transparent, secure, and user-friendly
-          platform for room rentals. Our goal is to build trust through verified
-          listings, genuine reviews, and reliable payment processing. Whether
-          you're looking for a room or want to list your property, myRentals is
-          your trusted partner.
+          platform for room rentals in Nepal. Our goal is to build trust through
+          verified listings, secure Khalti payment processing, and reliable
+          rental management. We follow Muluki Civil Code, 2074 and rental laws
+          of Nepal. Whether you're looking for a room or want to list your
+          property, myRentals is your trusted partner connecting tenants and
+          owners in a fair and transparent marketplace.
         </P>
 
         <ButtonRow>

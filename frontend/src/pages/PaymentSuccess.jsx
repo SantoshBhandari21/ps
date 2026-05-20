@@ -78,14 +78,23 @@ export default function PaymentSuccess() {
           },
         });
 
-        if (response.ok) {
+        const data = await response.json().catch(() => null);
+
+        if (
+          response.ok &&
+          data?.paymentVerified === true &&
+          data?.paymentStatus === "Completed"
+        ) {
           setStatus("success");
         } else {
-          throw new Error("Verification failed");
+          throw new Error(data?.message || "Verification failed");
         }
       } catch (err) {
         console.error("Payment verification error:", err);
-        setStatus("success"); // Still show success since Khalti confirmed payment
+        setStatus("error");
+        setError(
+          err.message || "Payment verification failed. Please try again.",
+        );
       }
     };
 

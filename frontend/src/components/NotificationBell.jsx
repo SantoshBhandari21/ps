@@ -204,16 +204,11 @@ const MarkAllReadBtn = styled.button`
 // Formatting notification timestamp
 const formatTime = (dateString) => {
   const date = new Date(dateString);
-  const now = new Date();
-  const sameDay = date.toDateString() === now.toDateString();
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
-  if (sameDay) return `Today ${time}`;
-  if ((now - date) / 86400000 < 1) return `Yesterday ${time}`;
-  return `${date.toLocaleDateString()} ${time}`;
 };
 
 // Notification bell component

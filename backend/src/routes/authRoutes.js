@@ -10,6 +10,7 @@ const { body } = require("express-validator");
 const { authenticate } = require("../middleware/auth");
 // Importing authentication controller functions
 const {
+  register,
   login,
   updateProfilePhoto,
   forgotPassword,

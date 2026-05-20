@@ -3,6 +3,72 @@ const { runQuery, getOne, getAll } = require("../config/database");
 // Importing notification service for notifying admins
 const { createNotification } = require("./notificationController");
 
+// Validating and cleaning Google Maps embed URL format
+// Accepts both iframe code and plain embed URLs
+const validateMapEmbedUrl = (url) => {
+  if (!url) return null; // Optional field
+  if (typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  let cleanUrl = trimmed;
+
+  // Check if input contains iframe code and extract src attribute
+  if (trimmed.includes("<iframe") && trimmed.includes("src=")) {
+    const srcMatch = trimmed.match(/src=["']([^"']+)["']/);
+    if (srcMatch && srcMatch[1]) {
+      cleanUrl = srcMatch[1];
+    } else {
+      throw new Error(
+        "Please enter a valid Google Maps embed URL or iframe code.",
+      );
+    }
+  }
+
+  // Validate that the final URL is a Google Maps embed URL
+  if (!cleanUrl.startsWith("https://www.google.com/maps/embed")) {
+    throw new Error(
+      "Please enter a valid Google Maps embed URL or iframe code.",
+    );
+  }
+
+  return cleanUrl;
+};
+
+// Validating and cleaning WhatsApp number format
+const validateWhatsappNumber = (number) => {
+  if (!number) return null; // Optional field
+  if (typeof number !== "string") return null;
+
+  // Remove spaces, dashes, brackets, plus signs
+  let cleaned = number.trim().replace(/[\s\-\(\)\+]/g, "");
+
+  if (!cleaned) return null;
+
+  // Must contain only digits
+  if (!/^\d+$/.test(cleaned)) {
+    throw new Error(
+      "Invalid WhatsApp number. Must contain only digits (spaces, dashes, brackets, and + signs will be removed).",
+    );
+  }
+
+  // Handle Nepali numbers: 98 or 97 prefix with 10 digits total -> convert to 977 format
+  if (
+    (cleaned.startsWith("98") || cleaned.startsWith("97")) &&
+    cleaned.length === 10
+  ) {
+    cleaned = "977" + cleaned.slice(2);
+  }
+  // If it already starts with 977, keep as is
+  else if (!cleaned.startsWith("977")) {
+    throw new Error(
+      "Invalid WhatsApp number. Must be a valid Nepali number (9841234567, 97xxxxxxxxxx, or 977xxxxxxxxx).",
+    );
+  }
+
+  return cleaned;
+};
+
 // Parsing amenities from JSON string or array format
 const parseAmenities = (amenities) => {
   if (!amenities) return [];
@@ -67,6 +133,8 @@ const createRoom = async (req, res) => {
       bathrooms,
       area,
       amenities,
+      mapEmbedUrl,
+      whatsappNumber,
     } = req.body;
 
     // Validate required fields
@@ -88,6 +156,22 @@ const createRoom = async (req, res) => {
       });
     }
 
+    // Validate optional map embed URL
+    let validatedMapUrl = null;
+    try {
+      validatedMapUrl = validateMapEmbedUrl(mapEmbedUrl);
+    } catch (validationError) {
+      return res.status(400).json({ message: validationError.message });
+    }
+
+    // Validate optional WhatsApp number
+    let validatedWhatsappNumber = null;
+    try {
+      validatedWhatsappNumber = validateWhatsappNumber(whatsappNumber);
+    } catch (validationError) {
+      return res.status(400).json({ message: validationError.message });
+    }
+
     // Get main image - use first uploaded image if available
     const mainImage =
       req.files && req.files.length > 0
@@ -98,8 +182,8 @@ const createRoom = async (req, res) => {
     const result = await runQuery(
       `INSERT INTO rooms 
        (owner_id, title, description, address, location, room_type, price, 
-        bedrooms, bathrooms, area, amenities, main_image, is_verified) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        bedrooms, bathrooms, area, amenities, main_image, map_embed_url, whatsapp_number, is_available, is_verified) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.user.id,
         title,
@@ -113,6 +197,9 @@ const createRoom = async (req, res) => {
         area ? parseFloat(area) : 0,
         stringifyAmenities(amenities),
         mainImage,
+        validatedMapUrl,
+        validatedWhatsappNumber,
+        0,
         0,
       ],
     );
@@ -372,6 +459,8 @@ const updateRoom = async (req, res) => {
       bathrooms,
       area,
       amenities,
+      mapEmbedUrl,
+      whatsappNumber,
       isAvailable,
       keepImageIds,
     } = req.body;
@@ -423,6 +512,24 @@ const updateRoom = async (req, res) => {
     if (isAvailable !== undefined) {
       updates.push("is_available = ?");
       values.push(isAvailable ? 1 : 0);
+    }
+    if (mapEmbedUrl !== undefined) {
+      try {
+        const validatedMapUrl = validateMapEmbedUrl(mapEmbedUrl);
+        updates.push("map_embed_url = ?");
+        values.push(validatedMapUrl);
+      } catch (validationError) {
+        return res.status(400).json({ message: validationError.message });
+      }
+    }
+    if (whatsappNumber !== undefined) {
+      try {
+        const validatedWhatsappNumber = validateWhatsappNumber(whatsappNumber);
+        updates.push("whatsapp_number = ?");
+        values.push(validatedWhatsappNumber);
+      } catch (validationError) {
+        return res.status(400).json({ message: validationError.message });
+      }
     }
 
     // Handle image deletion - delete images not in keepImageIds list

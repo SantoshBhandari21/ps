@@ -9,7 +9,7 @@ export default defineConfig({
     strictPort: true, // fail if port 3000 is unavailable
     open: true, // automatically open browser
     host: true, // allow external connections
-    allowedHosts: ["fyp.santoshbhandari.info.np"], // allow Cloudflare tunnel host
+    allowedHosts: ["fyp.santoshbhandari.info.np"],
   },
   resolve: {
     alias: {

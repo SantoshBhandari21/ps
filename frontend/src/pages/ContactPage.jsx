@@ -364,8 +364,8 @@ const ContactPage = () => {
         <Card>
           <Title>Contact myRentals</Title>
           <Sub>
-            Have questions about the platform, bookings, payments, or anything
-            else? We'd love to hear from you. Get in touch with our team, or
+            Have questions about the platform, bookings, payments or anything
+            else? We'd love to hear from you. Get in touch with our team or
             reach out directly to the founder and CEO.
           </Sub>
 
@@ -379,7 +379,7 @@ const ContactPage = () => {
                 />
               </ContactIcon>
               <ContactLabel>Email</ContactLabel>
-              <ContactValue>santosh@myrentals.com</ContactValue>
+              <ContactValue>santoshbhandari.ct@gmail.comm</ContactValue>
             </ContactBox>
 
             <ContactBox>
@@ -390,7 +390,7 @@ const ContactPage = () => {
                 />
               </ContactIcon>
               <ContactLabel>Phone</ContactLabel>
-              <ContactValue>+977 98XXXXXXXX</ContactValue>
+              <ContactValue>+977 9816140854</ContactValue>
             </ContactBox>
 
             <ContactBox>
@@ -498,7 +498,7 @@ const ContactPage = () => {
               <FAQQuestion>Can I contact the CEO directly?</FAQQuestion>
               <FAQAnswer>
                 Yes! You can reach Santosh Bhandari, the CEO and founder, via
-                email at santosh@myrentals.com or through this contact form. We
+                email at santoshbhandari.ct@gmail.com or through this contact form. We
                 encourage direct communication for feedback and feature
                 suggestions.
               </FAQAnswer>

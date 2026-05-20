@@ -355,16 +355,113 @@ const FormInput = styled.input`
   }
 `;
 
+const HelperText = styled.p`
+  margin: -6px 0 12px;
+  font-size: 12px;
+  color: #64748b;
+`;
+
+// WhatsApp button styling
+const WhatsappBtn = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #25d366;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 14px;
+  transition: all 0.2s;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: #20ba57;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+  }
+
+  i {
+    font-size: 16px;
+  }
+`;
+
+// Map section styling
+const MapSection = styled.div`
+  margin: 20px 0;
+  padding: 0;
+
+  h4 {
+    font-size: 13px;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+  }
+
+  iframe {
+    width: 100%;
+    height: 350px;
+    border: none;
+    border-radius: 8px;
+  }
+`;
+
 const RoomDetails = ({ room, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [imgError, setImgError] = useState(false);
   const [months, setMonths] = useState(1);
+  const [moveInDate, setMoveInDate] = useState(() => getTodayLocalDate());
   const [showPayment, setShowPayment] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const totalCost = room.price * months;
+
+  function getTodayLocalDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function addDaysToDate(dateString, days) {
+    const date = new Date(`${dateString}T00:00:00`);
+    date.setDate(date.getDate() + days);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const today = getTodayLocalDate();
+  const maxMoveInDate = addDaysToDate(today, 10);
+
+  const validateBookingDetails = () => {
+    if (!moveInDate) {
+      return "Please select a move-in date.";
+    }
+
+    if (moveInDate < today) {
+      return "Move-in date cannot be in the past.";
+    }
+
+    if (moveInDate > maxMoveInDate) {
+      return "Move-in date must be within the next 10 days.";
+    }
+
+    if (months < 1) {
+      return "Minimum rental period is 1 month.";
+    }
+
+    return null;
+  };
 
   // Get all available images
   const getAllImages = () => {
@@ -433,6 +530,12 @@ const RoomDetails = ({ room, onClose }) => {
 
   const handlePayment = async () => {
     try {
+      const validationError = validateBookingDetails();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
       setLoading(true);
       setError("");
 
@@ -440,6 +543,7 @@ const RoomDetails = ({ room, onClose }) => {
       const rentalResponse = await rentalsAPI.createRental({
         roomId: room.id,
         months: months,
+        moveInDate,
         totalPrice: totalCost,
       });
 
@@ -591,11 +695,65 @@ const RoomDetails = ({ room, onClose }) => {
             </>
           )}
 
+          {room.whatsapp_number && (
+            <WhatsappBtn
+              href={`https://wa.me/${room.whatsapp_number}?text=${encodeURIComponent(
+                `Hello, I am interested in your room: ${room.title}. Is it still available?`,
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Contact owner on WhatsApp"
+            >
+              <i className="fa-brands fa-whatsapp"></i>
+              Contact Owner on WhatsApp
+            </WhatsappBtn>
+          )}
+
+          {room.map_embed_url &&
+            room.map_embed_url.startsWith(
+              "https://www.google.com/maps/embed",
+            ) && (
+              <MapSection>
+                <h4>Location Map</h4>
+                <iframe
+                  src={room.map_embed_url}
+                  width="100%"
+                  height="350"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Room Location Map"
+                />
+              </MapSection>
+            )}
+
           {error && <Error>{error}</Error>}
 
           {!showPayment ? (
             <>
               <RentalForm>
+                <label
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    display: "block",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Move-in Date
+                </label>
+                <FormInput
+                  type="date"
+                  min={today}
+                  max={maxMoveInDate}
+                  value={moveInDate}
+                  onChange={(e) => setMoveInDate(e.target.value)}
+                />
+                <HelperText>
+                  Select a date from today up to {maxMoveInDate}.
+                </HelperText>
+
                 <label
                   style={{
                     fontSize: "13px",
@@ -660,7 +818,17 @@ const RoomDetails = ({ room, onClose }) => {
                 <Btn className="outline" onClick={onClose}>
                   Close
                 </Btn>
-                <Btn className="primary" onClick={() => setShowPayment(true)}>
+                <Btn
+                  className="primary"
+                  onClick={() => {
+                    const validationError = validateBookingDetails();
+                    if (validationError) {
+                      setError(validationError);
+                      return;
+                    }
+                    setShowPayment(true);
+                  }}
+                >
                   Proceed to Payment
                 </Btn>
               </ButtonGroup>

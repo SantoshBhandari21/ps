@@ -562,10 +562,25 @@ const updateRoomVerification = async (req, res) => {
       return res.status(400).json({ message: "is_verified must be 0 or 1" });
     }
 
-    await runQuery("UPDATE rooms SET is_verified = ? WHERE id = ?", [
-      is_verified,
-      id,
-    ]);
+    let isAvailable = 0;
+
+    if (is_verified === 1) {
+      const activeBooking = await getOne(
+        `SELECT COUNT(*) as count
+         FROM bookings
+         WHERE room_id = ?
+           AND status = 'approved'
+           AND (move_out_date IS NULL OR move_out_date > date('now'))`,
+        [id],
+      );
+
+      isAvailable = Number(activeBooking?.count || 0) === 0 ? 1 : 0;
+    }
+
+    await runQuery(
+      "UPDATE rooms SET is_verified = ?, is_available = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [is_verified, isAvailable, id],
+    );
 
     const room = await getOne("SELECT * FROM rooms WHERE id = ?", [id]);
 

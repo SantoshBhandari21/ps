@@ -4,30 +4,73 @@ const { runQuery, getOne, getAll } = require("../config/database");
 const { createNotification } = require("./notificationController");
 
 // Calculating move-out date based on rental period in months
-const calculateMoveOutDate = (months) => {
-  const moveOut = new Date();
+const calculateMoveOutDate = (moveInDate, months) => {
+  const moveOut = new Date(`${moveInDate}T00:00:00`);
   moveOut.setMonth(moveOut.getMonth() + months);
-  return moveOut.toISOString().split("T")[0];
+  const year = moveOut.getFullYear();
+  const month = String(moveOut.getMonth() + 1).padStart(2, "0");
+  const day = String(moveOut.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 // Retrieving current date in YYYY-MM-DD format
-const getTodayDate = () => new Date().toISOString().split("T")[0];
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const addDaysToDate = (dateString, days) => {
+  const date = new Date(`${dateString}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 // Creating new rental booking with validation and payment initialization
 exports.createRental = async (req, res) => {
   try {
-    const { roomId, months, totalPrice } = req.body;
+    const { roomId, months, totalPrice, moveInDate } = req.body;
     const clientId = req.user.id;
+    const today = getTodayDate();
+    const latestMoveInDate = addDaysToDate(today, 10);
+    const rentalMonths = parseInt(months, 10);
+    const bookingTotalPrice = Number(totalPrice);
 
     // Validation
-    if (!roomId || !months || !totalPrice) {
+    if (!roomId || !months || !totalPrice || !moveInDate) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    if (months < 1) {
+    if (Number.isNaN(rentalMonths) || rentalMonths < 1) {
       return res
         .status(400)
         .json({ message: "Minimum rental period is 1 month" });
+    }
+
+    if (Number.isNaN(bookingTotalPrice) || bookingTotalPrice <= 0) {
+      return res.status(400).json({ message: "Invalid rental amount" });
+    }
+
+    if (moveInDate < today) {
+      return res
+        .status(400)
+        .json({ message: "Move-in date cannot be in the past" });
+    }
+
+    if (moveInDate > latestMoveInDate) {
+      return res.status(400).json({
+        message: "Move-in date must be within the next 10 days",
+      });
+    }
+
+    const parsedMoveInDate = new Date(`${moveInDate}T00:00:00`);
+    if (Number.isNaN(parsedMoveInDate.getTime())) {
+      return res.status(400).json({ message: "Invalid move-in date" });
     }
 
     // Get room details
@@ -47,8 +90,7 @@ exports.createRental = async (req, res) => {
       clientId,
     ]);
 
-    const moveInDate = getTodayDate();
-    const moveOutDate = calculateMoveOutDate(months);
+    const moveOutDate = calculateMoveOutDate(moveInDate, rentalMonths);
 
     // Create booking
     const result = await runQuery(
@@ -59,11 +101,11 @@ exports.createRental = async (req, res) => {
         roomId,
         clientId,
         room.owner_id,
-        moveInDate,
+        today,
         moveInDate,
         moveOutDate,
         "pending_payment",
-        totalPrice,
+        bookingTotalPrice,
       ],
     );
 
@@ -77,8 +119,8 @@ exports.createRental = async (req, res) => {
         status: "pending_payment",
         moveInDate,
         moveOutDate,
-        totalPrice,
-        months,
+        totalPrice: bookingTotalPrice,
+        months: rentalMonths,
       },
     });
   } catch (err) {
@@ -102,9 +144,11 @@ exports.getMyRentals = async (req, res) => {
     `;
 
     const params = [clientId];
-    if (status) {
+    if (status && status !== "all") {
       sql += " AND b.status = ?";
       params.push(status);
+    } else {
+      sql += " AND b.status = 'approved'";
     }
 
     sql += " ORDER BY b.created_at DESC";

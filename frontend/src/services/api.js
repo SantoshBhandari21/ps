@@ -1,5 +1,9 @@
 // Importing and configuring API endpoint
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://api.santoshbhandari.info.np/api");
 
 // Getting authentication token from local storage
 const getToken = () => {
@@ -16,6 +20,7 @@ const apiCall = async (endpoint, options = {}) => {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
+    credentials: "include",
   };
 
   // Adding authorization token to request

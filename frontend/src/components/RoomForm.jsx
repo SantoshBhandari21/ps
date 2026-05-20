@@ -386,6 +386,37 @@ const SubmitBtn = styled(Button)`
   }
 `;
 
+// Helper function to clean Google Maps embed URLs
+// Accepts both iframe code and plain embed URLs
+const cleanGoogleMapsEmbed = (value) => {
+  if (!value) return "";
+  const trimmed = String(value).trim();
+  if (!trimmed) return "";
+
+  let cleanUrl = trimmed;
+
+  // Check if input contains iframe code and extract src attribute
+  if (trimmed.includes("<iframe") && trimmed.includes("src=")) {
+    const srcMatch = trimmed.match(/src=["']([^"']+)["']/);
+    if (srcMatch && srcMatch[1]) {
+      cleanUrl = srcMatch[1];
+    } else {
+      throw new Error(
+        "Please enter a valid Google Maps embed URL or iframe code.",
+      );
+    }
+  }
+
+  // Validate that the final URL is a Google Maps embed URL
+  if (!cleanUrl.startsWith("https://www.google.com/maps/embed")) {
+    throw new Error(
+      "Please enter a valid Google Maps embed URL or iframe code.",
+    );
+  }
+
+  return cleanUrl;
+};
+
 const RoomForm = ({ room, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     title: "",
@@ -397,6 +428,8 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
     bathrooms: "",
     area: "",
     amenities: [],
+    mapEmbedUrl: "",
+    whatsappNumber: "",
   });
 
   const [imagePreviewsLocal, setImagePreviewsLocal] = useState([]);
@@ -433,6 +466,8 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
         bathrooms: room.bathrooms || "",
         area: room.area || "",
         amenities: room.amenities || [],
+        mapEmbedUrl: room.map_embed_url || "",
+        whatsappNumber: room.whatsapp_number || "",
       });
       // Load existing images for editing
       if (room.images && room.images.length > 0) {
@@ -579,6 +614,18 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
     try {
       setLoading(true);
 
+      // Validate and clean Google Maps embed URL if provided
+      let cleanedMapUrl = "";
+      if (formData.mapEmbedUrl.trim()) {
+        try {
+          cleanedMapUrl = cleanGoogleMapsEmbed(formData.mapEmbedUrl);
+        } catch (mapError) {
+          setError(mapError.message);
+          setLoading(false);
+          return;
+        }
+      }
+
       // Create FormData for multipart/form-data
       const submitData = new FormData();
 
@@ -592,6 +639,15 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
       submitData.append("bathrooms", parseInt(formData.bathrooms));
       submitData.append("area", parseFloat(formData.area));
       submitData.append("amenities", JSON.stringify(formData.amenities));
+      if (cleanedMapUrl) {
+        submitData.append("mapEmbedUrl", cleanedMapUrl);
+      }
+      if (formData.whatsappNumber.trim()) {
+        submitData.append(
+          "whatsappNumber",
+          String(formData.whatsappNumber).trim(),
+        );
+      }
 
       // Append all new image files with "images" key for multiple file handling
       imageFiles.forEach((file) => {
@@ -821,6 +877,48 @@ const RoomForm = ({ room, onSubmit, onClose }) => {
                 onChange={handleChange}
                 placeholder="e.g., Pokhara, Lakeside"
               />
+            </FormGroup>
+
+            <FormGroup>
+              <label>Google Maps Embed URL</label>
+              <input
+                type="text"
+                name="mapEmbedUrl"
+                value={formData.mapEmbedUrl}
+                onChange={handleChange}
+                placeholder="https://www.google.com/maps/embed?pb=..."
+              />
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#666",
+                  margin: "0.5rem 0 0",
+                  lineHeight: "1.4",
+                }}
+              >
+                Paste the Google Maps embed URL here.
+              </p>
+            </FormGroup>
+
+            <FormGroup>
+              <label>Owner's WhatsApp Number</label>
+              <input
+                type="tel"
+                name="whatsappNumber"
+                value={formData.whatsappNumber}
+                onChange={handleChange}
+                placeholder="e.g., 9841234567"
+              />
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#666",
+                  margin: "0.5rem 0 0",
+                  lineHeight: "1.4",
+                }}
+              >
+                PLease Enter 977 infront of your Whatsapp number.
+              </p>
             </FormGroup>
           </FormSection>
 

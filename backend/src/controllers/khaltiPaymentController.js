@@ -155,6 +155,8 @@ exports.initiatePayment = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { pidx, status, transaction_id, purchase_order_id } = req.query;
+    const paymentStatus = status;
+    const paymentVerified = paymentStatus === "Completed";
 
     // Validate callback parameters - only pidx and status required
     if (!pidx || !status) {
@@ -165,10 +167,11 @@ exports.verifyPayment = async (req, res) => {
     }
 
     // Check if status is successful
-    if (status !== "Completed") {
+    if (!paymentVerified) {
       return res.status(400).json({
         message: "Payment not completed",
-        status,
+        paymentStatus,
+        paymentVerified,
       });
     }
 
@@ -195,26 +198,27 @@ exports.verifyPayment = async (req, res) => {
     }
 
     // Check payment status
-    if (khaltiResponse.status !== "Completed") {
+    const khaltiPaymentStatus = khaltiResponse.status;
+    const khaltiPaymentVerified = khaltiPaymentStatus === "Completed";
+
+    if (!khaltiPaymentVerified) {
       return res.status(400).json({
-        message: `Payment status is ${khaltiResponse.status}. Transaction must be Completed.`,
-        khalti_status: khaltiResponse.status,
+        message: `Payment status is ${khaltiPaymentStatus}. Transaction must be Completed.`,
+        khalti_status: khaltiPaymentStatus,
+        paymentStatus: khaltiPaymentStatus,
+        paymentVerified: false,
       });
     }
 
-    // Update payment record
-    await runQuery(
-      `UPDATE khalti_payments 
-       SET status = 'completed', 
-           transaction_id = ?, 
-           khalti_lookup_response = ? 
-       WHERE pidx = ?`,
-      [
-        transaction_id || khaltiResponse.transaction_id,
-        JSON.stringify(khaltiResponse),
-        pidx,
-      ],
-    );
+    const verifiedTransactionId =
+      transaction_id || khaltiResponse.transaction_id;
+    if (!verifiedTransactionId) {
+      return res.status(400).json({
+        message: "Transaction verification failed",
+        paymentStatus: khaltiPaymentStatus,
+        paymentVerified: false,
+      });
+    }
 
     // Get booking details with tenant and owner information
     const paymentRecord = await getOne(
@@ -246,16 +250,32 @@ exports.verifyPayment = async (req, res) => {
       return res.status(404).json({ message: "Payment record not found" });
     }
 
-    // Update booking status to approved
-    await runQuery(
-      "UPDATE bookings SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [paymentRecord.booking_id],
-    );
+    // Promote payment, booking, and room state together only after verification succeeds.
+    await runQuery("BEGIN TRANSACTION");
+    try {
+      await runQuery(
+        `UPDATE khalti_payments 
+         SET status = 'completed', 
+             transaction_id = ?, 
+             khalti_lookup_response = ? 
+         WHERE pidx = ?`,
+        [verifiedTransactionId, JSON.stringify(khaltiResponse), pidx],
+      );
 
-    // Mark room as unavailable
-    await runQuery("UPDATE rooms SET is_available = 0 WHERE id = ?", [
-      paymentRecord.room_id,
-    ]);
+      await runQuery(
+        "UPDATE bookings SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [paymentRecord.booking_id],
+      );
+
+      await runQuery("UPDATE rooms SET is_available = 0 WHERE id = ?", [
+        paymentRecord.room_id,
+      ]);
+
+      await runQuery("COMMIT");
+    } catch (txErr) {
+      await runQuery("ROLLBACK");
+      throw txErr;
+    }
 
     // Create notification
     try {
@@ -325,8 +345,10 @@ exports.verifyPayment = async (req, res) => {
       message: "Payment verified and booking approved",
       pidx,
       booking_id: paymentRecord.booking_id,
-      transaction_id: khaltiResponse.transaction_id,
+      transaction_id: verifiedTransactionId,
       amount: khaltiResponse.total_amount,
+      paymentStatus: khaltiPaymentStatus,
+      paymentVerified: true,
       room: {
         id: paymentRecord.room_id,
         title: paymentRecord.room_title,

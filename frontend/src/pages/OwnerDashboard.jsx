@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import "../styles/OwnerDashboard.css";
-import { roomsAPI, roomAPI, rentalsAPI } from "../services/api";
+import { roomsAPI, roomAPI } from "../services/api";
 import RoomForm from "../components/RoomForm";
 
 // Content wrapper container
@@ -23,6 +23,15 @@ const OwnerDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const totalRooms = rooms.length;
+  const availableRooms = rooms.filter(
+    (room) => room.is_verified && room.is_available,
+  ).length;
+  const roomsOnRent = rooms.filter(
+    (room) => room.is_verified && !room.is_available,
+  ).length;
+
   // Loading owner rooms
   useEffect(() => {
     fetchMyRooms();
@@ -125,15 +134,18 @@ const OwnerDashboard = () => {
         <div className="analytics-section">
           <div className="analytics-card">
             <div className="analytics-label">Total Rooms</div>
-            <div className="analytics-value">{rooms.length}</div>
+            <div className="analytics-value">{totalRooms}</div>
             <div className="analytics-hint">All listings</div>
           </div>
           <div className="analytics-card">
             <div className="analytics-label">Available Rooms</div>
-            <div className="analytics-value">
-              {rooms.filter((r) => r.is_available).length}
-            </div>
+            <div className="analytics-value">{availableRooms}</div>
             <div className="analytics-hint">Ready to book</div>
+          </div>
+          <div className="analytics-card">
+            <div className="analytics-label">Rooms on Rent</div>
+            <div className="analytics-value">{roomsOnRent}</div>
+            <div className="analytics-hint">Currently occupied</div>
           </div>
         </div>
       )}

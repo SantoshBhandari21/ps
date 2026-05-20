@@ -43,8 +43,26 @@ const ERROR_MESSAGES = {
 // ============ CORS & MIDDLEWARE ============
 app.use(
   cors({
-    origin: ALLOWED_ORIGINS,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Allow localhost in development
+      if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+        return callback(null, true);
+      }
+
+      // Allow production origins
+      if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(null, true); // Allow for now, log for debugging
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
@@ -63,6 +81,13 @@ app.use(API_ROUTES.PAYMENTS, ROUTES.PAYMENTS);
 app.use(API_ROUTES.CONTACT, ROUTES.CONTACT);
 
 // ============ SYSTEM ROUTES ============
+/**
+ * Favicon endpoint - prevent 404 errors
+ */
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
 /**
  * Health check endpoint
  */

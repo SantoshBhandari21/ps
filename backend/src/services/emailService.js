@@ -11,10 +11,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const getFrontendUrl = () =>
+  (
+    process.env.FRONTEND_URL ||
+    process.env.CLIENT_URL ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
+
+const buildFrontendUrl = (path) =>
+  `${getFrontendUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+
 // Defining welcome email template function
-/**
- * Welcome email after successful registration
- */
+
 const getWelcomeEmailTemplate = (userName, userRole) => {
   return `
     <!DOCTYPE html>
@@ -25,7 +33,7 @@ const getWelcomeEmailTemplate = (userName, userRole) => {
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .button { display: inline-block; background: #2563eb; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
         .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
       </style>
     </head>
@@ -65,7 +73,7 @@ const getWelcomeEmailTemplate = (userName, userRole) => {
           }
           
           <p style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/login" class="button">Get Started</a>
+            <a href="${buildFrontendUrl("/login")}" class="button" style="color: #ffffff !important;">Get Started</a>
           </p>
           
           <p>If you have any questions, feel free to contact our support team.</p>
@@ -83,9 +91,7 @@ const getWelcomeEmailTemplate = (userName, userRole) => {
 };
 
 // Defining password reset email template function
-/**
- * Password reset email template
- */
+
 const getPasswordResetEmailTemplate = (userName, resetLink) => {
   return `
     <!DOCTYPE html>
@@ -96,7 +102,7 @@ const getPasswordResetEmailTemplate = (userName, resetLink) => {
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #ef4444; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .button { display: inline-block; background: #ef4444; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
         .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
         .warning { background: #fee2e2; border-left: 4px solid #ef4444; padding: 12px; margin: 20px 0; }
       </style>
@@ -111,7 +117,7 @@ const getPasswordResetEmailTemplate = (userName, resetLink) => {
           <p>We received a request to reset your password for your myRentals account.</p>
           
           <p style="text-align: center;">
-            <a href="${resetLink}" class="button">Reset Password</a>
+            <a href="${resetLink}" class="button" style="color: #ffffff !important;">Reset Password</a>
           </p>
           
           <p>Or copy and paste this link into your browser:</p>
@@ -133,9 +139,7 @@ const getPasswordResetEmailTemplate = (userName, resetLink) => {
 };
 
 // Defining booking confirmation email template function
-/**
- * Booking confirmation email (for tenants)
- */
+
 const getBookingConfirmationEmailTemplate = (
   userName,
   roomTitle,
@@ -154,7 +158,7 @@ const getBookingConfirmationEmailTemplate = (
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .button { display: inline-block; background: #2563eb; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
         .booking-details { background: white; border: 2px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 8px; }
         .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
         .detail-label { font-weight: bold; color: #666; }
@@ -214,7 +218,7 @@ const getBookingConfirmationEmailTemplate = (
           </ul>
           
           <p style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/tenant/dashboard" class="button">View My Rentals</a>
+            <a href="${buildFrontendUrl("/tenant/dashboard")}" class="button" style="color: #ffffff !important;">View My Rentals</a>
           </p>
           
           <p>We hope you enjoy your stay!</p>
@@ -232,9 +236,7 @@ const getBookingConfirmationEmailTemplate = (
 };
 
 // Defining new booking notification template for property owners
-/**
- * New booking request notification (for owners)
- */
+
 const getNewBookingRequestEmailTemplate = (
   ownerName,
   tenantName,
@@ -252,7 +254,7 @@ const getNewBookingRequestEmailTemplate = (
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .button { display: inline-block; background: #2563eb; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
         .info-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
         .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
       </style>
@@ -278,7 +280,7 @@ const getNewBookingRequestEmailTemplate = (
           <p>The tenant has completed the payment. The booking is now confirmed automatically.</p>
           
           <p style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/owner/dashboard" class="button">View Dashboard</a>
+            <a href="${buildFrontendUrl("/owner/dashboard")}" class="button" style="color: #ffffff !important;">View Dashboard</a>
           </p>
           
           <p>Best regards,<br>The myRentals Team</p>
@@ -293,9 +295,7 @@ const getNewBookingRequestEmailTemplate = (
 };
 
 // Defining password reset success confirmation template
-/**
- * Password reset success confirmation email
- */
+
 const getPasswordResetSuccessEmailTemplate = (userName) => {
   return `
     <!DOCTYPE html>
@@ -306,7 +306,7 @@ const getPasswordResetSuccessEmailTemplate = (userName) => {
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .button { display: inline-block; background: #2563eb; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
         .success-box { background: #dcfce7; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
         .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
       </style>
@@ -335,7 +335,7 @@ const getPasswordResetSuccessEmailTemplate = (userName) => {
           <p>If you did not request this password reset, please contact our support team immediately.</p>
           
           <p style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/login" class="button">Go to Login</a>
+            <a href="${buildFrontendUrl("/login")}" class="button" style="color: #ffffff !important;">Go to Login</a>
           </p>
           
           <p>Best regards,<br>The myRentals Team</p>
@@ -351,9 +351,7 @@ const getPasswordResetSuccessEmailTemplate = (userName) => {
 };
 
 // Sending welcome email after registration
-/**
- * Send welcome email after registration
- */
+
 const sendWelcomeEmail = async (userEmail, userName, userRole) => {
   try {
     const mailOptions = {
@@ -373,12 +371,10 @@ const sendWelcomeEmail = async (userEmail, userName, userRole) => {
 };
 
 // Sending password reset email with token link
-/**
- * Send password reset email
- */
+
 const sendPasswordResetEmail = async (userEmail, userName, resetToken) => {
   try {
-    const resetLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
+    const resetLink = buildFrontendUrl(`/reset-password/${resetToken}`);
 
     const mailOptions = {
       from: `"myRentals" <${process.env.EMAIL_USER}>`,
@@ -397,9 +393,7 @@ const sendPasswordResetEmail = async (userEmail, userName, resetToken) => {
 };
 
 // Sending booking confirmation email to tenant
-/**
- * Send booking confirmation email to tenant
- */
+
 const sendBookingConfirmationEmail = async (
   tenantEmail,
   tenantName,
@@ -436,9 +430,7 @@ const sendBookingConfirmationEmail = async (
 };
 
 // Sending booking notification to property owner
-/**
- * Send new booking notification to owner
- */
+
 const sendNewBookingNotificationEmail = async (
   ownerEmail,
   ownerName,
@@ -473,9 +465,7 @@ const sendNewBookingNotificationEmail = async (
 };
 
 // Sending password reset success confirmation email
-/**
- * Send password reset success email
- */
+
 const sendPasswordResetSuccessEmail = async (userEmail, userName) => {
   try {
     const mailOptions = {
@@ -495,9 +485,7 @@ const sendPasswordResetSuccessEmail = async (userEmail, userName) => {
 };
 
 // Defining room approval notification template
-/**
- * Room approval email template
- */
+
 const getRoomApprovedEmailTemplate = (ownerName, roomTitle, roomId) => {
   return `
     <!DOCTYPE html>
@@ -508,7 +496,7 @@ const getRoomApprovedEmailTemplate = (ownerName, roomTitle, roomId) => {
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .button { display: inline-block; background: #2563eb; color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
         .success-box { background: #dcfce7; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
         .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
       </style>
@@ -537,7 +525,7 @@ const getRoomApprovedEmailTemplate = (ownerName, roomTitle, roomId) => {
           </ul>
           
           <p style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/owner/dashboard" class="button">Go to Dashboard</a>
+            <a href="${buildFrontendUrl("/owner/dashboard")}" class="button" style="color: #ffffff !important;">Go to Dashboard</a>
           </p>
           
           <p>Thank you for listing with myRentals!</p>
@@ -555,9 +543,7 @@ const getRoomApprovedEmailTemplate = (ownerName, roomTitle, roomId) => {
 };
 
 // Sending room approval notification to owner
-/**
- * Send room approval email to owner
- */
+
 const sendRoomApprovedEmail = async (
   ownerEmail,
   ownerName,

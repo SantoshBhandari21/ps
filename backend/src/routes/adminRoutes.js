@@ -14,18 +14,18 @@ const {
 router.use(authenticate, authorize("admin"));
 
 // Defining user management routes
-// router.get("/users", admin.getAllUsers);
+router.get("/users", admin.getAllUsers);
 router.get("/users/:id", admin.getUserById);
 router.post("/users", admin.createUser);
 router.put("/users/:id", admin.updateUser);
 router.delete("/users/:id", admin.deleteUser);
 
 // Defining admin dashboard and revenue routes
-// router.get("/stats/dashboard", admin.getAdminStats);
+router.get("/stats/dashboard", admin.getAdminStats);
 router.get("/revenue", admin.getRevenue);
 
 // Defining room and booking management routes
-// router.get("/rooms/all", admin.getAllRooms);
+router.get("/rooms/all", admin.getAllRooms);
 router.patch("/rooms/:id/verify", admin.updateRoomVerification);
 router.get("/payments/all", admin.getAllPayments);
 router.get("/bookings/all", admin.getAllBookings);

@@ -41,7 +41,7 @@ const LogoImage = styled(Link)`
     transform: scale(1.05);
   }
   img {
-    height: 68px;
+    height: 64px;
     width: auto;
     object-fit: contain;
   }
